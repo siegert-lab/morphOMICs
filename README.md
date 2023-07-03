@@ -25,9 +25,8 @@ Because morphOMICs relies on forceatlas2, which has problems with python3.9+, we
 ```
 conda create -n morphology python=3.8 scipy numpy pandas scikit-learn matplotlib tomli networkx Cython
 conda activate morphology
-pip install fa2
 
-git clone https://git.ista.ac.at/rcubero/morphomics_v2.git
+git clone https://github.com/siegert-lab/morphOMICs_v2.git
 cd morphomics_v2
 python3 setup.py install
 ```
@@ -38,10 +37,9 @@ The parameter file is build such that it modularizes the steps required to gener
 Once you have completed filling up the necessary information in the parameter file, run 
 `python3 run_morphomics.py [path-to-parameter-file]`
 
-To get started, download a demo folder containing sample traces and a parameter file from:
+To get started, download a demo folder containing sample traces, a parameter file and tutorial Jupyter notebooks from:
 https://seafile.ist.ac.at/f/7dc51d9b63d24fb28eba/?dl=1
 Once downloaded, place the extracted folder `morphomics_v2_demo` inside `morphomics_v2`.
 On the terminal, run
 `python3 run_morphomics.py morphomics_v2_demo/parameters/Morphomics.Parameters.1234.toml`
-
-You can also follow each steps in the protocol in Jupyter notebook in `Tutorials/morphOMICs_v2_Tutorial.ipynb`.
+You can also follow each steps in the protocol in Jupyter notebook in `morphomics_v2_demo/morphOMICs_v2_Tutorial.ipynb`.
