@@ -1,0 +1,33 @@
+# This file contains which conditions to plot and which color will be used for each condition,,,,
+# You can add as much conditions as you want to delineate, as long as these conditions are an element of `Input.conditions` in the parameter file,,,
+# `Color_type`, `Color`, `GradientLimits` needs to be here,,
+# `Color_type` can either be solid, gradient_pre , or “gradient_mod`,,
+# If `Color_type` is `solid`, `Color` must be a CSS color in matplotlib (see https://matplotlib.org/stable/gallery/color/named_colors.html),,,
+# Use color gradients when you have several timepoints and you want to follow the phenotypic progression in the spectrum,,,,
+# If `Color_type` is `gradient_mod`, `Color` must be a preset colormap in matplotlib, https://matplotlib.org/stable/tutorials/colors/colormaps.html,,
+# If `Color_type` is `gradient_mod`, `Color` can either be one color (set as the maximum of the color gradient) ,,,
+#     or a list of colors separated by `;` (sequence of colors in the gradient from minimum to maximum),,,,
+#     and each color name must be a CSS color in matplotlib,,,,
+# `GradientLimits` sets the minimum and maximum timepoints that will be reflected in the gradient and must be separated by `;`,,,,
+#     e.g., 0;100 will create a color gradient where the minimum is set at P0 and 100 is set at P100,,,
+#     Everything beyond the limits will be colored the same as the limits,,,,
+#     Will be ignored if `Color_type` is `solid`,,,,
+Region,Model,Color_type,Color,GradientLimits
+# IPL colors,,,,
+IPL,Cx3cr1_het,gradient_mod,thistle;purple,0;30
+IPL,rd1,gradient_mod,peachpuff;saddlebrown,0;100
+IPL,rd10,gradient_mod,lightgreen;darkgreen,0;100
+IPL,Ctrl_Iso,solid,lightcoral,0
+IPL,Ctrl_Kxa,solid,magenta,0
+IPL,Cx3cr1_hom,gradient_mod,bisque;darkorange,0;30
+# OPL colors,,,,
+OPL,Cx3cr1_het,gradient_mod,lightblue;darkblue,0;30
+OPL,rd1,gradient_mod,pink;deeppink;crimson,0;100
+OPL,rd10,gradient_mod,bisque;darkorange,0;100
+OPL,Ctrl_Iso,solid,dodgerblue,0
+OPL,Ctrl_Kxa,solid,cyan,0
+OPL,Cx3cr1_hom,gradient_mod,lightgreen;darkgreen,0;30
+# INL colors,,,,
+INL,Cx3cr1_het,gradient_mod,mistyrose;red,0;30
+INL,rd1,gradient_mod,lightcyan;darkcyan,0;100
+INL,rd10,gradient_pre,PuRd,0;100
