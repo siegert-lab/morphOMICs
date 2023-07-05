@@ -39,7 +39,7 @@ Once you have completed filling up the necessary information in the parameter fi
 
 To get started, download a demo folder containing sample traces, a parameter file and tutorial Jupyter notebooks from:
 https://seafile.ist.ac.at/f/7dc51d9b63d24fb28eba/?dl=1
-Once downloaded, place the extracted folder `morphomics_v2_demo` inside `morphomics_v2`.
+Once downloaded, place the extracted folder `morphOMICs_v2_Tutorials` inside `morphomics_v2`.
 On the terminal, run
-`python3 run_morphomics.py morphomics_v2_demo/parameters/Morphomics.Parameters.1234.toml`
-You can also follow each steps in the protocol in Jupyter notebook in `morphomics_v2_demo/morphOMICs_v2_Tutorial.ipynb`.
+`python3 run_morphomics.py morphOMICs_v2_Tutorials/Morphomics.Parameters.1.toml`
+You can also follow each steps in the protocol in Jupyter notebook in `morphOMICs_v2_Tutorials/morphOMICs_v2_Tutorial.ipynb`.
