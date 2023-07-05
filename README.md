@@ -37,9 +37,8 @@ The parameter file is build such that it modularizes the steps required to gener
 Once you have completed filling up the necessary information in the parameter file, run 
 `python3 run_morphomics.py [path-to-parameter-file]`
 
-To get started, download a demo folder containing sample traces, a parameter file and tutorial Jupyter notebooks from:
-https://seafile.ist.ac.at/f/7dc51d9b63d24fb28eba/?dl=1
+To get started, download a demo folder containing sample traces, a parameter file and tutorial Jupyter notebooks [HERE](https://seafile.ist.ac.at/f/cdd3c524c85d43be8984/?dl=1).
 Once downloaded, place the extracted folder `morphOMICs_v2_Tutorials` inside `morphomics_v2`.
-On the terminal, run
-`python3 run_morphomics.py morphOMICs_v2_Tutorials/Morphomics.Parameters.1.toml`
+On the terminal, `cd` to `morphOMICs_v2_Tutorials` and run
+`python3 ../run_morphomics.py Morphomics.Parameters.1.toml`
 You can also follow each steps in the protocol in Jupyter notebook in `morphOMICs_v2_Tutorials/morphOMICs_v2_Tutorial.ipynb`.
