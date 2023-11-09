@@ -27,7 +27,7 @@ conda create -n morphology python=3.8 scipy numpy pandas scikit-learn matplotlib
 conda activate morphology
 
 git clone https://github.com/siegert-lab/morphOMICs_v2.git
-cd morphomics_v2
+cd morphOMICs_v2
 python3 setup.py install
 ```
 
