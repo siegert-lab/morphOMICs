@@ -20,15 +20,15 @@ Additional dependencies:
 umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2 (https://github.com/bhargavchippada/forceatlas2)
 
 # Installation Guide
-Because morphOMICs relies on forceatlas2, which has problems with python3.9+, we will need to create a virtual environment for morphOMICs:
 
 ```
-conda create -n morphology python=3.8 scipy numpy pandas scikit-learn matplotlib tomli networkx Cython
+conda create -n morphology python=3.11
 conda activate morphology
 
 git clone https://github.com/siegert-lab/morphOMICs_v2.git
 cd morphOMICs_v2
-python3 setup.py install
+pip install -e .
+cd 
 ```
 
 # Usage
