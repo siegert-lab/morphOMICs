@@ -235,6 +235,7 @@ def get_barcodes_from_df(
     
     for ii in _np.arange(len(files)):
         _idx = info_frame.loc[info_frame["Filenames"] == files[ii]].index[0]
+        info_frame = info_frame.copy()
         info_frame.iloc[_idx]["Morphologies"] = pops.neurons[ii]
         info_frame.iloc[_idx]["Barcodes"] = analysis.collapse(
             exclude_single_branch_ph(pops.neurons[ii], feature=barcode_filter)
