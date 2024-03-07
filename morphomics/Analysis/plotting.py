@@ -308,26 +308,7 @@ def plot_convex_hulled_MF_deg_spatial(
                 * (np.array(brain_genders) == foreground_gender)
             )[0]
 
-            if conds in FAD_conditions:
-                label = "%s, 5xFAD %s (%s)" % (
-                    foreground_region,
-                    conds,
-                    foreground_gender,
-                )
-            elif conds in Ckp25_conditions:
-                label = "%s, Ckp25 %s (%s)" % (
-                    foreground_region,
-                    conds,
-                    foreground_gender,
-                )
-            elif conds in dev_conditions:
-                label = "%s, Dev %s (%s)" % (
-                    foreground_region,
-                    conds,
-                    foreground_gender,
-                )
-            else:
-                label = "%s, %s (%s)" % (foreground_region, conds, foreground_gender)
+            label = "%s, %s (%s)" % (foreground_region, conds, foreground_gender)
 
             if foreground_gender == "M":
                 color = colors_M[conds]
