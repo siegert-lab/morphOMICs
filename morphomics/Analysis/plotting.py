@@ -495,9 +495,9 @@ def scatterplot_3D_conditions(
             if color_type == "gradient_mod":
                 if len(color) == 1:
                     color = ("white", color[0])
-                _colors = colors.LinearSegmentedColormap.from_list("", color)
-            else:
-                _colors = color[0]
+                _colors = mpl.colors.colors.LinearSegmentedColormap.from_list("", color)
+            # else:
+            _colors = color[0]
 
             assert (
                 "Time" in query_frame.columns
