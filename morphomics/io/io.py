@@ -231,13 +231,13 @@ def get_barcodes_from_df(
     _fnames = list(info_frame["Filenames"].values)
     pops, files, failed_files = load_population(_fnames)
     print("...finished loading morphologies and barcodes...")
-    print("! Warning: You have %d .swc files that did not load. Potentially, empty files. Please check *-FailedFiles")
+    print(f"! Warning: You have {len(failed_files)} .swc files that did not load. Potentially, empty files. Please check *-FailedFiles")
     
     for ii in _np.arange(len(files)):
         _idx = info_frame.loc[info_frame["Filenames"] == files[ii]].index[0]
         info_frame = info_frame.copy()
-        info_frame.iloc[_idx]["Morphologies"] = pops.neurons[ii]
-        info_frame.iloc[_idx]["Barcodes"] = analysis.collapse(
+        info_frame.loc[_idx, "Morphologies"] = pops.neurons[ii]
+        info_frame.loc[_idx, "Barcodes"] = analysis.collapse(
             exclude_single_branch_ph(pops.neurons[ii], feature=barcode_filter)
         )
 
