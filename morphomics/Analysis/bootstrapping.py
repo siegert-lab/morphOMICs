@@ -24,6 +24,35 @@ bootstrap_methods = {
 }
 
 def _bootstrap_feature(_b_frame, morphology_list, _feature, _dtype):
+    '''The function `_bootstrap_feature` collects bars or averages over features based on the specified
+    data type.
+    
+    Parameters
+    ----------
+    _b_frame
+        The `_b_frame` parameter is likely a DataFrame or a similar data structure that contains the data
+    for analysis. It could be used to store information about the features being analyzed, such as
+    measurements or characteristics of a sample.
+    morphology_list
+        The `morphology_list` parameter likely contains a list of morphology features or characteristics
+    that are used in the bootstrapping process. These features could include measurements such as
+    length, width, area, volume, etc., depending on the context of the code and the specific application
+    it is being used for.
+    _feature
+        The `_feature` parameter is a feature that is being used in the `_bootstrap_feature` function. It
+    is a specific attribute or characteristic that is being analyzed or processed within the function.
+    _dtype
+        The `_dtype` parameter is used to specify the type of data being processed. In this code snippet,
+    it is checked to determine whether the data type is "bars" or not, and different functions are
+    called based on this condition.
+    
+    Returns
+    -------
+        The function `_bootstrap_feature` returns the `bootstrapped_feature` variable, which is either the
+    result of `_collect_bars` function if the `_dtype` is "bars", or the result of
+    `_average_over_features` function if `_dtype` is not "bars".
+    
+    '''
     if _dtype == "bars":
         bootstrapped_feature = _collect_bars(_b_frame[_feature], morphology_list)
     else:
@@ -32,6 +61,32 @@ def _bootstrap_feature(_b_frame, morphology_list, _feature, _dtype):
     
 
 def _average_over_features(features, morphology_list, _dtype, method="mean"):
+    '''The function `_average_over_features` calculates the average of selected features based on specified
+    morphology list and data type.
+    
+    Parameters
+    ----------
+    features
+        Features is a list of feature values, where each element in the list represents a feature.
+    morphology_list
+        The `morphology_list` parameter is a list of indices that specify which features to include in the
+    calculation.
+    _dtype
+        The `_dtype` parameter is used to specify the type of data being processed. It can have two
+    possible values: "scalar" or "array".
+    method, optional
+        The `method` parameter in the `_average_over_features` function is used to specify the method for
+    collapsing the features. The default value for this parameter is "mean", but you can also pass other
+    methods like "median", "sum", etc. depending on how you want to collapse the features.
+    
+    Returns
+    -------
+        The function `_average_over_features` returns the collapsed result of the input features based on
+    the specified method and data type. The specific result returned depends on the conditions within
+    the function, such as whether the data type is "scalar" or "array" and the method chosen for
+    collapsing the features.
+    
+    '''
     _features = [features[i] for i in morphology_list]
     _features = np.array(_features)
 
@@ -46,6 +101,27 @@ def _average_over_features(features, morphology_list, _dtype, method="mean"):
 
 
 def _collect_bars(_b_frame, morphology_list):
+    '''The function `_collect_bars` takes a DataFrame `_b_frame` and a list of indices `morphology_list`,
+    and returns a pooled list of bars based on the indices.
+    
+    Parameters
+    ----------
+    _b_frame
+        The `_b_frame` parameter is likely a DataFrame containing data related to bars or bar morphology.
+    The function `_collect_bars` takes this DataFrame as input along with a list of indices
+    `morphology_list`. It then collects the bars corresponding to the indices in the `morphology_list`
+    from the
+    morphology_list
+        The `morphology_list` parameter is a list of indices that are used to select specific rows from the
+    `_b_frame` DataFrame. These selected rows are then concatenated together to form a list of pooled
+    bars, which is returned by the `_collect_bars` function.
+    
+    Returns
+    -------
+        The function `_collect_bars` returns a list of pooled bars, which are collected from the `_b_frame`
+    DataFrame based on the indices provided in the `morphology_list`.
+    
+    '''
     pooled_bars = []
     for _idx in morphology_list:
         pooled_bars += _b_frame.iloc[_idx]
@@ -53,6 +129,38 @@ def _collect_bars(_b_frame, morphology_list):
 
 
 def _create_bootstrap_dataframe(_b_frame, _bs, morphology_idx, pooled_bars, bootstrap_resolution):
+    '''The function `_create_bootstrap_dataframe` generates a DataFrame with bootstrapped indices and
+    barcodes based on input parameters.
+    
+    Parameters
+    ----------
+    _b_frame
+        The `_b_frame` parameter is likely a DataFrame containing data related to bootstrapping conditions.
+    It seems to be used to extract specific values based on the bootstrap condition `_bs` and morphology
+    index `morphology_idx`. The function `_create_bootstrap_dataframe` creates a new DataFrame
+    `bootstrap_frame` with
+    _bs
+        _bs is a variable representing the bootstrap condition.
+    morphology_idx
+        Morphology_idx is a variable representing the index of morphology data.
+    pooled_bars
+        Pooled_bars likely refers to a collection of barcodes that have been combined or aggregated in some
+    way. This could be a list, array, or dataframe containing the barcodes that have been pooled
+    together for analysis.
+    bootstrap_resolution
+        The `bootstrap_resolution` parameter in the function `_create_bootstrap_dataframe` appears to be a
+    list of column names that are used to create a DataFrame. It is used to define the columns in the
+    DataFrame that will be created and populated with values from the input `_b_frame` DataFrame based
+    on the conditions
+    
+    Returns
+    -------
+        a DataFrame named `bootstrap_frame` with columns for the bootstrap resolution, "Bootstrapped
+    index", and "Barcodes". The function populates the "Bootstrapped index" and "Barcodes" columns with
+    the values of `morphology_idx` and `pooled_bars` respectively. It then iterates over the bootstrap
+    resolution values to populate the corresponding columns in the
+    
+    '''
     bootstrap_frame = pd.DataFrame(
         columns=bootstrap_resolution + ["Bootstrapped index", "Barcodes"]
     )
@@ -79,23 +187,64 @@ def get_subsampled_population_from_infoframe(
     ratio=None,
     save_filename=None,
 ):
-    """Generates bootstrapped barcodes from the info_frame based on bootstrap_conditions with bootstrap_resolution.
-
-    Args:
-        info_frame (DataFrame): _description_
-        feature_to_bootstrap (list, str)
-        condition_column (str): _description_
-        bootstrap_conditions (list, str): _description_
-        bootstrap_resolution (list, str): _description_
-        N_pop (int): _description_
-        N_samples (int): _description_
-        rand_seed (int): _description_. Defaults to 0.
-        ratio (float, optional): _description_. Defaults to None.
-        save_filename (str, optional): _description_. Defaults to None.
-
-    Returns:
-        DataFrame: _description_
-    """
+    
+    '''The function `get_subsampled_population_from_infoframe` performs bootstrapping or subsampling on a
+    DataFrame based on specified conditions and features.
+    
+    Parameters
+    ----------
+    info_frame
+        The `info_frame` parameter is a DataFrame containing information about the population you want to
+    subsample. It likely includes columns such as morphologies, barcodes, and other relevant features
+    for your analysis.
+    feature_to_bootstrap
+        The `feature_to_bootstrap` parameter specifies the feature from the `info_frame` that you want to
+    bootstrap. It should be a tuple containing the name of the feature and its data type. The data type
+    can be one of 'bars', 'scalar', or 'array'.
+    condition_column
+        The `condition_column` parameter in the `get_subsampled_population_from_infoframe` function refers
+    to the column in the `info_frame` DataFrame that contains the conditions based on which you want to
+    perform bootstrapping. This column is used to group the data for bootstrapping based on different
+    bootstrap_conditions
+        The `bootstrap_conditions` parameter in the `get_subsampled_population_from_infoframe` function is
+    a list of conditions based on which the bootstrapping will be performed. If this list is empty, the
+    function will bootstrap on all the conditions present in the `condition_column`. If specific
+    conditions are
+    bootstrap_resolution
+        The `bootstrap_resolution` parameter in the `get_subsampled_population_from_infoframe` function is
+    used to specify the resolution at which the bootstrapping should be performed. It is a list of
+    column names in the `info_frame` that will be used to create unique bootstrap conditions for
+    sampling.
+    N_pop
+        The `N_pop` parameter in the `get_subsampled_population_from_infoframe` function represents the
+    size of the population to sample from during bootstrapping or subsampling. It determines the number
+    of elements to include in each sample when resampling the data. This parameter is crucial for
+    controlling the
+    N_samples
+        The `N_samples` parameter in the `get_subsampled_population_from_infoframe` function represents the
+    number of subsamples to generate during the bootstrapping process. This parameter determines how
+    many random samples will be drawn from the population for each bootstrap condition. The function
+    will either perform random subsampling
+    rand_seed, optional
+        The `rand_seed` parameter in the `get_subsampled_population_from_infoframe` function is used to set
+    the random seed for reproducibility of the random number generation. By setting a specific
+    `rand_seed`, you can ensure that the random sampling done within the function will produce the same
+    results
+    ratio
+        The `ratio` parameter in the `get_subsampled_population_from_infoframe` function is used to specify
+    the ratio of the total number of morphologies to be used for bootstrapping. It is used to calculate
+    the size of the population for bootstrapping based on this ratio. If `
+    save_filename
+        The `save_filename` parameter in the `get_subsampled_population_from_infoframe` function is used to
+    specify the filename under which the bootstrapped morphologies will be saved as an output. If you
+    provide a value for `save_filename`, the function will save the resulting `bootstrapped
+    
+    Returns
+    -------
+        The function `get_subsampled_population_from_infoframe` returns a DataFrame containing bootstrapped
+    morphologies based on the input parameters and conditions specified in the function.
+    
+    '''
     np.random.seed(rand_seed)
 
     _feature, _dtype = feature_to_bootstrap
@@ -203,47 +352,3 @@ def get_subsampled_population_from_infoframe(
         save_obj(bootstrapped_morphologies, "%s" % (save_filename))
 
     return bootstrapped_morphologies
-
-
-# def _surprise(p):
-#     if p == 0:
-#         return 0
-#     else:
-#         return -p * np.log2(p)
-
-
-# def _mixing_entropy(clustering, N_samples):
-#     original_labels = np.array([1] * N_samples + [2] * N_samples)
-
-#     p1_size = len(np.where(clustering == 1)[0])
-#     p2_size = len(np.where(clustering == 2)[0])
-#     N_ = p1_size + p2_size
-
-#     p1 = np.mean(original_labels[np.where(clustering == 1)[0]] == 1)
-#     p2 = np.mean(original_labels[np.where(clustering == 2)[0]] == 1)
-
-#     cluster_entropy = (p1_size / (p1_size + p2_size)) * (
-#         _surprise(p1) + _surprise(1.0 - p1)
-#     ) + (p2_size / (p1_size + p2_size)) * (_surprise(p2) + _surprise(1.0 - p2))
-
-#     return cluster_entropy
-
-
-# def calculate_mixing_entropy(ph1, ph2, parameters, rand_seed=10):
-#     N_pop = parameters["N_pop"]
-#     N_samples = parameters["N_samples"]
-#     if not parameters["linkage"]:
-#         parameters["linkage"] = "single"
-
-#     phs_cluster_1, _ = get_subsampled_population(ph1, N_pop, N_samples, rand_seed)
-#     phs_cluster_2, _ = get_subsampled_population(ph2, N_pop, N_samples, rand_seed)
-
-#     phs_batched = list(phs_cluster_1) + list(phs_cluster_2)
-
-#     X = get_distance_array(phs_batched, xlims=[0, 200], ylims=[0, 200])
-#     linked = linkage(X, parameters["linkage"], optimal_ordering=False)
-#     clustering = fcluster(linked, t=2, criterion="maxclust")
-
-#     cluster_entropy = _mixing_entropy(clustering)
-
-#     return cluster_entropy
