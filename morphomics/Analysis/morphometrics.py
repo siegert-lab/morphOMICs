@@ -57,6 +57,32 @@ Lmeasure_FunctionList = [
 
 
 def calculate_sholl_curves(_files, _Sholl_radius, _type=None):
+    '''The function `calculate_sholl_curves` loads morphological data, selects specific sections based on
+    type, and calculates Sholl curves with a specified radius step.
+    
+    Parameters
+    ----------
+    _files
+        The `_files` parameter in the `calculate_sholl_curves` function is used to specify the file or
+    files that contain the morphological data to be analyzed. This function loads the morphological data
+    from the specified file(s) using the `m.load(_files)` method.
+    _Sholl_radius
+        The `_Sholl_radius` parameter in the `calculate_sholl_curves` function represents the radius
+    increment used for Sholl analysis. It determines the spacing between the concentric circles around
+    the neuron's soma within which intersections with neuronal processes are counted. This parameter
+    controls the resolution of the Sholl analysis
+    _type
+        The `_type` parameter in the `calculate_sholl_curves` function is used to specify the types of
+    sections to include in the Sholl analysis. It is a list of integers representing the types of
+    sections. If `_type` is not provided or is set to 0, it will default
+    
+    Returns
+    -------
+        The function `calculate_sholl_curves` returns a NumPy array containing the Sholl radii and
+    corresponding Sholl values calculated based on the input parameters `_files`, `_Sholl_radius`, and
+    `_type`.
+    
+    '''
     m = Morph()
     m.load(_files)
 
@@ -71,6 +97,24 @@ def calculate_sholl_curves(_files, _Sholl_radius, _type=None):
 
 
 def create_Lm_functions(Lmeasure_functions):
+    '''The function `create_Lm_functions` checks if the listed functions are valid Lmeasure functions and
+    removes any that are not available.
+    
+    Parameters
+    ----------
+    Lmeasure_functions
+        It seems like you haven't provided the value for the `Lmeasure_functions` parameter. In order to
+    assist you further with the `create_Lm_functions` function, could you please provide the list of
+    Lmeasure functions that you want to work with?
+    
+    Returns
+    -------
+        The function `create_Lm_functions` returns two arrays: `Lm_functions` and `Lm_quantities`. These
+    arrays contain the valid Lmeasure functions and their corresponding quantities after checking if the
+    functions listed in `Lmeasure_functions` are available in `Lmeasure`. If any functions are not
+    available, they are removed from the arrays before returning them.
+    
+    '''
     Lm_functions = np.array(Lmeasure_functions)[:, 0]
     Lm_quantities = np.array(Lmeasure_functions)[:, 1]
 
@@ -97,6 +141,36 @@ def create_Lm_functions(Lmeasure_functions):
 
 
 def calculate_morphometrics(filenames, tmp_folder, Lm_functions, Lm_quantities):
+    '''This Python function processes SWC files for morphometric analysis using pyLmeasure and returns the
+    calculated morphometric quantities.
+    
+    Parameters
+    ----------
+    filenames
+        Please provide the list of filenames that you want to process using the `calculate_morphometrics`
+    function.
+    tmp_folder
+        The `tmp_folder` parameter in the `calculate_morphometrics` function is a string that represents
+    the path to a temporary folder where SWC files with spaces in their filenames will be copied for
+    processing. This temporary folder is used to handle filenames with spaces, as Lmeasure does not
+    support filenames with
+    Lm_functions
+        Lm_functions is a list of L-measure functions that you want to calculate for the morphometrics.
+    These functions are specific measurements or analyses that you want to perform on the SWC files.
+    Examples of Lm_functions could include 'TotalSurfaceArea', 'TotalVolume', 'NumBifur
+    Lm_quantities
+        Lm_quantities is a list of morphometric quantities that you want to extract from the SWC files
+    using the Lmeasure functions. These quantities could include measurements such as total length,
+    surface area, volume, etc.
+    
+    Returns
+    -------
+        The function `calculate_morphometrics` returns two values: 
+    1. `files_to_process`: a list of filenames that have been processed
+    2. `morphometric_quantities`: an array containing the morphometric quantities calculated for each
+    file in `files_to_process`
+    
+    '''
     # Lmeasure does not like filenames with spaces
     files_to_process = []
     tmp_ind = 0

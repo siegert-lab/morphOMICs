@@ -20,6 +20,21 @@ from morphomics.default_parameters import defaults
 
 
 def _get_persistence_image_data_single(ar):
+    '''This function takes in an array `ar` containing various parameters, calculates persistence image
+    data based on those parameters, and returns the result along with the persistence barcode.
+    
+    Parameters
+    ----------
+    ar
+        The function `_get_persistence_image_data_single` takes in a list `ar` as input with the following
+    elements:
+    
+    Returns
+    -------
+        The function `_get_persistence_image_data_single` returns a tuple containing the result of the
+    analysis function `get_persistence_image_data` and the persistence barcode `ar[0]`.
+    
+    '''
     """
     ar[0]:   persistence barcode
     ar[1,2]: x, y-lims
@@ -39,9 +54,34 @@ def _get_persistence_image_data_single(ar):
 def _get_pairwise_distance_from_persistence(
     imgs1, metric="l1", chunks=10, to_squareform=True
 ):
-    """
-    Returns mean and spread (standard deviation) of the point cloud of persistence images
-    """
+    '''This function Returns mean and spread (standard deviation) of the point cloud of persistence images
+    
+    Parameters
+    ----------
+    imgs1
+        `imgs1` is a list of images that you want to calculate pairwise distances for. The function
+    `_get_pairwise_distance_from_persistence` takes this list as input along with other parameters like
+    `metric`, `chunks`, and `to_squareform` to compute pairwise distances between the images based on
+    metric, optional
+        The `metric` parameter in the `_get_pairwise_distance_from_persistence` function specifies the
+    distance metric to be used when calculating pairwise distances between images. The default metric is
+    set to "l1", which typically refers to the Manhattan distance or the sum of absolute differences
+    between the pixel values of two
+    chunks, optional
+        The `chunks` parameter in the `_get_pairwise_distance_from_persistence` function is used to split
+    the input `imgs1` into chunks for more efficient computation of pairwise distances. It divides the
+    input data into smaller subsets to process them separately before combining the results.
+    to_squareform, optional
+        The `to_squareform` parameter in the `_get_pairwise_distance_from_persistence` function determines
+    whether the output distance matrix should be converted to a squareform or not. If `to_squareform` is
+    set to `True`, the function will return the distance matrix in squareform format using the
+    
+    Returns
+    -------
+        The function `_get_pairwise_distance_from_persistence` returns either a squareform distance matrix
+    or a regular distance matrix, depending on the value of the `to_squareform` parameter.
+    
+    '''
     N = len(imgs1)
     distances = np.zeros((N, N))
 
@@ -76,13 +116,44 @@ def _get_pairwise_distance_from_persistence(
         return distances
 
 
+
 def get_images_array(
     p1, xlims=None, ylims=None, bw_method=None, norm_method="sum", 
 ):
-    """
-    Computes persistence images and returns an Nx10000 array,
-    N is the number of barcodes in p1
-    """
+    '''The function `get_images_array` computes persistence images for a set of barcodes and returns them
+    as a flattened array.
+    
+    Parameters
+    ----------
+    p1
+        It looks like you have provided a function `get_images_array` that computes persistence images
+    based on the input `p1`. The function takes several parameters such as `p1`, `xlims`, `ylims`,
+    `bw_method`, and `norm_method`.
+    xlims
+        The `xlims` parameter in the `get_images_array` function is used to specify the birth and death
+    distance limits for the persistence images. If `xlims` is not provided as an argument when calling
+    the function, it will default to the birth and death distance limits calculated using the `get
+    ylims
+        The `ylims` parameter in the `get_images_array` function is used to specify the limits for the
+    y-axis in the persistence images. If `ylims` is not provided as an argument when calling the
+    function, it will default to the y-axis limits calculated using the `analysis.get_limits
+    bw_method
+        The `bw_method` parameter in the `get_images_array` function is used to specify the bandwidth
+    method for computing the persistence images. It is an optional parameter that can be passed to the
+    function. The bandwidth method determines how the bandwidth of the kernel used in the computation of
+    persistence images is calculated.
+    norm_method, optional
+        The `norm_method` parameter in the `get_images_array` function specifies the method used for
+    normalizing the persistence images. The default value is set to "sum", which means that the images
+    are normalized by dividing each image by the sum of all its pixel values.
+    
+    Returns
+    -------
+        The function `get_images_array` returns a list of flattened persistence images for each barcode in
+    the input `p1`. The images are normalized based on the specified `norm_method` before being
+    returned.
+    
+    '''
     # get the birth and death distance limits for the persistence images
     _xlims, _ylims = analysis.get_limits(p1)
     if xlims is None:
@@ -110,6 +181,7 @@ def get_images_array(
     return images
 
 
+    
 def get_images_array_from_infoframe(
     _info_frame,
     xlims=None,
@@ -119,19 +191,49 @@ def get_images_array_from_infoframe(
     barcode_weight=None,
     save_filename=None,
 ):
-    """Computes persistence images from info_frame for all specified conditions
-
-    Args:
-        info_frame (DataFrame): dataframe containing the barcodes that will be transformed into persistence images.
-        xlims ([float,float], optional): left and right limits of the persistence image. Defaults to None.
-        ylims ([float,float], optional): bottom and top limits of the persistence image. Defaults to None.
-        bw_method (float, optional): spread of the Gaussian KDE. Defaults to None.
-        norm_method (str, optional): method for normalizing persistence image. Can be either ["sum", "min", "max", "ave", "std", "l1" and "l2"]. Defaults to "sum".
-        barcode_weight (list of float, optional): Defaults to None.
-
-    Returns:
-        DataFrame: info_frame with persistence image as a new column
-    """
+    '''This function takes information about barcodes, calculates persistence images based on specified
+    parameters, and returns an array of images.
+    
+    Parameters
+    ----------
+    _info_frame
+        The `_info_frame` parameter is expected to be a DataFrame containing information about barcodes,
+    specifically with a column named "Barcodes". This function calculates persistence images based on
+    the barcode information provided in the `_info_frame`.
+    xlims
+        The `xlims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+    birth and death distance limits for the persistence images. If `xlims` is not provided as an
+    argument when calling the function, it will default to the birth and death distance limits
+    calculated from
+    ylims
+        The `ylims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+    limits for the y-axis in the persistence images. If `ylims` is not provided as an argument when
+    calling the function, it will default to `None` and then be set based
+    bw_method
+        The `bw_method` parameter in the `get_images_array_from_infoframe` function is used to specify the
+    bandwidth method for kernel density estimation when generating persistence images. It controls the
+    smoothness of the resulting images by adjusting the bandwidth of the kernel used in the estimation
+    process. Different bandwidth methods can result
+    norm_method, optional
+        The `norm_method` parameter in the `get_images_array_from_infoframe` function specifies the method
+    used for normalizing the persistence images. The default value is set to "sum", which means that the
+    images will be normalized by dividing each pixel value by the sum of all pixel values in the image
+    barcode_weight
+        The `barcode_weight` parameter in the `get_images_array_from_infoframe` function is used to specify
+    weights for each barcode in the calculation of persistence images. If `barcode_weight` is provided,
+    it will be used as weights for the corresponding barcode during the calculation. If it is not
+    provided (
+    save_filename
+        The `save_filename` parameter in the `get_images_array_from_infoframe` function is used to specify
+    the filename under which the array of images will be saved after processing. If you provide a value
+    for `save_filename`, the function will save the array of images to a file with that name.
+    
+    Returns
+    -------
+        The function `get_images_array_from_infoframe` returns a NumPy array of persistence images
+    calculated based on the input parameters and data provided in the `_info_frame` DataFrame.
+    
+    '''
     assert (
         "Barcodes" in _info_frame.keys()
     ), "Missing `Barcodes` column in info_frame..."
