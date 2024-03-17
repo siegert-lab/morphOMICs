@@ -12,7 +12,7 @@
 
 
 # Required Dependencies
-Python : 3.9+
+Python : 3.9
 
 numpy : 1.8.1+, scipy : 0.13.3+, pickle : 4.0+, enum34 : 1.0.4+, scikit-learn : 0.19.1+, tomli: 2.0.1+, matplotlib : 3.2.0+, ipyvolume: 0.6.1+
 
@@ -21,16 +21,21 @@ umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2 (https://github.c
 
 # Installation Guide
 
+## Using PyPi
 ```
-conda create -n morphology python=3.11
+conda create -n morphology python=3.9
+conda activate morphology
+pip install morphomics
+```
+
+## Using Source Code
+```
+conda create -n morphology python=3.9
 conda activate morphology
 
-git clone https://github.com/siegert-lab/morphOMICs_v2.git
-cd morphOMICs_v2
+git clone https://github.com/siegert-lab/morphOMICs.git
+cd morphOMICs
 pip install -e .
-cd forceatlas2
-pip install -e .
-cd ..
 ```
 
 # Usage

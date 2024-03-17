@@ -1,44 +1,39 @@
-""" Distribution configuration for Moprhomics
-"""
+import os
 from setuptools import setup, find_packages
-import importlib
+from distutils.core import Extension
+from pathlib import Path
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical  analysis of microglia morphology (appliable to any cell structure)'''
 
+def get_requires():
+    """Read requirements.txt."""
+    requirements_file = os.path.join(os.path.dirname(__file__), "requirements.txt")
+    try:
+        with open(requirements_file, "r") as f:
+            requirements = f.read()
+        return list(filter(lambda x: x != "", requirements.split()))
+    except FileNotFoundError:
+        return []
 
-config = {
-    "description": "morphOMICs: a python package for the topological and statistical  analysis of microglia morphology",
-    "author": "Ryan Cubero",
-    "url": "https://github.com/rcubero/MorphOMICs",
-    "author_email": "ryanjohn.cubero@ist.ac.at",
-    "long_description": long_description,
-    "long_description_content_type": "text/markdown",
-    "install_requires": [
-        "scipy", "pandas", "scikit-learn", "matplotlib", "tomli", "networkx", "Cython", "pickle4",
-        "h5py>=2.8.0",
-        "scipy>=0.13.3",
-        "numpy >=1.8.1, <1.25",
-        "enum34>=1.0.4",
-        "scikit-learn>=0.19.1",
-        "matplotlib>=3.2.0",
-        "umap-learn>=0.3.10",
-        "ipyvolume>=0.6.1",
-        "morphon>=0.0.8",
-        "pylmeasure>=0.2.0"
-    ],
-    "dependency_links": [
-        "https://github.com/bhargavchippada/forceatlas2"
-    ],
-    "setup_requires": ["setuptools_scm"],
-    "packages": find_packages(),
-    "license": "MIT",
-    "scripts": [],
-    "name": "morphomics",
-    "include_package_data": True,
-    "use_scm_version": True,
-    "python_requires": ">=3.7",
-}
+def read_description():
+    """Read README.md and CHANGELOG.md."""
+    readme_path = Path("README.md")
+    if readme_path.exists():
+        with open(readme_path) as r:
+            description = "\n" + r.read()
+        return description
+    return MINIMAL_DESCRIPTION
 
-
-setup(**config)
+setup(
+    name="Morphomics",
+    version="2.0.0",
+    author='Amin Alam, Ryan Cubero',
+    description=MINIMAL_DESCRIPTION,
+    long_description=read_description(),
+    long_description_content_type='text/markdown',
+    install_requires=get_requires(),
+    python_requires='>=3.8',
+    license='GNU',
+    url='https://github.com/siegert-lab/morphOMICs',
+    keywords=['Morhpomics', 'MicroGlia', 'UMAP', 'TDA', 'Topological Data Analysis', 'Microscopy', 'Image Analysis', 'Cell Morphology'],
+    packages=['morphomics'],)

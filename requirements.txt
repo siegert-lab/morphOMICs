@@ -8,7 +8,7 @@ Cython
 pickle4
 h5py>=2.8.0
 scipy>=0.13.3
-numpy >=1.8.1, <1.25
+numpy<1.25
 enum34>=1.0.4
 scikit-learn>=0.19.1
 matplotlib>=3.2.0
@@ -17,3 +17,4 @@ ipyvolume>=0.6.1
 morphon>=0.0.8
 pylmeasure>=0.2.0
 ipython_genutils
+fa2-modified
