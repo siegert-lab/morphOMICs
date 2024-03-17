@@ -1,6 +1,6 @@
-# morphOMICs_v2
+# morphOMICs
 
-`morphOMICs_v2` is a Python package containing tools for analyzing microglia morphology using a topological data analysis approach. Note that this algorithm is designed not only for microglia applications but also for any dynamic branching structures across natural sciences.
+`morphOMICs` is a Python package containing tools for analyzing microglia morphology using a topological data analysis approach. Note that this algorithm is designed not only for microglia applications but also for any dynamic branching structures across natural sciences.
 
 - [Overview](#overview)
 - [Required Dependencies](#required-dependencies)
@@ -8,7 +8,7 @@
 - [Usage](#usage)
 
 # Overview
-`morphOMICs_v2` is a topological data analysis approach which combines the Topological Morphology Descriptor (TMD) with bootstrapping approach, dimensionality reduction strategies to visualize microglial morphological signatures and their relationships across different biological conditions.
+`morphOMICs` is a topological data analysis approach which combines the Topological Morphology Descriptor (TMD) with bootstrapping approach, dimensionality reduction strategies to visualize microglial morphological signatures and their relationships across different biological conditions.
 
 
 # Required Dependencies

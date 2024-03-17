@@ -6,7 +6,7 @@ Author: Ryan Cubero
 import numpy as np
 import concurrent.futures
 
-from fa2 import ForceAtlas2
+from fa2_modified import ForceAtlas2
 from scipy.linalg import svd
 from scipy.spatial.distance import cdist, squareform
 from scipy.sparse import csr_matrix, find, issparse, coo_matrix
