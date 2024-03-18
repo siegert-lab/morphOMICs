@@ -5,6 +5,7 @@ useful for multiple tmd modules.
 
 import pickle as pkl
 import numpy as np
+import os
 
 term_dict = {"x": 0, "y": 1, "z": 2}
 
@@ -42,6 +43,10 @@ norm_methods = {
 
 
 def save_obj(obj, name):
+    parent_dir = os.path.dirname(name)
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir)
+    print(parent_dir)
     with open(name + ".pkl", "wb") as f:
         pkl.dump(obj, f, pkl.HIGHEST_PROTOCOL)
 
