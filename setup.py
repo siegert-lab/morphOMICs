@@ -26,7 +26,7 @@ def read_description():
 
 setup(
     name="Morphomics",
-    version="2.0.6",
+    version="2.0.7",
     author='Amin Alam, Ryan Cubero',
     description=MINIMAL_DESCRIPTION,
     long_description=read_description(),
