@@ -6,27 +6,27 @@
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols = [
-        "Input",
-        "Clean_frame",
-        "Bootstrap",
-        "Persistence_Images",
-        "UMAP",
-        "Prepare_ReductionInfo",
+        # "Input",
+        # "Clean_frame",
+        # "Bootstrap",
+        # "Persistence_Images",
+        # "UMAP",
+        # "Prepare_ReductionInfo",
         "Plotting",
     ]
   
 # set this if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance
 # use case: you tried running run_morphomics.py but it failed at some protocol
-load_previous_instance = false
+load_previous_instance = true
 # set this if you want to always save last instance
 save_last_instance = true
-path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
+path_to_last_instance = "/mnt/ssd_2TB/morphomics/models/"
 
 
 
 [Input]
 # filepath pointing to the parent folder containing the .swc files arranged hierarchically according to conditions
-"data_location_filepath" = "/media/drive_siegert/RyCu/Projects/TMD/_Data/Brain"
+"data_location_filepath" = "/mnt/ssd_2TB/morphomics/_Brain_Alessandro"
 
 # .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
 "extension" = "_corrected.swc"
@@ -34,9 +34,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # this must match the hierarchical structure of `data_location_filepath`
 "conditions" = [
             "Region",
-            "Condition",
             "Model",
-            "Time",
             "Sex",
             "Animal",
         ]
@@ -55,7 +53,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 "separated_by" = "Model"
 
 # location where to save the data
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Data/_TMD_barcodes/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-
 # Otherwise, this will be used as the file prefix
@@ -76,10 +74,9 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # the example below keeps bars whose length is greater than 0, and less than 200.
 # if not used, comment the elements of `barlength_cutoff` out
 "barlength_cutoff" = [ 
-            ["less_than", 0, "drop"],
-            ["greater_than", 200, "drop"], 
-            ["within", [0,200], "keep"],
-        ]
+           # ["<=", 0],
+           # [">=", 200]
+           ]
 
 # enumerate which conditions will be merged
 # must be an array with three elements [a header of the info_frame (is an element of `Input.conditions`),
@@ -87,7 +84,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 #                                       the new name of the merged conditions]
 # if not used, comment the elements of `combine_conditions` out
 "combine_conditions" = [
-    ["Model", ["Ctrl_Kxa4h", "Ctrl_Kxa48h"], "Ctrl_Kxa"]
+    ["Model", ["Saline_4h", "Saline_48h"], "Adult"]
 ]
 
 # enumerate restrictions
@@ -103,7 +100,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 "save_data" = true
 
 # location where to save the data
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Data/_TMD_barcodes/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Cleaned.
 # Otherwise, this will be used as the file prefix
@@ -123,7 +120,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 
 # use this if you want to constraint your bootstrapping to a subset of conditions that you did not drop using `Clean_frame`
 # column name in morphoframe where the bootstrap_conditions are located
-"condition_column" = "Model"
+"condition_column" = "Condition"
 # conditions to bootstrap
 # if this array is empty, it will bootstrap across all conditions in the morphoframe
 "bootstrap_conditions" = [
@@ -161,7 +158,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Results/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -188,7 +185,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Results/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -226,7 +223,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Results/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -243,7 +240,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 "coordinate_axisnames" = "UMAP"
 
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Results/Brain/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -281,7 +278,7 @@ path_to_last_instance = "/media/drive_siegert/RyCu/Projects/TMD/_Data/tmp/"
 # Location to the color mapping that will be used
 # 
 "colormap_filepath" = [
-    "/media/drive_siegert/RyCu/Projects/TMD/_Tutorials/_morphOMICs_v2/colormap.1.csv",
+    "Parameter_files/colormap.1.csv",
 # colapmap_filepath2,
 # colapmap_filepath3,
 ]
@@ -308,7 +305,7 @@ label_prefixes = [
 "save_data" = true
 
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "/media/drive_siegert/RyCu/Projects/TMD/_Results/Retina_Morphomics/Retina_sample/"
+"save_folder" = "/mnt/ssd_2TB/morphomics/models/"
 
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix

@@ -12,22 +12,9 @@
 #     e.g., 0;100 will create a color gradient where the minimum is set at P0 and 100 is set at P100,,,
 #     Everything beyond the limits will be colored the same as the limits,,,,
 #     Will be ignored if `Color_type` is `solid`,,,,
-Region,Model,Color_type,Color,GradientLimits
-# IPL colors,,,,
-IPL,Cx3cr1_het,gradient_mod,thistle;purple,0;30
-IPL,rd1,gradient_mod,peachpuff;saddlebrown,0;100
-IPL,rd10,gradient_mod,lightgreen;darkgreen,0;100
-IPL,Ctrl_Iso,solid,lightcoral,0
-IPL,Ctrl_Kxa,solid,magenta,0
-IPL,Cx3cr1_hom,gradient_mod,bisque;darkorange,0;30
-# OPL colors,,,,
-OPL,Cx3cr1_het,gradient_mod,lightblue;darkblue,0;30
-OPL,rd1,gradient_mod,pink;deeppink;crimson,0;100
-OPL,rd10,gradient_mod,bisque;darkorange,0;100
-OPL,Ctrl_Iso,solid,dodgerblue,0
-OPL,Ctrl_Kxa,solid,cyan,0
-OPL,Cx3cr1_hom,gradient_mod,lightgreen;darkgreen,0;30
-# INL colors,,,,
-INL,Cx3cr1_het,gradient_mod,mistyrose;red,0;30
-INL,rd1,gradient_mod,lightcyan;darkcyan,0;100
-INL,rd10,gradient_pre,PuRd,0;100
+Region,Model,Sex,Color_type,Color,GradientLimits
+# FC colors,,,,
+FC,1xKXA,F,solid,lightblue;darkblue,0;30
+FC,Adult,F,solid,pink;deeppink;darkorange,0;100
+FC,1xKXA,M,solid,red;darkblue,0;30
+FC,Adult,M,solid,bisque;darkorange,0;100
