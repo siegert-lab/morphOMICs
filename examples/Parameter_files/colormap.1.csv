@@ -14,7 +14,11 @@
 #     Will be ignored if `Color_type` is `solid`,,,,
 Region,Model,Sex,Color_type,Color,GradientLimits
 # FC colors,,,,
-FC,1xKXA,F,solid,lightblue;darkblue,0;30
-FC,Adult,F,solid,pink;deeppink;darkorange,0;100
-FC,1xKXA,M,solid,red;darkblue,0;30
-FC,Adult,M,solid,bisque;darkorange,0;100
+S1,1xKXA,F,solid,lightblue;darkblue,0;30
+S1,1xKXA,M,solid,pink;deeppink;darkorange,0;100
+S1,2xKXA,F,solid,red;darkblue,0;30
+S1,2xKXA,M,solid,bisque;darkorange,0;100
+S1,3xKXA,F,solid,lightgreen;darkgreen,0;30
+S1,3xKXA,M,solid,yellow;darkorange,0;100
+S1,3xSaline,F,solid,lightcoral;darkred,0;30
+S1,3xSaline,M,solid,magenta;darkorange,0;100

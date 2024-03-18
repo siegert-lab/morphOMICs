@@ -1,1 +1,9 @@
 include requirements.txt
+include morphomics/Analysis/*
+include morphomics/io/*
+include morphomics/Neuron/*
+include morphomics/Population/*
+include morphomics/Soma/*
+include morphomics/TMD_view/*
+include morphomics/Topology/*
+include morphomics/Tree/*
