@@ -26,7 +26,7 @@ def read_description():
 
 setup(
     name="Morphomics",
-    version="2.0.4",
+    version="2.0.5",
     author='Amin Alam, Ryan Cubero',
     description=MINIMAL_DESCRIPTION,
     long_description=read_description(),
@@ -36,4 +36,5 @@ setup(
     license='GNU',
     url='https://github.com/siegert-lab/morphOMICs',
     keywords=['Morhpomics', 'MicroGlia', 'UMAP', 'TDA', 'Topological Data Analysis', 'Microscopy', 'Image Analysis', 'Cell Morphology'],
-    packages=['morphomics'],)
+    packages=['morphomics'],
+    include_package_data=True,)

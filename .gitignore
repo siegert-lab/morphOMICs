@@ -5,3 +5,5 @@ build
 dist
 *.egg*
 .ipynb_checkpoints
+saved_instances
+Morphomics.Parameters.0.toml

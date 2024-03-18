@@ -21,22 +21,13 @@ umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2 (https://github.c
 
 # Installation Guide
 
-## Using PyPi
+You need Python 3.9 or 3.10 to run this package.
 ```
 conda create -n morphology python=3.9
 conda activate morphology
 pip install morphomics
 ```
 
-## Using Source Code
-```
-conda create -n morphology python=3.9
-conda activate morphology
-
-git clone https://github.com/siegert-lab/morphOMICs.git
-cd morphOMICs
-pip install -e .
-```
 
 # Usage
 To run a typical morphOMICs pipeline, create a parameter file with filename Morphomics.Parameters.[Parameters ID].toml (see examples).

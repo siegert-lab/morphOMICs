@@ -12,9 +12,7 @@ class Protocols(object):
     
     def __init__(self, parameters, Parameters_ID):
         self.parameters = parameters
-        self.file_prefix = "Morphomics.PID%d" % (
-            int(Parameters_ID)
-        )
+        self.file_prefix = f"Morphomics.PID_{Parameters_ID}"
         self.morphoframe = {}
         self.metadata = {}
         
