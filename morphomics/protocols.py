@@ -18,8 +18,51 @@ class Protocols(object):
         
         print("Unless you have specified the file prefix in the succeeding executables, \nthis will be the file prefix: %s"%(self.file_prefix))
 
+    ## Private
+    def _find_variable(self, params):
+        """
+        finds the variable that should be processed/used by the protocol
 
+        Parameters
+        ----------
+        params: the parameters of the protocol
 
+        Returns
+        -------
+        the variable used by the protocol
+        """ 
+        if params["morphoframe_filepath"]:
+            _morphoframe = morphomics.utils.load_obj(params["morphoframe_filepath"].replace(".pkl", ""))
+        else:
+            _morphoframe = self.morphoframe[params["morphoframe_name"]]  
+        
+        return _morphoframe
+
+    def _define_filename(self, params, file_prefix):
+        """
+        defines the name of the file containing the output of the protocol
+
+        Paramters
+        ---------
+        params: the parameters of the protocol
+        file_prefix: a big part of the name of the file 
+
+        Returns
+        -------
+        the name of the file containing the output of the protocol
+        """
+        if params["save_data"]:
+            if params["file_prefix"] == 0:
+                params["file_prefix"] = file_prefix
+            if params["save_folder"] == 0:
+                params["save_folder"] = os.getcwd()
+            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
+        else:
+            save_filename = None
+
+        return save_filename
+
+    ## Public
     def Input(self):
         """
         Protocol: Load .swc files, transform them into TMD barcodes and store them as a morphoframe
@@ -34,19 +77,18 @@ class Protocols(object):
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
+
+        Returns
+        -------
+        add a dataframe with key morphoframe_name to morphoframe
+        each row in the dataframe is tmd data from one cell
         """
         params = self.parameters["Input"]
         
-        # initialize output filename
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.TMD-%s"%(self.file_prefix, params["barcode_filter"])
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
-            
+        # define output filename
+        file_prefix = "%s.TMD-%s"%(self.file_prefix, params["barcode_filter"])
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+
         print("Loading the data from %s"%(params["data_location_filepath"]))
         print("Saving dataset in %s"%(save_filename))
 
@@ -60,7 +102,7 @@ class Protocols(object):
             separated_by=params["separated_by"],
         )
 
-        print("Done!")
+        print("Input done!")
 
 
 
@@ -76,14 +118,14 @@ class Protocols(object):
         """
         params = self.parameters["Load_data"]
         
-        _morphoframe = {}
-        for _c in params["conditions_to_include"]:
-            print("...loading %s" % _c)
-            save_filename = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
-            _morphoframe[_c] = morphomics.utils.load_obj(save_filename.replace(".pkl", ""))
+        # _morphoframe = {}
+        # for _c in params["conditions_to_include"]:
+        #     print("...loading %s" % _c)
+        #     save_filename = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
+        #     _morphoframe[_c] = morphomics.utils.load_obj(save_filename.replace(".pkl", ""))
 
-        self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
-        
+        # self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
+        self.morphoframe[params["morphoframe_name"]] = morphomics.utils.load_obj(params["folderpath_to_data"])
         
         
     def Clean_frame(self):
@@ -112,11 +154,8 @@ class Protocols(object):
         """
         params = self.parameters["Clean_frame"]
         
-        # initialize morphoframe to clean
-        if params["morphoframe_filepath"]:
-            _morphoframe = morphomics.utils.load_obj(params["morphoframe_filepath"].replace(".pkl", ""))
-        else:
-            _morphoframe = self.morphoframe[params["morphoframe_name"]]
+        # define morphoframe to clean
+        _morphoframe = self._find_variable(params)
 
         # drops empty morphologies, potentially artifacts
         _morphoframe = _morphoframe.loc[~_morphoframe.Barcodes.isna()].reset_index(
@@ -160,14 +199,19 @@ class Protocols(object):
                     print("Third column must be either 'drop' or 'keep'...")
                     print("Nothing will be done...")
 
-        print("Done!")
+        print("Clean done!")
         
+        # initialize output filename
+        file_prefix = "%s.Cleaned"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+        
+        # change file name prefix
+        # save the file 
+        # TODO armonizer la sauvegarde
         if params["save_data"]:
             if params["file_prefix"] == 0:
-                params["file_prefix"] = self.file_prefix = "%s.Cleaned"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
+                self.file_prefix = file_prefix
+
             morphomics.utils.save_obj(_morphoframe, save_filename)
             
         self.morphoframe[params["morphoframe_name"]] = _morphoframe
@@ -195,20 +239,13 @@ class Protocols(object):
             file_prefix (str or 0): this will be used as the file prefix
         """
         params = self.parameters["Bootstrap"]
-        
-        if params["morphoframe_filepath"]:
-            _morphoframe = morphomics.utils.load_obj(params["morphoframe_filepath"].replace(".pkl", ""))
-        else:
-            _morphoframe = self.morphoframe[params["morphoframe_name"]]    
-            
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Bootstrapped"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+                
+        # initialize morphoframe to bootstrap
+        _morphoframe = self._find_variable(params)   
+
+        # define output filename
+        file_prefix = "%s.Bootstrapped"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
             
         if params["ratio"] == 0:
             ratio = None
@@ -232,7 +269,7 @@ class Protocols(object):
             )
         )
         
-        print("Done!")
+        print("Bootstrap done!")
         
         self.metadata[params["morphoinfo_name"]] = (
             bootstrapped_frame[params["bootstrap_resolution"]]
@@ -245,7 +282,6 @@ class Protocols(object):
         if params["save_data"]:
             morphomics.utils.save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filename)
             morphomics.utils.save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filename)
-            
             
             
     def Persistence_Images(self):
@@ -266,19 +302,12 @@ class Protocols(object):
         """
         params = self.parameters["Persistence_Images"]
         
-        if params["morphoframe_filepath"]:
-            _morphoframe = morphomics.utils.load_obj(params["morphoframe_filepath"].replace(".pkl", ""))
-        else:
-            _morphoframe = self.morphoframe[params["morphoframe_name"]]    
-            
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.PersistenceImages"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+        # define morphoframe to compute persistence image
+        _morphoframe = self._find_variable(params)
+
+        # define output filename
+        file_prefix = "%s.PersistenceImages"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
         
         # this is feature that will be developed in the future
         if params["barcode_weight"] == 0:
@@ -288,19 +317,41 @@ class Protocols(object):
         print("Gaussian kernel size: %.3f"%(float(params["bw_method"])))
         print("image normalization method: %s"%(params["norm_method"]))
         self.metadata["PI_matrix"] = morphomics.reduction.get_images_array_from_infoframe(
-            _morphoframe,
+            _info_frame = _morphoframe,
             xlims=params["xlims"],
             ylims=params["ylims"],
+            resolution = params["resolution"],
             bw_method=params["bw_method"],
             norm_method=params["norm_method"],
             barcode_weight=barcode_weight,
             save_filename=save_filename,  # save the persistence images
         )
         
-        print("Done!")
+        print("Persistence image done!")
         
+    def Vectorizations(self):
+        """
+        Protocol: Takes a morphoframe in `morphoframe_name` and vectorize the TMD within the morphoframe
         
-        
+        Essential parameters:
+            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            morphoframe_name (str): morphoframe key which will be filtered out
+            vect_methods (dict): keys of the dicitonary are the vectorization methods applied on the TMD and attributes are the parameters of each vetorization method
+            barcode_weight (float): key in the metadata which will be used to weight each bar
+            save_data (bool): trigger to save output of protocol
+            save_folder (str): location where to save the data
+            file_prefix (str or 0): this will be used as the file prefix
+        """
+
+        params = self.parameters["Vectorizations"]
+
+        # define input in morphoframe to vectorize
+        _morphoframe = self._find_variable(params)
+
+        # define output filename
+        file_prefix = "%s.Vectorizations"%(self.file_prefix, params["vect_methods"])
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+
     def UMAP(self):
         """
         Protocol: Takes the persistence images and calculates the UMAP manifold
@@ -325,14 +376,10 @@ class Protocols(object):
         """
         params = self.parameters["UMAP"]
         
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.UMAP"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+
+        # define output filename
+        file_prefix = "%s.UMAP"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
             
         if params["PersistenceImages_filepath"]:
             print("Loading persistence image matrix file...")
@@ -378,7 +425,7 @@ class Protocols(object):
             densmap=bool(params["densmap"]),
         )
 
-        print("Done!")
+        print("Umap done!")
         
         self.metadata["X_umap"] = F_umap.fit_transform(self.metadata["PI_matrix"])
 
@@ -403,14 +450,9 @@ class Protocols(object):
         """
         params = self.parameters["Palantir"]
         
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Palantir"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+        # define output filename
+        file_prefix = "%s.Palantir"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
             
         if params["X_umap_filepath"]:
             print("Loading UMAP coordinates...")
@@ -429,7 +471,7 @@ class Protocols(object):
             random_seed=params["fdl_random_seed"]
         )
 
-        print("Done!")
+        print("Palantir done!")
         
         if params["save_data"]:
             morphomics.utils.save_obj(self.metadata["palantir_distances"], "%s-PalantirDistances" % (save_filename) )
@@ -454,11 +496,10 @@ class Protocols(object):
         """
         params = self.parameters["Prepare_ReductionInfo"]
     
-        if params["file_prefix"] == 0:
-            params["file_prefix"] = "%s.ReductionInfo"%(self.file_prefix)
-        if params["save_folder"] == 0:
-            params["save_folder"] = os.getcwd()
-        save_filename = "%s/%s.csv" % (params["save_folder"], params["file_prefix"])
+        # define output filename
+        file_prefix = "%s.ReductionInfo"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+        save_filename = "%s.csv" % (save_filename)
 
         print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
         
@@ -466,15 +507,15 @@ class Protocols(object):
             self.metadata[params["coordinate_key"]] = morphomics.utils.load_obj( params["UMAP_filepath"] )
             self.metadata[params["morphoinfo_key"]] = morphomics.utils.load_obj( params["BootstrapInfo_filepath"] )
                 
-        assert params["coordinate_key"] in self.metadata.keys(), "Run UMAP first!"
-        assert params["morphoinfo_key"] in self.metadata.keys(), "Bootstrap_info is not found"
+            assert params["coordinate_key"] in self.metadata.keys(), "Run UMAP first!"
+            assert params["morphoinfo_key"] in self.metadata.keys(), "Bootstrap_info is not found"
         
         _reduction_info = self.metadata[params["morphoinfo_key"]].copy()
         for dims in range(self.metadata[params["coordinate_key"]].shape[1]):
             _reduction_info["%s_%d"%(params["coordinate_axisnames"], dims+1)] = self.metadata[params["coordinate_key"]][:, dims]
         _reduction_info.to_csv( save_filename )
 
-        print("Done!")
+        print("Reduction done!")
             
         
         
@@ -494,15 +535,10 @@ class Protocols(object):
             file_prefix (str or 0): this will be used as the file prefix
         """
         params = self.parameters["Mapping"]
-            
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Mapping"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+
+        # define output filename
+        file_prefix = "%s.Mapping"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)            
             
         if os.path.isfile(params["F_umap_filepath"]):
             print("Loading UMAP function...")
@@ -550,7 +586,7 @@ class Protocols(object):
         print("Mapping persistence images into the UMAP space...")
         self.metadata["X_umap"] = F_umap.transform(self.metadata["PI_matrix"])
         
-        print("Done!")
+        print("Mapping done!")
         
         if params["save_data"]:
             morphomics.utils.save_obj(self.metadata["X_umap"], "%s-UMAPcoords%dD" % (save_filename, self.metadata["X_umap"].shape[1]) )
@@ -573,14 +609,9 @@ class Protocols(object):
         """
         params = self.parameters["Sholl_curves"]
             
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Sholl"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+        # define output filename
+        file_prefix = "%s.Sholl"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)   
             
         sholl_plots = []
         
@@ -607,7 +638,7 @@ class Protocols(object):
         sholl_curves["Files"] = files
         self.metadata[params["Sholl_colname"]] = sholl_curves[["Files", "Sholl_curves"]]
         
-        print("Done!")
+        print("Sholl done!")
         
         if params["save_data"]:
             morphomics.utils.save_obj(self.metadata[params["Sholl_colname"]], "%s" % (save_filename) )
@@ -630,14 +661,9 @@ class Protocols(object):
         """
         params = self.parameters["Morphometrics"]
 
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Morphometrics"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+        # define output filename
+        file_prefix = "%s.Morphometrics"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)   
             
         assert params["morphoframe_name"] in self.morphoframe.keys(), "There is no `morphoframe_name`. Check this or make sure that you ran either `Input` or `Load_data` first."
         assert "Filenames" in self.morphoframe[params["morphoframe_name"]].columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
@@ -664,7 +690,7 @@ class Protocols(object):
         morphometrics = morphometrics[np.hstack(["Files", morphometrics.columns[:-1]])]
         self.metadata[params["Morphometric_colname"]] = morphometrics
         
-        print("Done!")
+        print("Morphometrics done!")
         
         if params["save_data"]:
             morphomics.utils.save_obj(self.metadata[params["Morphometric_colname"]], "%s" % (save_filename) )
@@ -692,14 +718,9 @@ class Protocols(object):
         """
         params = self.parameters["Plotting"]
         
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = "%s.Plot"%(self.file_prefix)
-            if params["save_folder"] == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
+        # define output filename
+        file_prefix = "%s.Plot"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, file_prefix = file_prefix)   
             
         assert len(params["colormap_filepath"]) > 0, "There must be a colormap_filepath!"
         assert np.sum([os.path.isfile(color_path) for color_path in params["colormap_filepath"]])==len(params["colormap_filepath"]), "Make sure that all files in colormap_filepath exists!"
@@ -738,7 +759,7 @@ class Protocols(object):
                     print("Inferring the morpho_infoframe and manifold coordinates from Protocol class.")
                     
                     assert params["coordinate_key"] in self.metadata.keys(), "Cannot infer manifold coordinates. Run UMAP first!"
-                    assert params["morphoinfo_key"] in self.metadata.keys(), "Morpho_infoframe not found. Check this!"
+                    #assert params["morphoinfo_key"] in self.metadata.keys(), "Morpho_infoframe not found. Check this!"
                 
                     morpho_info = self.metadata[params["morphoinfo_key"]]
                     coordinates = self.metadata[params["coordinate_key"]]

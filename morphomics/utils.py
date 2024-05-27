@@ -2,7 +2,7 @@
 Contains all the commonly used functions and data
 useful for multiple tmd modules.
 """
-
+import os
 import pickle as pkl
 import numpy as np
 
@@ -41,8 +41,14 @@ norm_methods = {
 }
 
 
-def save_obj(obj, name):
-    with open(name + ".pkl", "wb") as f:
+def save_obj(obj, filepath):
+    # Function to save an object to a file using pickle
+
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    
+    # Open the file and save the object (create or overwrite)
+    with open(filepath + ".pkl", "wb") as f:
         pkl.dump(obj, f, pkl.HIGHEST_PROTOCOL)
 
 

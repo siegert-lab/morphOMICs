@@ -38,13 +38,14 @@ def _get_persistence_image_data_single(ar):
     """
     ar[0]:   persistence barcode
     ar[1,2]: x, y-lims
+    ar
     ar[3]:   bw-method
     ar[4]:   normalization method (see morphomics.utils.norm_methods)
     ar[5]:   bar weights
     """
     if len(ar[0]) >= 0:
         res = analysis.get_persistence_image_data(
-            ar[0], xlims=ar[1], ylims=ar[2], bw_method=ar[3], norm_method=ar[4], weights=ar[5]
+            ar[0], xlims=ar[1], ylims=ar[2],resolution=ar[3], bw_method=ar[4], norm_method=ar[5], weights=ar[6]
         )
     else:
         res = []
@@ -186,6 +187,7 @@ def get_images_array_from_infoframe(
     _info_frame,
     xlims=None,
     ylims=None,
+    resolution=None,
     bw_method=None,
     norm_method="sum",
     barcode_weight=None,
@@ -252,13 +254,12 @@ def get_images_array_from_infoframe(
     imgs1 = []
     p1_lims = []
     
-    
     for _ind in np.arange(len(p1)):
         if barcode_weight is not None: 
             weights = barcode_weight[_ind]
         else:
             weights = None
-        p1_lims.append([p1[_ind], xlims, ylims, bw_method, norm_method, weights])
+        p1_lims.append([p1[_ind], xlims, ylims, resolution, bw_method, norm_method, weights])
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         # parallelized calculation of the persistence images
