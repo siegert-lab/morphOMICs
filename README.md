@@ -2,6 +2,7 @@
 
 `morphOMICs` is a Python package containing tools for analyzing microglia morphology using a topological data analysis approach. Note that this algorithm is designed not only for microglia applications but also for any dynamic branching structures across natural sciences.
 
+- [morphOMICs](#morphomics)
 - [Overview](#overview)
 - [Required Dependencies](#required-dependencies)
 - [Installation Guide](#installation-guide)
@@ -14,7 +15,7 @@
 # Required Dependencies
 Python : <= 3.10
 
-numpy : 1.8.1+, scipy : 0.13.3+, pickle : 4.0+, enum34 : 1.0.4+, scikit-learn : 0.19.1+, tomli: 2.0.1+, matplotlib : 3.2.0+, ipyvolume: 0.6.1+, umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2_modified
+numpy : 1.8.1+, scipy : 0.13.3+, pickle : 4.0+, enum34 : 1.0.4+, scikit-learn : 0.19.1+, tomli: 2.0.1+, matplotlib : 3.2.0+, ipyvolume: 0.6.1+, umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2_modified, TMD
 
 # Installation Guide
 
