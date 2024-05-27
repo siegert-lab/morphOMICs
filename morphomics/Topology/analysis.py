@@ -16,6 +16,7 @@ from morphomics.utils import norm_methods
 
 def get_lengths(ph):
     """
+    
     Returns the lengths of the bars from the diagram
     """
     return np.array([np.abs(i[0] - i[1]) for i in ph])
@@ -73,6 +74,7 @@ def get_persistence_image_data(
     ph,
     xlims=None,
     ylims=None,
+    resolution = 100,
     norm_factor=None,
     bw_method=None,
     norm_method="max",
@@ -92,8 +94,8 @@ def get_persistence_image_data(
     """
     if xlims is None or xlims is None:
         xlims, ylims = get_limits(ph, coll=False)
-
-    X, Y = np.mgrid[xlims[0] : xlims[1] : 100j, ylims[0] : ylims[1] : 100j]
+    res = complex(0, resolution)
+    X, Y = np.mgrid[xlims[0] : xlims[1] : res, ylims[0] : ylims[1] : res]
 
     values = np.transpose(ph)
     kernel = stats.gaussian_kde(values, bw_method=bw_method, weights=weights)
