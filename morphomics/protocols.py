@@ -1,4 +1,5 @@
 import morphomics
+import morphomics.old_methods
 import numpy as np
 import pandas as pd
 import os
@@ -70,7 +71,7 @@ class Protocols(object):
         Essential parameters:
             data_location_filepath (str): location of the filepath
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
-            barcode_filter (str): this is the TMD filtration function, can either be radial_distances, or path_distances
+            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
             conditions (list, str): this must match the hierarchical structure of `data_location_filepath`
             separated_by (str): saving chunks of the morphoframe via this condition, this must be an element of `conditions`
             morphoframe_name (str): this is how the morphoframe will be called
@@ -86,20 +87,20 @@ class Protocols(object):
         params = self.parameters["Input"]
         
         # define output filename
-        file_prefix = "%s.TMD-%s"%(self.file_prefix, params["barcode_filter"])
+        file_prefix = "%s.TMD-%s"%(self.file_prefix, params["filtration_function"])
         save_filename = self._define_filename(params = params, file_prefix = file_prefix)
 
         print("Loading the data from %s"%(params["data_location_filepath"]))
         print("Saving dataset in %s"%(save_filename))
 
         # load the data
-        self.morphoframe[params["morphoframe_name"]] = morphomics.io.load_data(
+        self.morphoframe[params["morphoframe_name"]] = morphomics.old_methods.load_data(
             folder_location=params["data_location_filepath"],
             extension=params["extension"],
-            barcode_filter=params["barcode_filter"],
-            save_filename=save_filename,
             conditions=params["conditions"],
+            filtration_function=params["filtration_function"],
             separated_by=params["separated_by"],
+            save_filename=save_filename,
         )
 
         print("Input done!")

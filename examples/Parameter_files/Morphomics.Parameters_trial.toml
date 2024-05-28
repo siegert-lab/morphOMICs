@@ -17,12 +17,12 @@ Protocols = [
 
 Parameters_ID = "trial"
   
-# set load_previous_instance = True if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols
+# set load_previous_instance = true if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols
 # use case: you tried running run_morphomics.py but it failed at some protocol
 load_previous_instance = false
 path_to_last_instance = "examples/trial_folder"
 
-# set save_last_instance = True if you want to always save last instance of protocols
+# set save_last_instance = true if you want to always save last instance of protocols
 save_last_instance = true
 path_to_new_instance = "examples/trial_folder"
 
@@ -43,7 +43,7 @@ path_to_new_instance = "examples/trial_folder"
         ]
         
 # this is the TMD filtration function, can either be radial_distances, or path_distances
-"barcode_filter" = "radial_distances"
+"filtration_function" = "radial_distances"
 
 # this is how the variable will be called
 "morphoframe_name" = "TMD"
@@ -53,12 +53,12 @@ path_to_new_instance = "examples/trial_folder"
 
 # saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
 # this must be an element of `conditions`
-"separated_by" = "Model"
+"separated_by" = "Sex"
 
 # location where to save the data
 "save_folder" = "examples/trial_folder/tmd"
 
-# if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-
+# if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[filtration_function].[separated_by]-
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
 
