@@ -13,6 +13,8 @@ from scipy.sparse import csr_matrix, find, issparse, coo_matrix
 from scipy.sparse.linalg import eigs
 import umap
 
+from tmd.Topology import vectorizations
+
 from morphomics.utils import save_obj
 from morphomics.utils import norm_methods, scipy_metric
 from morphomics.default_parameters import defaults
@@ -43,7 +45,7 @@ def _get_persistence_image_data_single(ar):
     ar[5]:   bar weights
     """
     if len(ar[0]) >= 0:
-        res = analysis.get_persistence_image_data(
+        res = vectorizations.get_persistence_image_data(
             ar[0], xlims=ar[1], ylims=ar[2],resolution=ar[3], bw_method=ar[4], norm_method=ar[5], weights=ar[6]
         )
     else:
@@ -244,7 +246,7 @@ def get_images_array_from_infoframe(
     p1 = _info_frame["Barcodes"]
         
     # get the birth and death distance limits for the persistence images
-    _xlims, _ylims = analysis.get_limits(p1)
+    _xlims, _ylims = vectorizations.get_limits(p1)
     if xlims is None:
         xlims = _xlims
     if ylims is None:

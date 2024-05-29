@@ -1,0 +1,240 @@
+import numpy as np
+
+from tmd.Topology import vectorizations
+
+from morphomics.utils import norm_methods, scipy_metric
+from morphomics.default_parameters import defaults
+
+class Vectorizer(object):
+    
+    def __init__(self, tmd, vect_parameters):
+        self.tmd = tmd
+        self.vect_parameters = vect_parameters
+        
+    ## Private
+    def _get_persistence_image_list(self, 
+                                    norm_factor = 1,
+                                    xlim = None,
+                                    ylim = None,
+                                    bw_method = None,
+                                    weights = None,
+                                    resolution = 100):
+        pi_list = []
+        for barcode in self.tmd:
+            pi = vectorizations.persistence_image_data(ph = barcode, 
+                                                        norm_factor = norm_factor,
+                                                        xlim = xlim,
+                                                        ylim = ylim,
+                                                        bw_method = bw_method,
+                                                        weights = weights,
+                                                        resolution = resolution)
+            pi_list.append(pi)
+        return pi_list
+    
+
+
+    def _get_curve_list(self,
+                        curve_method = vectorizations.betti_curve,
+                        t_list = None,
+                        resolution = 1000):
+        c_list = []
+        for barcode in self.tmd:
+            c, _ = curve_method(ph_diagram = barcode,
+                                             bins = t_list,
+                                             num_bins = resolution)
+            c_list.append(c)
+        return c_list
+    
+
+
+    def _vectorization_curve(self, 
+                             curve_method,
+                             curve_params):
+        
+        rescale_lims = curve_params["rescale_lims"]
+        xlims = curve_params["xlims"]
+        resolution = curve_params["resolution"]
+        norm_method = curve_params["norm_method"]
+
+
+        if rescale_lims:
+            t_list = None
+        else:
+            # get the birth and death distance limits for the curve
+            _xlims, _ylims = vectorizations.get_limits(self.tmd)
+            if xlims is None:
+                xlims = [np.min(_xlims[0], _ylims[0]), np.max(_xlims[1], _ylims[1])]
+            t_list = np.linspace(xlims[0], xlims[1], resolution)
+
+        curve_list = self._get_curve_list(curve_method = curve_method, 
+                                               t_list = t_list, 
+                                               num_bins = resolution)
+        
+        curves = []
+        for curve in curve_list:
+            if len(curve) > 0:
+                norm = norm_method(curve)
+                curves.append(curve / norm)
+            else:
+                curves.append(np.nan)
+
+        return np.array(curves)
+
+
+
+    def _lifespan_curve(barcode,
+                        t_list = None,
+                        resolution = 1000):
+        if t_list is None:
+            t_list = np.linspace(np.min(barcode), np.max(barcode), resolution)
+        else:
+            t_list = t_list
+
+        lifespan_c = [np.sum([vectorizations._index_bar(bar, t)*np.diff(bar) for bar in barcode]) for t in t_list]
+        return lifespan_c, t_list
+
+
+    ## Public
+    def persistence_image(self):
+        '''This function takes information about barcodes, calculates persistence images based on specified
+        parameters, and returns an array of images.
+        
+        Parameters
+        ----------
+        _info_frame
+            The `_info_frame` parameter is expected to be a DataFrame containing information about barcodes,
+        specifically with a column named "barcodes". This function calculates persistence images based on
+        the barcode information provided in the `_info_frame`.
+        xlims
+            The `xlims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+        birth and death distance limits for the persistence images. If `xlims` is not provided as an
+        argument when calling the function, it will default to the birth and death distance limits
+        calculated from
+        ylims
+            The `ylims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+        limits for the y-axis in the persistence images. If `ylims` is not provided as an argument when
+        calling the function, it will default to `None` and then be set based
+        bw_method
+            The `bw_method` parameter in the `get_images_array_from_infoframe` function is used to specify the
+        bandwidth method for kernel density estimation when generating persistence images. It controls the
+        smoothness of the resulting images by adjusting the bandwidth of the kernel used in the estimation
+        process. Different bandwidth methods can result
+        norm_method, optional
+            The `norm_method` parameter in the `get_images_array_from_infoframe` function specifies the method
+        used for normalizing the persistence images. The default value is set to "sum", which means that the
+        images will be normalized by dividing each pixel value by the sum of all pixel values in the image
+        barcode_weight
+            The `barcode_weight` parameter in the `get_images_array_from_infoframe` function is used to specify
+        weights for each barcode in the calculation of persistence images. If `barcode_weight` is provided,
+        it will be used as weights for the corresponding barcode during the calculation. If it is not
+        provided (
+        save_filename
+            The `save_filename` parameter in the `get_images_array_from_infoframe` function is used to specify
+        the filename under which the array of images will be saved after processing. If you provide a value
+        for `save_filename`, the function will save the array of images to a file with that name.
+        
+        Returns
+        -------
+            The function `get_images_array_from_infoframe` returns a NumPy array of persistence images
+        calculated based on the input parameters and data provided in the `_info_frame` DataFrame.
+        
+
+        '''
+
+        pi_params = self.vect_parameters["persistence_image"]
+
+        rescale_lims = pi_params["rescale_lims"]
+        xlims=pi_params["xlims"]
+        ylims=pi_params["ylims"]
+        bw_method=pi_params["bw_method"]
+        barcode_weight=pi_params["barcode_weight"]
+        norm_method=pi_params["norm_method"]
+        resolution=pi_params["resolution"]
+        flatten = True
+
+        print("Computing persistence images...")
+        
+        if rescale_lims:
+            xlims, ylims = None, None
+        else:
+            # get the birth and death distance limits for the persistence images
+            _xlims, _ylims = vectorizations.get_limits(self.tmd)
+            if xlims is None:
+                xlims = _xlims
+            if ylims is None:
+                ylims = _ylims
+
+        pi_list = self._get_persistence_image_list(norm_factor = 1,
+                                                    xlim = xlims,
+                                                    ylim = ylims,
+                                                    bw_method = bw_method,
+                                                    weights = barcode_weight,
+                                                    resolution = resolution
+                                                )
+        
+        if flatten:
+            flatten_method = lambda arr: arr.flatten()
+        else:
+            flatten_method = lambda arr: arr
+
+        images = []
+        for pi in pi_list:
+            if len(pi) > 0:
+                norm = norm_method(pi)
+                images.append(flatten_method(pi) / norm)
+            else:
+                images.append(np.nan)
+
+        print("pi done! \n")
+
+        return np.array(images)
+    
+
+
+    def betti_curve(self):
+
+        betti_params = self.vect_parameters["betti_curve"]
+
+        print("Computing betti curves...")
+
+        betti_curves = self._vectorization_curve(curve_params = betti_params,
+                                                curve_method = vectorizations.betti_curve)
+
+        print("bc done! \n")
+
+        return betti_curves
+
+
+    
+    def life_entropy_curve(self):
+
+        entropy_params = self.vect_parameters["life_entropy_curve"]
+
+        print("Computing life entropy curves...")
+
+        life_entropy_curves = self._vectorization_curve(curve_params = entropy_params,
+                                                        curve_method = vectorizations.life_entropy_curve)
+
+        print("lec done! \n")
+
+        return life_entropy_curves
+
+
+
+    def lifespan_curve(self):
+
+        lifespan_params = self.vect_parameters["lifespan_curve"]
+
+        print("Computing lifespan curves...")
+
+        lifespan_cuves = self._vectorization_curve(curve_params = lifespan_params,
+                                                    curve_method = self._lifespan_cuve)
+        print("lsc done! \n")
+        return lifespan_cuves
+
+
+
+    def stable_ranks(self):
+        return
+
+    

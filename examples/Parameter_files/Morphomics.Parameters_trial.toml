@@ -53,7 +53,7 @@ path_to_new_instance = "examples/trial_folder"
 
 # saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
 # this must be an element of `conditions`
-"separated_by" = "Sex"
+"separated_by" = "Model"
 
 # location where to save the data
 "save_folder" = "examples/trial_folder/tmd"
@@ -179,8 +179,8 @@ path_to_new_instance = "examples/trial_folder"
 "ylims" = [0, 200]
 # resolution of the persistence image
 "resolution" = 20
-# if not 0, must point to the location containing the weights to each bar
-"barcode_weight" = 0
+# if not None, must point to the location containing the weights to each bar
+"barcode_weight" = ""
 
 
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)

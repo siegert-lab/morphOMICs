@@ -1,5 +1,9 @@
 import morphomics
-import morphomics.old_methods
+import morphomics.io
+
+from morphomics.Analysis import vectorizer, embedder
+from morphomics.utils import save_obj
+
 import numpy as np
 import pandas as pd
 import os
@@ -20,42 +24,45 @@ class Protocols(object):
         print("Unless you have specified the file prefix in the succeeding executables, \nthis will be the file prefix: %s"%(self.file_prefix))
 
     ## Private
-    def _find_variable(self, params):
+    def _find_variable(self, variable_filepath, variable_name):
         """
         finds the variable that should be processed/used by the protocol
 
         Parameters
         ----------
-        params: the parameters of the protocol
+        variable_filepath (str): path to the file that contains variable of interest
+        variable_name (str): name of the variable of interest in morphoframe
 
         Returns
         -------
         the variable used by the protocol
         """ 
-        if params["morphoframe_filepath"]:
-            _morphoframe = morphomics.utils.load_obj(params["morphoframe_filepath"].replace(".pkl", ""))
+        if variable_filepath:
+            _morphoframe = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
         else:
-            _morphoframe = self.morphoframe[params["morphoframe_name"]]  
+            _morphoframe = self.morphoframe[variable_name]  
         
         return _morphoframe
 
-    def _define_filename(self, params, file_prefix):
+    def _define_filename(self, params, save_folder_path, file_prefix, save_data = True):
         """
         defines the name of the file containing the output of the protocol
 
         Paramters
         ---------
-        params: the parameters of the protocol
-        file_prefix: a big part of the name of the file 
+        params (dict): the parameters of the protocol
+        save_folder_path (str): the folder path to where file is saved 
+        file_prefix (str): a big part of the name of the file to save
+        save_data (bool): data will be saved or not
 
         Returns
         -------
         the name of the file containing the output of the protocol
         """
-        if params["save_data"]:
-            if params["file_prefix"] == 0:
+        if save_data:
+            if file_prefix == 0:
                 params["file_prefix"] = file_prefix
-            if params["save_folder"] == 0:
+            if save_folder_path == 0:
                 params["save_folder"] = os.getcwd()
             save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
         else:
@@ -85,16 +92,20 @@ class Protocols(object):
         each row in the dataframe is tmd data from one cell
         """
         params = self.parameters["Input"]
+
         
         # define output filename
         file_prefix = "%s.TMD-%s"%(self.file_prefix, params["filtration_function"])
-        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+        save_filename = self._define_filename(params = params, 
+                                              save_folder_path = params["save_folder"], 
+                                              file_prefix = params["file_prefix"], 
+                                              save_data = params["save_data"])
 
         print("Loading the data from %s"%(params["data_location_filepath"]))
         print("Saving dataset in %s"%(save_filename))
 
         # load the data
-        self.morphoframe[params["morphoframe_name"]] = morphomics.old_methods.load_data(
+        self.morphoframe[params["morphoframe_name"]] = morphomics.io.load_data(
             folder_location=params["data_location_filepath"],
             extension=params["extension"],
             conditions=params["conditions"],
@@ -129,6 +140,7 @@ class Protocols(object):
         self.morphoframe[params["morphoframe_name"]] = morphomics.utils.load_obj(params["folderpath_to_data"])
         
         
+
     def Clean_frame(self):
         """
         Protocol: Clean out the morphoframe, to filter out artifacts and unwanted conditions
@@ -284,7 +296,8 @@ class Protocols(object):
             morphomics.utils.save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filename)
             morphomics.utils.save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filename)
             
-            
+
+
     def Persistence_Images(self):
         """
         Protocol: Takes a morphoframe in `morphoframe_name` and calculates the persistence images with the barcodes within the morphoframe
@@ -304,30 +317,48 @@ class Protocols(object):
         params = self.parameters["Persistence_Images"]
         
         # define morphoframe to compute persistence image
-        _morphoframe = self._find_variable(params)
+        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"])
+        assert (
+            "barcodes" in _morphoframe.keys()
+        ), "Missing `barcodes` column in info_frame..."
 
         # define output filename
         file_prefix = "%s.PersistenceImages"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+        save_filename = self._define_filename(params = params, 
+                                              save_folder_path = params["save_folder"], 
+                                              file_prefix = file_prefix, 
+                                              save_data = params["save_data"])
         
         # this is feature that will be developed in the future
-        if params["barcode_weight"] == 0:
+        if params["barcode_weight"] == "None":
             barcode_weight = None
             
         print("Calculating persistence images with the following parameters:")
         print("Gaussian kernel size: %.3f"%(float(params["bw_method"])))
         print("image normalization method: %s"%(params["norm_method"]))
-        self.metadata["PI_matrix"] = morphomics.reduction.get_images_array_from_infoframe(
-            _info_frame = _morphoframe,
-            xlims=params["xlims"],
-            ylims=params["ylims"],
-            resolution = params["resolution"],
-            bw_method=params["bw_method"],
-            norm_method=params["norm_method"],
-            barcode_weight=barcode_weight,
-            save_filename=save_filename,  # save the persistence images
-        )
         
+        vect_method = "persistence_image"
+        pi_parameters = {vect_method: { "rescale_lims" : params["rescale_lims"],
+                                        "xlims" : params["xlims"],
+                                        "ylims" : params["ylims"],
+                                        "bw_method" : params["bw_method"],
+                                        "barcode_weight" : params["barcode_weight"],
+                                        "norm_method" : params["norm_method"],
+                                        "resolution" : params["resolution"]
+                                        } 
+                        }
+        
+        pi_vectorizer = vectorizer.Vectorizer(tmd = _morphoframe["barcodes"], 
+                                              vect_parameters = pi_parameters)
+        
+        pis = pi_vectorizer.persistence_image()
+ 
+        # save the persistence images
+        if save_filename is not None:
+            save_obj(obj = pis, filepath = save_filename)
+
+        self.metadata["PI_matrix"] = pis
         print("Persistence image done!")
         
     def Vectorizations(self):
@@ -337,21 +368,51 @@ class Protocols(object):
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be filtered out
-            vect_methods (dict): keys of the dicitonary are the vectorization methods applied on the TMD and attributes are the parameters of each vetorization method
-            barcode_weight (float): key in the metadata which will be used to weight each bar
+            vect_methods (dict): keys are the vectorization methods applied on the TMD and attributes are the parameters of each vetorization method
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
         """
 
         params = self.parameters["Vectorizations"]
+        vect_methods = params["vect_methods"]
+        vect_parameters = params["vect_parameters"]
 
-        # define input in morphoframe to vectorize
-        _morphoframe = self._find_variable(params)
+        # define morphoframe to compute vectorizations
+        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"])
+        assert (
+            "barcodes" in _morphoframe.keys()
+        ), "Missing `barcodes` column in info_frame..."
 
         # define output filename
-        file_prefix = "%s.Vectorizations"%(self.file_prefix, params["vect_methods"])
-        save_filename = self._define_filename(params = params, file_prefix = file_prefix)
+        file_prefix = "%s.Vectorizations"%(self.file_prefix, vect_methods)
+        save_filename = self._define_filename(params = params, 
+                                              save_folder_path = params["save_folder"], 
+                                              file_prefix = file_prefix, 
+                                              save_data = params["save_data"])
+        
+
+        print("Computes %s and concatenates the vectors" %(vect_methods))
+        
+        vectorizer = vectorizer.Vectorizer(tmd = _morphoframe["barcodes"], 
+                                            vect_parameters = vect_parameters)
+        
+        output_vectors = []
+        for vect_method in vect_methods:
+            perform_vect_method = getattr(vectorizer, vect_method)
+            output_vector = perform_vect_method()
+            
+            output_vectors.append(output_vector)
+
+        output_vectors = np.concatenate(output_vectors, axis=1)
+
+        # save the persistence images
+        if save_filename is not None:
+            save_obj(obj = output_vectors, filepath = save_filename)
+
+        self.metadata["vectorization"] = output_vectors
+        print("Vectorization done!")
 
     def UMAP(self):
         """
