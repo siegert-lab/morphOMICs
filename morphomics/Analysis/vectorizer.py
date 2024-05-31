@@ -39,41 +39,59 @@ class Vectorizer(object):
                         resolution = 1000):
         c_list = []
         for barcode in self.tmd:
-            c, _ = curve_method(ph_diagram = barcode,
-                                             bins = t_list,
-                                             num_bins = resolution)
+            c, _ = curve_method(barcode,
+                                t_list,
+                                resolution)
             c_list.append(c)
         return c_list
     
 
 
-    def _vectorization_curve(self, 
+    def _curve_vectorization(self, 
                              curve_method,
                              curve_params):
+        '''General method to compute vectorization for curve methods.
+
+        Parameters
+        ----------
+        curve_method (method): the actual curve like vectorization method, the method has 2 parameters: (t_list, resolution).
+                                example: _lifespan_curve.
+        curve_params (dict): the parameters for the curve vectorization:
+                            -rescale_lims (bool): True: adapt the boundaries of the barcode for each barcode
+                                                False: choose the widest boundaries that include all barcodes 
+                            -xlims (pair of double): the boundaries
+                            -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
+                            -norm_method (str): the method to normalize the vector
+
+        Returns
+        -------
+        a numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
+        '''
         
         rescale_lims = curve_params["rescale_lims"]
         xlims = curve_params["xlims"]
         resolution = curve_params["resolution"]
         norm_method = curve_params["norm_method"]
 
-
+        # define the interval of the curve
         if rescale_lims:
             t_list = None
         else:
             # get the birth and death distance limits for the curve
             _xlims, _ylims = vectorizations.get_limits(self.tmd)
             if xlims is None:
-                xlims = [np.min(_xlims[0], _ylims[0]), np.max(_xlims[1], _ylims[1])]
+                xlims = [np.min([_xlims[0], _ylims[0]]), np.max([_xlims[1], _ylims[1]])]
             t_list = np.linspace(xlims[0], xlims[1], resolution)
-
+       
+       #get the curve
         curve_list = self._get_curve_list(curve_method = curve_method, 
                                                t_list = t_list, 
-                                               num_bins = resolution)
-        
+                                               resolution = resolution)
+        # normalize the curve
         curves = []
         for curve in curve_list:
             if len(curve) > 0:
-                norm = norm_method(curve)
+                norm = norm_methods[norm_method](curve)
                 curves.append(curve / norm)
             else:
                 curves.append(np.nan)
@@ -82,7 +100,8 @@ class Vectorizer(object):
 
 
 
-    def _lifespan_curve(barcode,
+    def _lifespan_curve(self,
+                        barcode,
                         t_list = None,
                         resolution = 1000):
         if t_list is None:
@@ -90,7 +109,8 @@ class Vectorizer(object):
         else:
             t_list = t_list
 
-        lifespan_c = [np.sum([vectorizations._index_bar(bar, t)*np.diff(bar) for bar in barcode]) for t in t_list]
+        bar_differences = np.diff(barcode)
+        lifespan_c = [np.sum([vectorizations._index_bar(bar, t)*bar_diff for bar, bar_diff in zip(barcode, bar_differences)]) for t in t_list]
         return lifespan_c, t_list
 
 
@@ -180,7 +200,7 @@ class Vectorizer(object):
         images = []
         for pi in pi_list:
             if len(pi) > 0:
-                norm = norm_method(pi)
+                norm = norm_methods[norm_method](pi)
                 images.append(flatten_method(pi) / norm)
             else:
                 images.append(np.nan)
@@ -197,7 +217,7 @@ class Vectorizer(object):
 
         print("Computing betti curves...")
 
-        betti_curves = self._vectorization_curve(curve_params = betti_params,
+        betti_curves = self._curve_vectorization(curve_params = betti_params,
                                                 curve_method = vectorizations.betti_curve)
 
         print("bc done! \n")
@@ -212,7 +232,7 @@ class Vectorizer(object):
 
         print("Computing life entropy curves...")
 
-        life_entropy_curves = self._vectorization_curve(curve_params = entropy_params,
+        life_entropy_curves = self._curve_vectorization(curve_params = entropy_params,
                                                         curve_method = vectorizations.life_entropy_curve)
 
         print("lec done! \n")
@@ -227,8 +247,8 @@ class Vectorizer(object):
 
         print("Computing lifespan curves...")
 
-        lifespan_cuves = self._vectorization_curve(curve_params = lifespan_params,
-                                                    curve_method = self._lifespan_cuve)
+        lifespan_cuves = self._curve_vectorization(curve_params = lifespan_params,
+                                                    curve_method = self._lifespan_curve)
         print("lsc done! \n")
         return lifespan_cuves
 

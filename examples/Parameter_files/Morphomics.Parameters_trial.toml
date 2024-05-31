@@ -2,7 +2,7 @@
 
 # sequential list of executables
 # Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Persistence_Images, UMAP, 
-#                         Palantir, Plotting, Mapping, Clear_morphframe, Prepare_ReductionInfo, 
+#                         , Plotting, Mapping, Clear_morphframe, Prepare_ReductionInfo, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols = [
@@ -174,13 +174,15 @@ path_to_new_instance = "examples/trial_folder"
 "bw_method" = 0.5
 # how to normalize the persistence image, can be "sum" or "max"
 "norm_method" = "sum"
+# rescale the boundaries for each barcode (in this case xlims and ylims are set to None)
+"rescale_lims" = false 
 # constraints to the axes limits
 "xlims" = [0, 200]
 "ylims" = [0, 200]
 # resolution of the persistence image
 "resolution" = 20
 # if not None, must point to the location containing the weights to each bar
-"barcode_weight" = ""
+"barcode_weight" = "None"
 
 
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)

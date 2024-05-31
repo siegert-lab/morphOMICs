@@ -156,16 +156,16 @@ def _create_bootstrap_dataframe(_b_frame, _bs, morphology_idx, pooled_bars, boot
     Returns
     -------
         a DataFrame named `bootstrap_frame` with columns for the bootstrap resolution, "Bootstrapped
-    index", and "Barcodes". The function populates the "Bootstrapped index" and "Barcodes" columns with
+    index", and "barcodes". The function populates the "Bootstrapped index" and "Barcodes" columns with
     the values of `morphology_idx` and `pooled_bars` respectively. It then iterates over the bootstrap
     resolution values to populate the corresponding columns in the
     
     '''
     bootstrap_frame = pd.DataFrame(
-        columns=bootstrap_resolution + ["Bootstrapped index", "Barcodes"]
+        columns=bootstrap_resolution + ["Bootstrapped index", "barcodes"]
     )
     bootstrap_frame["Bootstrapped index"] = morphology_idx
-    bootstrap_frame["Barcodes"] = pooled_bars
+    bootstrap_frame["barcodes"] = pooled_bars
 
     for _bc in bootstrap_resolution:
         bootstrap_frame[_bc] = _b_frame.loc[
