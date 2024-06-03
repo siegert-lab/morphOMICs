@@ -31,8 +31,7 @@ class Vectorizer(object):
             pi_list.append(pi)
         return pi_list
     
-
-
+    #TODO parallelize 
     def _get_curve_list(self,
                         curve_method = vectorizations.betti_curve,
                         t_list = None,
@@ -45,7 +44,6 @@ class Vectorizer(object):
             c_list.append(c)
         return c_list
     
-
 
     def _curve_vectorization(self, 
                              curve_method,
@@ -99,7 +97,6 @@ class Vectorizer(object):
         return np.array(curves)
 
 
-
     def _lifespan_curve(self,
                         barcode,
                         t_list = None,
@@ -110,7 +107,12 @@ class Vectorizer(object):
             t_list = t_list
 
         bar_differences = np.diff(barcode)
-        lifespan_c = [np.sum([vectorizations._index_bar(bar, t)*bar_diff for bar, bar_diff in zip(barcode, bar_differences)]) for t in t_list]
+        lifespan_c = [np.sum([
+                            np.float(bar_diff) if vectorizations._index_bar(bar, t) else 0.
+                            for bar, bar_diff in zip(barcode, bar_differences)
+                            ])
+                        for t in t_list
+                    ]
         return lifespan_c, t_list
 
 

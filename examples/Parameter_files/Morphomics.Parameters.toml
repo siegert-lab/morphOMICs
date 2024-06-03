@@ -42,7 +42,7 @@ path_to_last_instance = "examples/saved_instances"
         ]
         
 # this is the TMD filtration function, can either be radial_distances, or path_distances
-"barcode_filter" = "radial_distances"
+"filtration_function" = "radial_distances"
 
 # this is how the variable will be called
 "morphoframe_name" = "morphoframe"

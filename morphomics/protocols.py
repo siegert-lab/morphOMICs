@@ -2,8 +2,10 @@ import morphomics
 import morphomics.io
 
 from morphomics.Analysis.vectorizer import Vectorizer
-#embedder
-from morphomics.utils import save_obj
+from morphomics.Analysis.embedder import Embedder
+
+from morphomics.utils import save_obj, vectorization_codenames
+from sklearn.preprocessing import Normalizer
 
 import numpy as np
 import pandas as pd
@@ -39,6 +41,7 @@ class Protocols(object):
         the variable used by the protocol
         """ 
         if variable_filepath:
+            print("Loading %s file..." %(variable_filepath))
             _morphoframe = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
         else:
             _morphoframe = self.morphoframe[variable_name]  
@@ -70,6 +73,26 @@ class Protocols(object):
             save_filename = None
 
         return save_filename
+    
+    def _image_filtering(self, persistence_images, params, save_filename):
+
+        if params["filteredpixelindex_filepath"]:
+            print("Loading indices used for filtering persistence images...")
+            _tokeep = morphomics.utils.load_obj(params["filteredpixelindex_filepath"].replace(".pkl", ""))
+        else:
+            print("Keeping pixels in persistence image with standard deviation of %.3f..."%float(params["pixel_std_cutoff"]))
+            _tokeep = np.where(
+                np.std(persistence_images, axis=0) >= params["pixel_std_cutoff"]
+            )[0]
+            
+        filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
+
+        if params["save_data"]:
+            morphomics.utils.save_obj(_tokeep, "%s-FilteredIndex" % (save_filename))
+            morphomics.utils.save_obj(self.metadata["PI_matrix"], "%s-FilteredMatrix" % (save_filename))
+            
+        return filtered_image
+
 
     ## Public
     def Input(self):
@@ -358,7 +381,7 @@ class Protocols(object):
                                         } 
                         }
         
-        pi_vectorizer = vectorizer.Vectorizer(tmd = _morphoframe["barcodes"], 
+        pi_vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
                                               vect_parameters = pi_parameters)
         
         pis = pi_vectorizer.persistence_image()
@@ -367,7 +390,7 @@ class Protocols(object):
         if save_filename is not None:
             save_obj(obj = pis, filepath = save_filename)
 
-        self.metadata["PI_matrix"] = pis
+        self.self.morphoframe[params["morphoframe_name"]]["PI_matrix"] = pis
         print("Persistence image done!")
         
 
@@ -383,13 +406,19 @@ class Protocols(object):
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
+
+        Returns
+        -------
+        A numpy array of vectors. The rows are the samples (microglia), the colums are the features of the vector (result of the TMD vectorrization).
         """
 
         params = self.parameters["Vectorizations"]
         vect_methods = params["vect_method_parameters"].keys()
         vect_parameters = params["vect_method_parameters"]
-        vect_methods_str = '_&_'.join(list(vect_methods))
-        print(type(vect_methods_str))
+        vect_methods_names = [vectorization_codenames[vect_method] for vect_method in vect_methods]
+        vect_method_names = '_'.join(vect_methods_names)
+
+
         # define morphoframe to compute vectorizations
         _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
                                            variable_name = params["morphoframe_name"])
@@ -398,14 +427,13 @@ class Protocols(object):
         ), "Missing `barcodes` column in info_frame..."
 
         # define output filename
-        file_prefix = "%s.Vectorizations-%s"%(self.file_prefix, vect_methods_str)
+        file_prefix = "%s.Vectorizations-%s"%(self.file_prefix, vect_method_names)
         save_filename = self._define_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
-        
 
-        print("Computes %s and concatenates the vectors" %(vect_methods_str))
+        print("Computes %s and concatenates the vectors" %(vect_method_names))
         
         vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
                                             vect_parameters = vect_parameters)
@@ -419,12 +447,80 @@ class Protocols(object):
 
         output_vectors = np.concatenate(output_vectors, axis=1)
 
-        # save the persistence images
+        # save the output vectors
         if save_filename is not None:
             save_obj(obj = output_vectors, filepath = save_filename)
 
-        self.metadata["vectorization"] = output_vectors
+        self.morphoframe[params["morphoframe_name"]][vect_method_names] = list(output_vectors)
         print("Vectorization done!")
+
+
+
+    def Embedding(self):
+        """
+        Protocol: Takes vectors in 'metada' and embeds the vectors following the chosen embedding techniques
+        
+        Parameters:
+        ----------
+
+        """
+        params = self.parameters["Embedding"]
+
+        embed_methods = params["embed_method_parameters"].keys()
+        embed_parameters = params["embed_method_parameters"]
+        embed_method_names = '_'.join(list(embed_methods))
+
+        vectors_to_embed = params["vectors_to_embed"]
+
+        # define morphoframe to compute embedding
+        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"])
+        X = np.vstack(_morphoframe[vectors_to_embed])
+
+        # define output filename
+        file_prefix = "%s.Embeddings-%s"%(self.file_prefix, embed_method_names)
+        save_filename = self._define_filename(params = params, 
+                                              save_folder_path = params["save_folder"], 
+                                              file_prefix = file_prefix, 
+                                              save_data = params["save_data"])
+        
+        if params["filter_pixels"]:
+            filtered_image = self._image_filtering(persistence_images = X,
+                                                  params = params, 
+                                                  save_filename = save_filename)
+            X = filtered_image
+
+        normalize = params['normalize']
+        if normalize:
+            print("Normalize the vectors")
+            normalizer = Normalizer()
+            X = normalizer.fit_transform(X)
+
+        print("Embeds the vectors with the following techniques %s " %(embed_method_names))
+        embedder = Embedder(tmd_vectors = X,
+                            embed_parameters = embed_parameters)
+        
+        fit_embedders = []
+        for embed_method in embed_methods:
+            perform_embed_method = getattr(embedder, embed_method)
+            fit_embedder, embedded_vector = perform_embed_method()
+
+            self.metadata[embed_method] = fit_embedder
+            fit_embedders.append(fit_embedder)
+   
+            embedder.tmd_vectors = embedded_vector
+
+        # save the embedded vectors
+        if save_filename is not None:
+            save_obj(obj = embedded_vector, filepath = save_filename + '_results')
+            save_obj(obj = fit_embedders, filepath = save_filename + '_fitted_embedder')
+
+        self.morphoframe[params["morphoframe_name"]][embed_method_names] = list(embedded_vector)
+        print("Embedding done!")
+
+#       save_obj(F_umap, "%s-UMAPfunction%dD" % (save_filename, params["n_components"]) )
+#       save_obj(self.metadata["X_umap"], "%s-UMAPcoords%dD" % (save_filename, params["n_components"]) )
+
 
     def UMAP(self):
         """

@@ -279,7 +279,7 @@ def load_data(
     file_info = _np.array(
         [_files.replace(folder_location, "").split("/")[1:] for _files in filenames]
     )
-
+    print(file_info)
     _info_frame = _pd.DataFrame(data=file_info, columns=conditions + ["_file_name"])
     _info_frame["path_to_file"] = filenames
     print("Found %d files..." % len(filenames))

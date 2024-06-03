@@ -38,6 +38,14 @@ norm_methods = {
     "std": lambda arr: np.std(arr),
     "l1": lambda arr: np.sum(np.abs(arr)),
     "l2": lambda arr: np.sqrt(np.dot(arr, arr)),
+    "id": lambda arr: np.ones_like(arr),
+}
+
+vectorization_codenames = {
+    "persistence_image" : "pi",
+    "betti_curve" : "bc",
+    "life_entropy_curve" : "lec",
+    "lifespan_curve" : "lsc",
 }
 
 

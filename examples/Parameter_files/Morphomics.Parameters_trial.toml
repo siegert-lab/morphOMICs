@@ -199,7 +199,6 @@ path_to_new_instance = "examples/trial_folder"
 ## if we use other vectotrization methods maybe we should not call it PersistenceImages_filepath -> be more general
 "PersistenceImages_filepath" = 0
 
-
 # if 0, no pixel filtering will be done
 "filter_pixels" = 1
 # if not 0, must contain the filepath to the indices of the persistence image that will be filtered
@@ -220,7 +219,7 @@ path_to_new_instance = "examples/trial_folder"
 "spread" = 3.0
 "random_state" = 34151
 "metric" = "manhattan"
-"densmap" = 0 # zero is false
+"densmap" = false
 "n_components" = 3
 
 
