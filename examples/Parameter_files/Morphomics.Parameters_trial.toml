@@ -111,10 +111,10 @@ path_to_new_instance = "examples/trial_folder"
 [Bootstrap]
 # if not 0, must contain the filepath to the morphoframe
 "morphoframe_filepath" = 0
-"morphoframe_name" = "morphoframe"
+"morphoframe_name" = "TMD"
 
 # must be an array with two elements [feature (one of the headers in morphoframe), "bars", "scalar" or "array"]
-"feature_to_bootstrap" = ["Barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
+"feature_to_bootstrap" = ["barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
 # "feature_to_bootstrap" = ["Barcode_length", "scalar"] # bootstraps by taking the average of an array
 # "feature_to_bootstrap" = ["Sholl", "array"]           # # bootstraps by taking the element-wise average of a high-dimensional NumPy array
 
@@ -156,7 +156,7 @@ path_to_new_instance = "examples/trial_folder"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "trial_folder"
+"save_folder" = "examples/trial_folder/bootstrap"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -233,13 +233,13 @@ path_to_new_instance = "examples/trial_folder"
 
 
 [Prepare_ReductionInfo]
-"declare_filepaths" = false
-"UMAP_filepath" = 0
-"BootstrapInfo_filepath" = 0
+"morphoframe_filepath" = 0
+# basically the TMD or the bootstrap_data
+"morphoframe_name" = 'TMD'
 
 # dictionary keys to the metadata
 "coordinate_key" = "X_umap"
-"morphoinfo_key" = "bootstrap_info"
+#"morphoinfo_key" = "bootstrap_info"
 "coordinate_axisnames" = "UMAP"
 
 "save_data" = true

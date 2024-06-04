@@ -32,7 +32,7 @@ class Vectorizer(object):
         return pi_list
     
     #TODO parallelize 
-    def _get_curve_list(self,
+    def _get_curve_vectorization_list(self,
                         curve_method = vectorizations.betti_curve,
                         t_list = None,
                         resolution = 1000):
@@ -82,7 +82,7 @@ class Vectorizer(object):
             t_list = np.linspace(xlims[0], xlims[1], resolution)
        
        #get the curve
-        curve_list = self._get_curve_list(curve_method = curve_method, 
+        curve_list = self._get_curve_vectorization_list(curve_method = curve_method, 
                                                t_list = t_list, 
                                                resolution = resolution)
         # normalize the curve

@@ -313,7 +313,6 @@ class Protocols(object):
                 save_filename=save_filename,
             )
         )
-        
         print("Bootstrap done!")
         
         self.metadata[params["morphoinfo_name"]] = (
@@ -324,9 +323,9 @@ class Protocols(object):
         
         self.morphoframe[params["bootstrapframe_name"]] = bootstrapped_frame
         
-        if params["save_data"]:
-            morphomics.utils.save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filename)
-            morphomics.utils.save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filename)
+        if save_filename is not None:
+            save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filename)
+            save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filename)
             
 
 
@@ -413,6 +412,7 @@ class Protocols(object):
         """
 
         params = self.parameters["Vectorizations"]
+
         vect_methods = params["vect_method_parameters"].keys()
         vect_parameters = params["vect_method_parameters"]
         vect_methods_names = [vectorization_codenames[vect_method] for vect_method in vect_methods]
@@ -458,10 +458,27 @@ class Protocols(object):
 
     def Embedding(self):
         """
-        Protocol: Takes vectors in 'metada' and embeds the vectors following the chosen embedding techniques
+        Protocol: Takes the vectors you want in morphoframe and embeds them following the chosen embedding techniques
         
         Parameters:
-        ----------
+        ----------        
+        Essential parameters:
+            PersistenceImages_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            filter_pixels (str): morphoframe key which will be filtered out
+            filteredpixelindex_filepath (float): spread of the Gaussian kernel
+            pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
+            run_PCA (1 or 0)): if 0, the persistence image array will not be initially reduced
+            n_PCs (list, (float, float))): number of PCs
+            n_neighbors (int): how many neighbors to consider when constructing the connectivity matrix
+            min_dist (float): minimum distance between points to consider as neighbors
+            spread (float): spread of points in the UMAP manifold
+            metric (str): metric to use to calculate distances between points
+            random_state (int): seed of the random number generator
+            densmap (1 or 0): trigger density-preserving mapping, i.e., location of points in the UMAP manifold reflects sparsity of points
+            n_components (int): dimension of the UMAP manifold
+            save_data (bool): trigger to save output of protocol
+            save_folder (str): location where to save the data
+            file_
 
         """
         params = self.parameters["Embedding"]
@@ -503,111 +520,23 @@ class Protocols(object):
         fit_embedders = []
         for embed_method in embed_methods:
             perform_embed_method = getattr(embedder, embed_method)
-            fit_embedder, embedded_vector = perform_embed_method()
+            fit_embedder, embedded_vectors = perform_embed_method()
 
             self.metadata[embed_method] = fit_embedder
             fit_embedders.append(fit_embedder)
    
-            embedder.tmd_vectors = embedded_vector
+            embedder.tmd_vectors = embedded_vectors
 
         # save the embedded vectors
         if save_filename is not None:
-            save_obj(obj = embedded_vector, filepath = save_filename + '_results')
+            save_obj(obj = embedded_vectors, filepath = save_filename + '_embedded_data')
             save_obj(obj = fit_embedders, filepath = save_filename + '_fitted_embedder')
 
-        self.morphoframe[params["morphoframe_name"]][embed_method_names] = list(embedded_vector)
+        self.morphoframe[params["morphoframe_name"]][embed_method_names] = list(embedded_vectors)
         print("Embedding done!")
 
-#       save_obj(F_umap, "%s-UMAPfunction%dD" % (save_filename, params["n_components"]) )
-#       save_obj(self.metadata["X_umap"], "%s-UMAPcoords%dD" % (save_filename, params["n_components"]) )
 
 
-    def UMAP(self):
-        """
-        Protocol: Takes the persistence images and calculates the UMAP manifold
-        
-        Essential parameters:
-            PersistenceImages_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-            filter_pixels (str): morphoframe key which will be filtered out
-            filteredpixelindex_filepath (float): spread of the Gaussian kernel
-            pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
-            run_PCA (1 or 0)): if 0, the persistence image array will not be initially reduced
-            n_PCs (list, (float, float))): number of PCs
-            n_neighbors (int): how many neighbors to consider when constructing the connectivity matrix
-            min_dist (float): minimum distance between points to consider as neighbors
-            spread (float): spread of points in the UMAP manifold
-            metric (str): metric to use to calculate distances between points
-            random_state (int): seed of the random number generator
-            densmap (1 or 0): trigger density-preserving mapping, i.e., location of points in the UMAP manifold reflects sparsity of points
-            n_components (int): dimension of the UMAP manifold
-            save_data (bool): trigger to save output of protocol
-            save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
-        """
-        params = self.parameters["UMAP"]
-        
-
-        # define output filename
-        file_prefix = "%s.UMAP"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])
-            
-        if params["PersistenceImages_filepath"]:
-            print("Loading persistence image matrix file...")
-            self.metadata["PI_matrix"] = morphomics.utils.load_obj(params["PersistenceImages_filepath"].replace(".pkl", ""))
-            
-        if params["filter_pixels"]:
-            if params["filteredpixelindex_filepath"]:
-                print("Loading indices used for filtering persistence images...")
-                _tokeep = morphomics.utils.load_obj(params["filteredpixelindex_filepath"].replace(".pkl", ""))
-            else:
-                print("Keeping pixels in persistence image with standard deviation of %.3f..."%float(params["pixel_std_cutoff"]))
-                _tokeep = np.where(
-                    np.std(self.metadata["PI_matrix"], axis=0) >= params["pixel_std_cutoff"]
-                )[0]
-                
-            self.metadata["PI_matrix"] = np.array([np.array(self.metadata["PI_matrix"][_i][_tokeep]) for _i in np.arange(len(self.metadata["PI_matrix"]))])
-
-            if params["save_data"]:
-                morphomics.utils.save_obj(_tokeep, "%s-FilteredIndex" % (save_filename))
-                morphomics.utils.save_obj(self.metadata["PI_matrix"], "%s-FilteredMatrix" % (save_filename))
-                
-        if params["run_PCA"]:
-            print("Running PCA...")
-            F_PCA = PCA(n_components=params["n_PCs"])
-            self.metadata["PI_matrix"] = F_PCA.fit_transform(self.metadata["PI_matrix"])
-        
-            if params["save_data"]:
-                morphomics.utils.save_obj(F_PCA, "%s-PCAfunction" % (save_filename) )
-                morphomics.utils.save_obj(self.metadata["PI_matrix"], "%s-PCAcoords" % (save_filename) )
-
-        print("Running UMAP with the following parameters:")
-        print("metric: %s"%(params["metric"]))
-        print("n_neighbors: %d"%(int(params["n_neighbors"])))
-        print("min_dist: %.5f"%(params["min_dist"]))
-        print("spread: %.2f"%(params["spread"]))
-        F_umap = umap.UMAP(
-            n_neighbors=params["n_neighbors"],
-            min_dist=params["min_dist"],
-            spread=params["spread"],
-            random_state=params["random_state"],
-            n_components=params["n_components"],
-            metric=params["metric"],
-            densmap=bool(params["densmap"]),
-        )
-
-        print("Umap done!")
-        
-        self.metadata["X_umap"] = F_umap.fit_transform(self.metadata["PI_matrix"])
-
-        if params["save_data"]:
-            morphomics.utils.save_obj(F_umap, "%s-UMAPfunction%dD" % (save_filename, params["n_components"]) )
-            morphomics.utils.save_obj(self.metadata["X_umap"], "%s-UMAPcoords%dD" % (save_filename, params["n_components"]) )
-        
-    
-    
     def Palantir(self):
         """
         Protocol: Takes the UMAP manifold, calculates diffusion maps using Palantir and outputs a force-directed layout of the maps
@@ -655,13 +584,13 @@ class Protocols(object):
         
         
         
-    def Prepare_ReductionInfo(self):
+    def old_Prepare_ReductionInfo(self):
         """
         Protocol: Takes the UMAP manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
         
         Essential parameters:
             declare_filepaths (true or false): prompt whether UMAP and morphoinfo files will be declared
-            UMAP_filepath (str): filepath to the UMAP manifold coordinates
+            embedded_data_filepath (str): filepath to the UMAP manifold coordinates
             BootstrapInfo_filepath (str): filepath to the morphoinfo file corresponding to the UMAP manifold coordinates
             coordinate_key (str): metadata key where UMAP coordinates are located, or will be stored
             morphoinfo_key (str): metadata key where morphoinfo is located, or will be stored
@@ -683,20 +612,59 @@ class Protocols(object):
         print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
         
         if params["declare_filepaths"]:
-            self.metadata[params["coordinate_key"]] = morphomics.utils.load_obj( params["UMAP_filepath"] )
+            self.metadata[params["coordinate_key"]] = morphomics.utils.load_obj( params["embedded_data_filepath"] )
             self.metadata[params["morphoinfo_key"]] = morphomics.utils.load_obj( params["BootstrapInfo_filepath"] )
                 
             assert params["coordinate_key"] in self.metadata.keys(), "Run UMAP first!"
             assert params["morphoinfo_key"] in self.metadata.keys(), "Bootstrap_info is not found"
         
         _reduction_info = self.metadata[params["morphoinfo_key"]].copy()
+        _reduction_info = self.metadata[params["coordinate_key"]].shape[1]
+        print(_reduction_info)
         for dims in range(self.metadata[params["coordinate_key"]].shape[1]):
             _reduction_info["%s_%d"%(params["coordinate_axisnames"], dims+1)] = self.metadata[params["coordinate_key"]][:, dims]
         _reduction_info.to_csv( save_filename )
 
         print("Reduction done!")
             
+    def Prepare_ReductionInfo(self):
+        """
+        Protocol: Takes the UMAP manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
         
+        Essential parameters:
+            declare_filepaths (true or false): prompt whether UMAP and morphoinfo files will be declared
+            embedded_data_filepath (str): filepath to the UMAP manifold coordinates
+            BootstrapInfo_filepath (str): filepath to the morphoinfo file corresponding to the UMAP manifold coordinates
+            coordinate_key (str): metadata key where UMAP coordinates are located, or will be stored
+            morphoinfo_key (str): metadata key where morphoinfo is located, or will be stored
+            coordinate_axisnames (str): name of the coordinate (e.g., UMAP)
+            save_data (bool): trigger to save output of protocol
+            save_folder (str): location where to save the data
+            file_prefix (str or 0): this will be used as the file prefix
+        """
+        params = self.parameters["Prepare_ReductionInfo"]
+    
+        # define output filename
+        file_prefix = "%s.ReductionInfo"%(self.file_prefix)
+        save_filename = self._define_filename(params = params, 
+                                              save_folder_path = params["save_folder"], 
+                                              file_prefix = file_prefix, 
+                                              save_data = params["save_data"])
+        save_filename = "%s.csv" % (save_filename)
+
+        print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
+
+        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"], 
+                                           variable_name = params["morphoframe_name"])
+        
+        reduction_morphoframe = _morphoframe.copy()
+        print(_morphoframe[params["coordinate_key"]].shape())
+        for dims in range(_morphoframe[params["coordinate_key"]].shape[1]):
+            reduction_morphoframe["%s_%d"%(params["coordinate_axisnames"], dims+1)] = reduction_morphoframe[params["coordinate_key"]][:, dims]
+
+        reduction_morphoframe.to_csv( save_filename )
+
+        print("Reduction done!")
         
     def Mapping(self):
         """

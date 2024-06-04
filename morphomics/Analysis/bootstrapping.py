@@ -265,7 +265,7 @@ def get_subsampled_population_from_infoframe(
             ignore_index=True,
         )
     
-    _b_frame = _b_frame.loc[_b_frame["Morphologies"].notna()].reset_index(drop=True)
+    _b_frame = _b_frame.loc[_b_frame["tree"].notna()].reset_index(drop=True)
 
     # create the conditions for bootstrapping
     _b_frame["bootstrap_condition"] = ""
@@ -345,7 +345,7 @@ def get_subsampled_population_from_infoframe(
     )
     
     bootstrapped_morphologies = bootstrapped_morphologies.loc[
-        bootstrapped_morphologies["Barcodes"].notna()
+        bootstrapped_morphologies["barcodes"].notna()
     ].reset_index(drop=True)
 
     if save_filename is not None:
