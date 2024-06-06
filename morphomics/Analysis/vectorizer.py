@@ -77,7 +77,7 @@ class Vectorizer(object):
         else:
             # get the birth and death distance limits for the curve
             _xlims, _ylims = vectorizations.get_limits(self.tmd)
-            if xlims is None:
+            if xlims is None or xlims == "None":
                 xlims = [np.min([_xlims[0], _ylims[0]]), np.max([_xlims[1], _ylims[1]])]
             t_list = np.linspace(xlims[0], xlims[1], resolution)
        
@@ -181,9 +181,9 @@ class Vectorizer(object):
         else:
             # get the birth and death distance limits for the persistence images
             _xlims, _ylims = vectorizations.get_limits(self.tmd)
-            if xlims is None:
+            if xlims is None or xlims == "None":
                 xlims = _xlims
-            if ylims is None:
+            if ylims is None or ylims == "None":
                 ylims = _ylims
 
         pi_list = self._get_persistence_image_list(norm_factor = 1,

@@ -18,16 +18,19 @@ import matplotlib.pyplot as plt
 
 class Protocols(object):
     
-    def __init__(self, parameters, Parameters_ID):
+    def __init__(self, parameters, Parameters_ID, morphoframe = {}, metadata = {}) :
         self.parameters = parameters
         self.file_prefix = f"Morphomics.PID_{Parameters_ID}"
-        self.morphoframe = {}
-        self.metadata = {}
+        self.morphoframe = morphoframe
+        self.metadata = metadata
         
         print("Unless you have specified the file prefix in the succeeding executables, \nthis will be the file prefix: %s"%(self.file_prefix))
 
     ## Private
-    def _find_variable(self, variable_filepath, variable_name, morphoframe = True):
+    def _get_variable(self, variable_filepath, 
+                       variable_name, 
+                       column_name = False,
+                       morphoframe = True):
         """
         finds the variable that should be processed/used by the protocol
 
@@ -42,7 +45,9 @@ class Protocols(object):
         """ 
         if variable_filepath:
             print("Loading %s file..." %(variable_filepath))
-            _morphoframe = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
+            _column = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
+            if column_name:
+                _morphoframe = {column_name : _column}
         elif morphoframe:
             _morphoframe = self.morphoframe[variable_name]  
         else:
@@ -50,7 +55,7 @@ class Protocols(object):
 
         return _morphoframe
 
-    def _define_filename(self, params, save_folder_path, file_prefix, save_data = True):
+    def _set_filename(self, params, save_folder_path, file_prefix, save_data = True):
         """
         defines the name of the file containing the output of the protocol
 
@@ -79,9 +84,9 @@ class Protocols(object):
     def _image_filtering(self, persistence_images, params, save_filename):
 
         #if os.path.isfile(params["FilteredPixelIndex_filepath"]):
-        if params["filteredpixelindex_filepath"]:
+        if params["FilteredPixelIndex_filepath"]:
             print("Loading indices used for filtering persistence images...")
-            _tokeep = morphomics.utils.load_obj(params["filteredpixelindex_filepath"].replace(".pkl", ""))
+            _tokeep = morphomics.utils.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
         else:
             print("Keeping pixels in persistence image with standard deviation of %.3f..."%float(params["pixel_std_cutoff"]))
             _tokeep = np.where(
@@ -123,7 +128,7 @@ class Protocols(object):
         
         # define output filename
         file_prefix = "%s.TMD-%s"%(self.file_prefix, params["filtration_function"])
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -195,8 +200,9 @@ class Protocols(object):
         params = self.parameters["Clean_frame"]
         
         # define morphoframe to clean
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                            variable_name = params["morphoframe_name"],
+                                            column_name = False)
 
         # drops empty morphologies, potentially artifacts
         _morphoframe = _morphoframe.loc[~_morphoframe.barcodes.isna()].reset_index(
@@ -244,7 +250,7 @@ class Protocols(object):
         
         # initialize output filename
         file_prefix = "%s.Cleaned"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -285,12 +291,13 @@ class Protocols(object):
         params = self.parameters["Bootstrap"]
                 
         # initialize morphoframe to bootstrap
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"])   
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                            variable_name = params["morphoframe_name"],
+                                            column_name = False)   
 
         # define output filename
         file_prefix = "%s.Bootstrapped"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -351,15 +358,16 @@ class Protocols(object):
         params = self.parameters["Persistence_Images"]
         
         # define morphoframe to compute persistence image
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                           variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"],
+                                           column_name = "barcodes")
         assert (
             "barcodes" in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
 
         # define output filename
         file_prefix = "%s.PersistenceImages"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -423,15 +431,16 @@ class Protocols(object):
 
 
         # define morphoframe to compute vectorizations
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                           variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"],
+                                           column_name = 'barcodes')
         assert (
             "barcodes" in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
 
         # define output filename
         file_prefix = "%s.Vectorizations-%s"%(self.file_prefix, vect_method_names)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -439,7 +448,7 @@ class Protocols(object):
         print("Computes %s and concatenates the vectors" %(vect_method_names))
         
         vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
-                                            vect_parameters = vect_parameters)
+                                vect_parameters = vect_parameters)
         
         output_vectors = []
         for vect_method in vect_methods:
@@ -459,7 +468,7 @@ class Protocols(object):
 
 
 
-    def Embedding(self):
+    def Embeddings(self):
         """
         Protocol: Takes the vectors you want in morphoframe and embeds them following the chosen embedding techniques
         
@@ -484,7 +493,7 @@ class Protocols(object):
             file_
 
         """
-        params = self.parameters["Embedding"]
+        params = self.parameters["Embeddings"]
 
         embed_methods = params["embed_method_parameters"].keys()
         embed_parameters = params["embed_method_parameters"]
@@ -493,13 +502,14 @@ class Protocols(object):
         vectors_to_embed = params["vectors_to_embed"]
 
         # define morphoframe to compute embedding
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                           variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                           variable_name = params["morphoframe_name"],
+                                           column_name = vectors_to_embed)
         X = np.vstack(_morphoframe[vectors_to_embed])
 
         # define output filename
         file_prefix = "%s.Embeddings-%s"%(self.file_prefix, embed_method_names)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -557,7 +567,7 @@ class Protocols(object):
         
         # define output filename
         file_prefix = "%s.Palantir"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -602,11 +612,11 @@ class Protocols(object):
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
         """
-        params = self.parameters["Prepare_ReductionInfo"]
+        params = self.parameters["Save_EmbedInfo"]
     
         # define output filename
         file_prefix = "%s.ReductionInfo"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -614,11 +624,12 @@ class Protocols(object):
 
         print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
 
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"], 
-                                           variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"], 
+                                           variable_name = params["morphoframe_name"],
+                                           column_name = False)
         
         _morphoframe_reduced_copy = _morphoframe[params["condition_to_save"]].copy()
-        reduction_column = _morphoframe[params["coordinate_key"]].copy()
+        reduction_column = _morphoframe[params["embed_method"]].copy()
         reduction_column = np.vstack(reduction_column)
 
         for dims in range(reduction_column.shape[1]):
@@ -629,7 +640,7 @@ class Protocols(object):
         os.makedirs(save_directory, exist_ok=True)
         _morphoframe_reduced_copy.to_csv( save_filename, index = True)
 
-        print("Embedded coordibnates done and saved!")
+        print("Embedded coordinates done and saved!")
         
 
 
@@ -652,22 +663,25 @@ class Protocols(object):
 
         # define output filename
         file_prefix = "%s.Mapping"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])            
             
         # define morphoframe that contains the fitted embedder
         print("Loading fitted embedder function...")    
-        _metadata = self._find_variable(variable_filepath = params["fitted_embedder_filepath"],
+        _metadata = self._get_variable(variable_filepath = params["fitted_embedder_filepath"],
                                             variable_name = None,
+                                            column_name = params["embed_method"],
                                             morphoframe = False)
-        f_embedder = _metadata[params["embed_method"]]
+        print(_metadata, type(_metadata))
+        f_embedders = _metadata[params["embed_method"]]
 
         print("Loading persistence image matrix file...")
-        _morphoframe = self._find_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"])
-        vector_to_embed = _morphoframe[params["vector_to_embed"]].copy()
+        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
+                                            variable_name = params["morphoframe_name"],
+                                            column_name = params["vectors_to_embed"])
+        vector_to_embed = _morphoframe[params["vectors_to_embed"]].copy()
         vector_to_embed = np.vstack(vector_to_embed)
        
         if params["filter_pixels"] and os.path.isfile(params["FilteredPixelIndex_filepath"]):
@@ -675,14 +689,22 @@ class Protocols(object):
                                     params = params, 
                                     save_filename = save_filename)
 
+        normalize = params['normalize']
+        if normalize:
+            print("Normalize the vectors")
+            normalizer = Normalizer()
+            vector_to_embed = normalizer.fit_transform(vector_to_embed)
+
         print("Mapping vectors into the embedded space...")
-        embedded_vectors = f_embedder.transform(vector_to_embed)
-                
+        for f_embedder in f_embedders:
+            embedded_vectors = f_embedder.transform(vector_to_embed)
+            vector_to_embed = embedded_vectors.copy()
+
         if params["save_data"]:
             morphomics.utils.save_obj(obj = embedded_vectors,
                                       filepath = "%s-EmbedCoords%dD" % (save_filename, embedded_vectors.shape[1]) )
         
-        self.morphoframe[params["morphoframe_name"]][params["embed_method"] + 'transformed'] = list(embedded_vectors)
+        self.morphoframe[params["morphoframe_name"]][params["embed_method"] + '_transformed'] = list(embedded_vectors)
         print("Mapping done!")
 
        
@@ -705,7 +727,7 @@ class Protocols(object):
             
         # define output filename
         file_prefix = "%s.Sholl"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
@@ -760,7 +782,7 @@ class Protocols(object):
 
         # define output filename
         file_prefix = "%s.Morphometrics"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
@@ -820,7 +842,7 @@ class Protocols(object):
         
         # define output filename
         file_prefix = "%s.Plot"%(self.file_prefix)
-        save_filename = self._define_filename(params = params, 
+        save_filename = self._set_filename(params = params, 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
