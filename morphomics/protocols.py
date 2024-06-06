@@ -19,6 +19,21 @@ import matplotlib.pyplot as plt
 class Protocols(object):
     
     def __init__(self, parameters, Parameters_ID, morphoframe = {}, metadata = {}) :
+        """
+        initialize the Protocols instance
+
+        Parameters
+        ----------
+        parameters (dict): contains the parameters for each protocol that would be run
+                            parameters = {'protocol_1 : { parameter_1_1: x_1_1, ..., parameter_1_n: x_1_n},
+                                            ...
+                                            'protocol_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
+                                        } 
+        Parameters_ID (str): a way to characterize the name of all saved files from the same Protocols instance
+        morphoframe (dict): contais the data from cells, each column is a feature and each raw is a cell
+        metadata (dict): contains the tools that the pipeline use, contains the data that are not ordered by row/cell
+        """
+
         self.parameters = parameters
         self.file_prefix = f"Morphomics.PID_{Parameters_ID}"
         self.morphoframe = morphoframe
@@ -36,13 +51,16 @@ class Protocols(object):
 
         Parameters
         ----------
-        variable_filepath (str): path to the file that contains variable of interest
-        variable_name (str): name of the variable of interest in morphoframe
-
+        variable_filepath (str): path to the file that contains the variable of interest
+        variable_name (str): name of the variable of interest in self.morphoframe
+        column_name (str or False): name of the the variable from variable_filepath 
+        morphoframe (bool): choose betwenn self.morphoframe and self.metadata
+        
         Returns
         -------
-        the variable used by the protocol
+        the variable used by the protocol (dict)
         """ 
+
         if variable_filepath:
             print("Loading %s file..." %(variable_filepath))
             _column = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
@@ -55,31 +73,32 @@ class Protocols(object):
 
         return _morphoframe
 
-    def _set_filename(self, params, save_folder_path, file_prefix, save_data = True):
+    def _set_filename(self, params, save_folder_path, file_name, save_data = True):
         """
         defines the name of the file containing the output of the protocol
 
-        Paramters
+        Parameters
         ---------
         params (dict): the parameters of the protocol
-        save_folder_path (str): the folder path to where file is saved 
-        file_prefix (str): a big part of the name of the file to save
+        save_folder_path (str): the folder path containing the saved file 
+        file_name (str): a big part of the name of the file to save
         save_data (bool): data will be saved or not
 
         Returns
         -------
-        the name of the file containing the output of the protocol
+        save_filename_path (str): the path of the file containing the output of the protocol
         """
-        if save_data:
-            if params["file_prefix"] == 0:
-                params["file_prefix"] = file_prefix
-            if save_folder_path == 0:
-                params["save_folder"] = os.getcwd()
-            save_filename = "%s/%s" % (params["save_folder"], params["file_prefix"])
-        else:
-            save_filename = None
 
-        return save_filename
+        if save_data:
+            if file_name == 0:
+                params["file_name"] = file_name
+            if save_folder_path == 0:
+                params["save_folder_path"] = os.getcwd()
+            save_filename_path = "%s/%s" % (params["save_folder_path"], params["file_name"])
+        else:
+            save_filename_path = None
+
+        return save_filename_path
     
     def _image_filtering(self, persistence_images, params, save_filename):
 
@@ -110,40 +129,50 @@ class Protocols(object):
         Essential parameters:
             data_location_filepath (str): location of the filepath
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
-            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
             conditions (list, str): this must match the hierarchical structure of `data_location_filepath`
+            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
             separated_by (str): saving chunks of the morphoframe via this condition, this must be an element of `conditions`
             morphoframe_name (str): this is how the morphoframe will be called
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
+            file_name (str or 0): this will be used as the file prefix
 
         Returns
         -------
         add a dataframe with key morphoframe_name to morphoframe
-        each row in the dataframe is tmd data from one cell
+        each row in the dataframe is data from one cell
         """
+
         params = self.parameters["Input"]
 
+        data_location_filepath = params["data_location_filepath"]
+        extension = params["extension"]
+        conditions = params["conditions"]
+        filtration_function = params["filtration_function"]
+        separated_by = params["separated_by"]
+        morphoframe_name = params["morphoframe_name"]
+        save_data = params["save_data"]
+        save_folder = params["save_folder"]
+        file_name = params["file_name"]
         
         # define output filename
-        file_prefix = "%s.TMD-%s"%(self.file_prefix, params["filtration_function"])
+        file_name = "%s.TMD-%s"%(self.file_prefix, filtration_function)
         save_filename = self._set_filename(params = params, 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])
+                                              save_folder_path = save_folder, 
+                                              file_name = file_name, 
+                                              save_data = save_data)
 
-        print("Loading the data from %s"%(params["data_location_filepath"]))
+        print("Loading the data from %s"%(data_location_filepath))
         print("Saving dataset in %s"%(save_filename))
 
         # load the data
-        self.morphoframe[params["morphoframe_name"]] = morphomics.io.load_data(
-            folder_location=params["data_location_filepath"],
-            extension=params["extension"],
-            conditions=params["conditions"],
-            filtration_function=params["filtration_function"],
-            separated_by=params["separated_by"],
-            save_filename=save_filename,
+        self.morphoframe[morphoframe_name] = morphomics.io.load_data(
+            folder_location = data_location_filepath,
+            extension = extension,
+            conditions = conditions,
+            filtration_function = filtration_function,
+            separated_by = separated_by,
+            save_filename = save_filename,
         )
 
         print("Input done!")

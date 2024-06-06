@@ -223,7 +223,6 @@ def get_barcodes_from_df(
         info_frame.loc[_idx, "barcodes"] = analysis.collapse(
             exclude_single_branch_ph(pops.neurons[ii], feature=filtration_function)
         )
-
     if save_filename is not None:
         save_obj(info_frame, save_filename)
         _np.savetxt("%s-FailedFiles.txt" % (save_filename), failed_files, delimiter='\n', fmt="%s")
