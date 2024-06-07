@@ -1,8 +1,8 @@
 # morphOMICs pipeline and parameter setup
 
 # sequential list of executables
-# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Persistence_Images, 
-#                         , Plotting, Mapping, Clear_morphframe, Save_EmbedInfo, 
+# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Embeddings,
+#                         Plotting, Mapping, Clear_morphframe, Save_embedded, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols_test = [
@@ -10,7 +10,7 @@ Protocols_test = [
         "Clean_frame",
         "Vectorizations",
         "Embeddings",
-        "Save_EmbedInfo",
+        "Save_embedded",
         "Mapping",
     ]
 
@@ -41,6 +41,10 @@ path_to_new_instance = "examples/trial_folder"
             "Sex",
             "Animal",
         ]
+
+# saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
+# this must be an element of `conditions`
+"separated_by" = "Model"
         
 # this is the TMD filtration function, can either be radial_distances, or path_distances
 "filtration_function" = "radial_distances"
@@ -51,16 +55,12 @@ path_to_new_instance = "examples/trial_folder"
 # I would advise saving the loaded data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 
-# saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
-# this must be an element of `conditions`
-"separated_by" = "Model"
-
 # location where to save the data
-"save_folder" = "examples/trial_folder/tmd_test"
+"save_folderpath" = "examples/trial_folder/tmd_test"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[filtration_function].[separated_by]-
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 
@@ -102,11 +102,11 @@ path_to_new_instance = "examples/trial_folder"
 "save_data" = true
 
 # location where to save the data
-"save_folder" = "examples/trial_folder/tmd_test_cleaned"
+"save_folderpath" = "examples/trial_folder/tmd_test_cleaned"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Cleaned.
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 
@@ -155,10 +155,10 @@ path_to_new_instance = "examples/trial_folder"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "examples/trial_folder/bootstrap_test"
+"save_folderpath" = "examples/trial_folder/bootstrap_test"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 
@@ -168,8 +168,8 @@ path_to_new_instance = "examples/trial_folder"
 "morphoframe_name" = "tmd_test"
 
 "save_data" = true
-"save_folder" = "examples/trial_folder/vectors_test"
-"file_prefix" = 0
+"save_folderpath" = "examples/trial_folder/vectors_test"
+"save_filename" = 0
 
     [Vectorizations.vect_method_parameters]
 
@@ -203,64 +203,65 @@ path_to_new_instance = "examples/trial_folder"
 "normalize" = true
 
 "save_data" = true
-"save_folder" = "examples/trial_folder/embeddings_test"
-"file_prefix" = 0
+"save_folderpath" = "examples/trial_folder/embeddings_test"
+"save_filename" = 0
 
     [Embeddings.embed_method_parameters] 
 
         [Embeddings.embed_method_parameters.pca]
-        "n_components" = 3
+        "n_components" = 10
         "svd_solver" = true
         "pca_version" = 'normal'                 
                                 
-        # [Embeddings.embed_method_parameters.umap]
-        # "n_components" = 3
-        # "n_neighbors" = 20
-        # "min_dist" = 0.1
-        # "spread" = 3.0
-        # "random_state" = 10
-        # "metric" = "manhattan"
-        # "densmap" = false
+        [Embeddings.embed_method_parameters.umap]
+        "n_components" = 3
+        "n_neighbors" = 20
+        "min_dist" = 0.1
+        "spread" = 3.0
+        "random_state" = 10
+        "metric" = "manhattan"
+        "densmap" = false
 
 
 
-[Save_EmbedInfo]
+[Save_embedded]
 "morphoframe_filepath" = 0
 # basically the TMD or the bootstrap_data
 "morphoframe_name" = 'tmd_test'
 
-"fitted_embedder_filepath" = 0
-"embed_method" = "pca"
-"coordinate_axisnames" = "pca_2"
-"condition_to_save" = ["Region",
+"embed_method" = "pca_umap"
+"coordinate_axisnames" = "pca_umap_2"
+"conditions_to_save" = ["Region",
                         "Model",
                         "Sex"]
 
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "examples/trial_folder/reduction_test"
+"save_folderpath" = "examples/trial_folder/reduction_test"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 
 [Mapping]
-"morphoframe_filepath" = 'examples/trial_folder/embeddings_train/Morphomics.PID_train.Embeddings-pca_fitted_embedder.pkl'
-"morphoframe_name" = 'tmd_test'
-"vectors_to_embed" = 'lsc_bc_lec'
-"filter_pixels" = false
-"normalize" = true
 
-"fitted_embedder_filepath" = 0
-"embed_method" = "pca"
+"fitted_embedder_filepath" = 'examples/trial_folder/embeddings_train/Morphomics.PID_train.Embeddings-pca_umap_fitted_embedder.pkl'
+"embed_method" = "pca_umap"
+
+"morphoframe_filepath" = 0
+"morphoframe_name" = 'tmd_test'
+"vectors_to_embed_name" = 'lsc_bc_lec'
+"filter_pixels" = false
+"FilteredPixelIndex_filepath" = 'None'
+"normalize" = true
 
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "examples/trial_folder/mapping_test"
+"save_folderpath" = "examples/trial_folder/mapping_test"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 [Plotting]
