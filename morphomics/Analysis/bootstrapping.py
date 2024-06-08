@@ -9,7 +9,7 @@ from scipy.cluster.hierarchy import linkage, fcluster
 from math import comb
 from itertools import combinations
 
-from morphomics.Analysis.reduction import get_distance_array
+from morphomics.Analysis.old_reduction import get_distance_array
 from morphomics.utils import save_obj
 
 bootstrap_methods = {

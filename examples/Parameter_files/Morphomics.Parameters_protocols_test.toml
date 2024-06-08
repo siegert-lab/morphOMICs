@@ -1,7 +1,7 @@
 # morphOMICs pipeline and parameter setup
 
 # sequential list of executables
-# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Embeddings,
+# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions,
 #                         Plotting, Mapping, Clear_morphframe, Save_embedded, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
@@ -9,7 +9,7 @@ Protocols_test = [
         "Input",
         "Clean_frame",
         "Vectorizations",
-        "Embeddings",
+        "Dim_reductions",
         "Save_embedded",
         "Mapping",
     ]
@@ -193,27 +193,27 @@ path_to_new_instance = "examples/trial_folder"
 
 
 
-[Embeddings]
+[Dim_reductions]
 # if not 0, must contain the filepath to the morphoframe
 "morphoframe_filepath" = 0
 "morphoframe_name" = "tmd_test"
 
-"vectors_to_embed" = 'lsc_bc_lec'
+"vectors_to_reduce" = 'lsc_bc_lec'
 "filter_pixels" = false
 "normalize" = true
 
 "save_data" = true
-"save_folderpath" = "examples/trial_folder/embeddings_test"
+"save_folderpath" = "examples/trial_folder/dim_reductions_test"
 "save_filename" = 0
 
-    [Embeddings.embed_method_parameters] 
+    [Dim_reductions.dimred_method_parameters] 
 
-        [Embeddings.embed_method_parameters.pca]
+        [Dim_reductions.dimred_method_parameters.pca]
         "n_components" = 10
         "svd_solver" = true
         "pca_version" = 'normal'                 
                                 
-        [Embeddings.embed_method_parameters.umap]
+        [Dim_reductions.dimred_method_parameters.umap]
         "n_components" = 3
         "n_neighbors" = 20
         "min_dist" = 0.1
@@ -229,7 +229,7 @@ path_to_new_instance = "examples/trial_folder"
 # basically the TMD or the bootstrap_data
 "morphoframe_name" = 'tmd_test'
 
-"embed_method" = "pca_umap"
+"dimred_method" = "pca_umap"
 "coordinate_axisnames" = "pca_umap_2"
 "conditions_to_save" = ["Region",
                         "Model",
@@ -246,12 +246,12 @@ path_to_new_instance = "examples/trial_folder"
 
 [Mapping]
 
-"fitted_embedder_filepath" = 'examples/trial_folder/embeddings_train/Morphomics.PID_train.Embeddings-pca_umap_fitted_embedder.pkl'
-"embed_method" = "pca_umap"
+"fitted_dimreducer_filepath" = 'examples/trial_folder/embeddings_train/Morphomics.PID_train.Embeddings-pca_umap_fitted_embedder.pkl'
+"dimred_method" = "pca_umap"
 
 "morphoframe_filepath" = 0
 "morphoframe_name" = 'tmd_test'
-"vectors_to_embed_name" = 'lsc_bc_lec'
+"vectors_to_reduce_name" = 'lsc_bc_lec'
 "filter_pixels" = false
 "FilteredPixelIndex_filepath" = 'None'
 "normalize" = true
