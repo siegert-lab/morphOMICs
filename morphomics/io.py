@@ -17,6 +17,7 @@ from tmd.io.swc import SWC_DCT
 from tmd.io.swc import read_swc
 from tmd.io.swc import swc_to_data
 from tmd.io.io import make_tree
+from tmd.io import io
 from tmd.Population import Population
 from tmd.Neuron import Neuron
 from tmd.Tree import Tree
@@ -35,21 +36,6 @@ class LoadNeuronError(Exception):
     """
     Captures the exception of failing to load a single neuron
     """
-
-def load_ph_file(filename, delimiter=" "):
-    """Load PH file in a np.array
-
-    Args:
-        filename (str): Path to the PH file
-        delimiter (str): separator to use. Defaults to " ".
-
-    Returns:
-        numpy array: persistence barcode
-    """
-    f = open(filename, "r")
-    ph = _np.array([_np.array(line.split(delimiter), dtype=float) for line in f])
-    f.close()
-    return ph
 
 def load_neuron(
     input_file,
@@ -81,7 +67,6 @@ def load_neuron(
             read_swc(input_file=input_file, line_delimiter=line_delimiter)
         )
         neuron = Neuron.Neuron(name=input_file.replace(".swc", ""))
-
     try:
         soma_ids = _np.where(_np.transpose(data)[1] == soma_index)[0]
     except IndexError:
@@ -165,7 +150,8 @@ def load_population(neurons, tree_types=None, name=None):
     for filename in files:
         try:
             assert filename.endswith((".swc"))
-            pop.append_neuron(load_neuron(input_file = filename, tree_types=tree_types))
+            neuron = load_neuron(input_file = filename, tree_types=tree_types)
+            pop.append_neuron(neuron)
             fnames.append(filename)
         except AssertionError:
             raise Warning("{} is not a valid swc file".format(filename))
@@ -181,7 +167,7 @@ def load_population(neurons, tree_types=None, name=None):
 def exclude_single_branch_ph(neuron, feature="radial_distances"):
     """
     Calculates persistence diagram and only considers
-    only those with more than one bar
+    those with more than one bar
     """
     phs = []
     for tree in neuron.neurites:
@@ -262,10 +248,11 @@ def load_data(
         "path_distances",
     ], "Currently, TMD is only implemented with either radial_distances or path_distances"
 
-    # get all the files in folder_location
+    # get all the file names in folder_location
     filenames = glob.glob(
         "%s%s/*%s" % (folder_location, "/*" * len(conditions), extension)
     )
+    # print a sample of file names
     nb_files = len(filenames)
     if nb_files > 0:
         print("Sample filenames:")

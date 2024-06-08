@@ -20,39 +20,6 @@ from morphomics.utils import norm_methods, scipy_metric
 from morphomics.default_parameters import defaults
 
 
-def _get_persistence_image_data_single(ar):
-    '''This function takes in an array `ar` containing various parameters, calculates persistence image
-    data based on those parameters, and returns the result along with the persistence barcode.
-    
-    Parameters
-    ----------
-    ar
-        The function `_get_persistence_image_data_single` takes in a list `ar` as input with the following
-    elements:
-    
-    Returns
-    -------
-        The function `_get_persistence_image_data_single` returns a tuple containing the result of the
-    analysis function `get_persistence_image_data` and the persistence barcode `ar[0]`.
-    
-    '''
-    """
-    ar[0]:   persistence barcode
-    ar[1,2]: x, y-lims
-    ar
-    ar[3]:   bw-method
-    ar[4]:   normalization method (see morphomics.utils.norm_methods)
-    ar[5]:   bar weights
-    """
-    if len(ar[0]) >= 0:
-        res = vectorizations.get_persistence_image_data(
-            ar[0], xlims=ar[1], ylims=ar[2],resolution=ar[3], bw_method=ar[4], norm_method=ar[5], weights=ar[6]
-        )
-    else:
-        res = []
-    return res, ar[0]
-
-
 def _get_pairwise_distance_from_persistence(
     imgs1, metric="l1", chunks=10, to_squareform=True
 ):

@@ -4,9 +4,9 @@ import morphomics.io
 import os
 
 from morphomics.Analysis.vectorizer import Vectorizer
-from morphomics.Analysis.embedder import Embedder
+from morphomics.Analysis.dim_reducer import DimReducer
 
-from morphomics.utils import save_obj, vectorization_codenames
+from morphomics.utils import save_obj, load_obj, vectorization_codenames
 from sklearn.preprocessing import Normalizer
 
 import numpy as np
@@ -19,7 +19,7 @@ class Protocols(object):
     
     def __init__(self, parameters, Parameters_ID, morphoframe = {}, metadata = {}) :
         """
-        initialize the Protocols instance
+        Initializes the Protocols instance.
 
         Parameters
         ----------
@@ -29,8 +29,12 @@ class Protocols(object):
                                             'protocol_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
                                         } 
         Parameters_ID (str): a way to characterize the name of all saved files from the same Protocols instance i.e. prefix
-        morphoframe (dict): contais the data from cells, each column is a feature and each raw is a cell
+        morphoframe (dict): contais the data from cells, each column is a feature and each row is a cell
         metadata (dict): contains the tools that the pipeline use, contains the data that are not ordered by row/cell
+
+        Returns
+        -------
+        An instance of protocols.
         """
 
         self.parameters = parameters
@@ -46,7 +50,7 @@ class Protocols(object):
                        column_name = False,
                        morphoframe = True):
         """
-        finds the variable that should be processed/used by the protocol
+        Finds the variable that should be processed/used by the protocol
 
         Parameters
         ----------
@@ -57,7 +61,7 @@ class Protocols(object):
         
         Returns
         -------
-        the variable used by the protocol (dict)
+        _morphoframe (dict): the variable used by the protocol
         """ 
 
         if variable_filepath:
@@ -72,13 +76,13 @@ class Protocols(object):
 
         return _morphoframe
 
-    def _set_filename(self, params, save_folderpath, save_filename, default_save_filename, save_data = True):
+    def _set_filename(self, protocol_name, save_folderpath, save_filename, default_save_filename, save_data = True):
         """
-        defines the name of the file containing the output of the protocol
+        Defines the path of the file containing the output of the protocol.
 
         Parameters
-        ---------
-        params (dict): the parameters of the protocol
+        ----------
+        protocol_name (str): the name of the protocol
         save_folderpath (str): the folder path containing the saved file 
         save_filename (str): name of the file that will be saved
         save_data (bool): data will be saved or not
@@ -86,15 +90,15 @@ class Protocols(object):
         Returns
         -------
         save_filepath (str): the path of the file containing the output of the protocol
-        update save_folderpath and save_filename in params 
+        update save_folderpath and save_filename of the protocol in self.parameters
         """
 
         if save_data:
             if save_filename == 0:
-                params["save_filename"] = default_save_filename
+                self.parameters[protocol_name]["save_filename"] = default_save_filename
             if save_folderpath == 0:
-                params["save_folderpath"] = os.getcwd()
-            save_filepath = "%s/%s" % (params["save_folderpath"], params["save_filename"])
+                self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
+            save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.parameters[protocol_name]["save_filename"])
         else:
             save_filepath = None
 
@@ -124,14 +128,14 @@ class Protocols(object):
     ## Public
     def Input(self):
         """
-        Protocol: Load .swc files, transform them into TMD barcodes and store them as a morphoframe
+        Protocol: Load .swc files, transform them into TMD barcodes and store them as a morphoframe.
         
         Essential parameters:
             data_location_filepath (str): location of the filepath
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
             conditions (list, str): this must match the hierarchical structure of `data_location_filepath`
-            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
             separated_by (str): saving chunks of the morphoframe via this condition, this must be an element of `conditions`
+            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
             morphoframe_name (str): this is how the morphoframe will be called
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
@@ -139,8 +143,8 @@ class Protocols(object):
         
         Returns
         -------
-        add a dataframe with key morphoframe_name to morphoframe
-        each row in the dataframe is data from one cell and each column is a fetaure of the cell
+        Add a dataframe with key morphoframe_name to morphoframe.
+        Each row in the dataframe is data from one cell and each column is a fetaure of the cell.
         """
 
         params = self.parameters["Input"]
@@ -158,7 +162,7 @@ class Protocols(object):
         
         # define output filename
         default_save_filename = "%s.TMD-%s"%(self.file_prefix, filtration_function)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Input", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
@@ -183,30 +187,38 @@ class Protocols(object):
 
     def Load_data(self):
         """
-        Protocol: Load morphoframe output files from Protocols.Input
+        Protocol: Load morphoframe from .pkl files.
         
         Essential parameters:
             folderpath_to_data (str): location to the pickle file outputs to Protocols.Input 
-            filename_prefix (str): ommon prefix of the pickle files to be loaded, must be inside `folderpath_to_data`
-            conditions_to_include (arr): the different conditions that you want to load
+            filepath_to_data (0 or str): full path to file to be loaded
+            filename_prefix (str): common prefix of the pickle files to be loaded, must be inside `folderpath_to_data`
+            conditions_to_include (list of str): the different conditions that you want to load
             morphoframe_name (str): this is how the morphoframe will be called
+        
+        Returns
+        -------
+        Add a dataframe to morphoframe.
         """
         params = self.parameters["Load_data"]
         
-        # _morphoframe = {}
-        # for _c in params["conditions_to_include"]:
-        #     print("...loading %s" % _c)
-        #     save_filename = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
-        #     _morphoframe[_c] = morphomics.utils.load_obj(save_filename.replace(".pkl", ""))
+        if params["filepath_to_data"] == 0:
+            self.morphoframe[params["morphoframe_name"]] = load_obj(params["filepath_to_data"])
 
-        # self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
-        self.morphoframe[params["morphoframe_name"]] = morphomics.utils.load_obj(params["folderpath_to_data"])
+        else:
+            _morphoframe = {}
+            for _c in params["conditions_to_include"]:
+                print("...loading %s" % _c)
+                filepath = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
+                _morphoframe[_c] = morphomics.utils.load_obj(filepath.replace(".pkl", ""))
+
+            self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
         
         
 
     def Clean_frame(self):
         """
-        Protocol: Clean out the morphoframe, to filter out artifacts and unwanted conditions
+        Protocol: Clean out the morphoframe, to filter out artifacts and unwanted conditions.
         
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
@@ -227,6 +239,10 @@ class Protocols(object):
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
+
+        Returns
+        -------
+        Add a dataframe to morphoframe. the samples that don't respond to the conditions are removed.
         """
         params = self.parameters["Clean_frame"]
         
@@ -285,7 +301,7 @@ class Protocols(object):
         
         # initialize output filename
         default_save_filename = "%s.Cleaned"%(self.file_prefix)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Clean_frame", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
@@ -319,6 +335,10 @@ class Protocols(object):
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             default_save_filename (str or 0): this will be used as the file prefix
+
+        Returns
+        -------
+        Add a dataframe containing bootstrapped data to morphoframe. The samples are sub groups of microglia.
         """
         params = self.parameters["Bootstrap"]
 
@@ -333,7 +353,7 @@ class Protocols(object):
 
         # define output filename
         default_save_filename = "%s.Bootstrapped"%(self.file_prefix)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Bootstrap", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
@@ -378,7 +398,7 @@ class Protocols(object):
 
     def Vectorizations(self):
         """
-        Protocol: Takes a morphoframe in `morphoframe_name` and vectorize the TMD within the morphoframe
+        Protocol: Takes a morphoframe called morphoframe_name and vectorize the barcodes within the morphoframe
         
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
@@ -390,7 +410,7 @@ class Protocols(object):
 
         Returns
         -------
-        A numpy array of vectors. The rows are the samples (microglia), the colums are the features of the vector (result of the TMD vectorrization).
+        Add a list of vectors to a morphoframe. A row per sample, the colums are the dimensions of the vector (result of the TMD vectorization).
         """
 
         params = self.parameters["Vectorizations"]
@@ -403,7 +423,7 @@ class Protocols(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        # define morphoframe to compute vectorizations
+        # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name,
                                            column_name = 'barcodes')
@@ -417,9 +437,11 @@ class Protocols(object):
 
         print("Computes %s and concatenates the vectors" %(vect_methods_codename))
         
+        # initalize an instance of Vectorizer
         vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
                                 vect_parameters = vect_method_parameters)
         
+        # compute vectors
         output_vectors = []
         for vect_method in vect_methods:
             perform_vect_method = getattr(vectorizer, vect_method)
@@ -431,7 +453,7 @@ class Protocols(object):
 
         # define output filename
         default_save_filename = "%s.Vectorizations-%s"%(self.file_prefix, vect_methods_codename)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Vectorizations", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
@@ -446,31 +468,33 @@ class Protocols(object):
 
 
 
-    def Embeddings(self):
+    def Dim_reductions(self):
         """
-        Protocol: Takes the vectors you want in morphoframe and embeds them following the chosen embedding techniques
-        
-        Parameters:
-        ----------        
+        Protocol: Takes the vectors you want in morphoframe and reduces them following the chosen dim reduction techniques
+              
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be processed out
-            embed_method_parameters (dict): keys are the embedder names applied to the vectors and attributes are the parameters of each embedder
-            vectors_to_embed (str): the name of the vectors to embed in morphoframe
+            dimred_method_parameters (dict): keys are the reducer names applied to the vectors and attributes are the parameters of each reducer
+            vectors_to_reduce (str): the name of the vectors to reduce in morphoframe
             filter_pixels (bool): filter persistence image
             FilteredPixelIndex_filepath (float): spread of the Gaussian kernel
             pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
-            normalize (bool): normalize data before embedding
+            normalize (bool): normalize data before reduction
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
+
+        Returns
+        -------
+        Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
-        params = self.parameters["Embeddings"]
+        params = self.parameters["Dim_reductions"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
-        embed_method_parameters = params["embed_method_parameters"]
-        vectors_to_embed = params["vectors_to_embed"]
+        dimred_method_parameters = params["dimred_method_parameters"]
+        vectors_to_reduce = params["vectors_to_reduce"]
         filter_pixels = params["filter_pixels"]
         normalize = params['normalize']
 
@@ -478,55 +502,59 @@ class Protocols(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        # define morphoframe to compute embedding
+        # define morphoframe containing vectors to compute dim reduction
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name,
-                                           column_name = vectors_to_embed)
-        X = np.vstack(_morphoframe[vectors_to_embed])
+                                           column_name = vectors_to_reduce)
+        X = np.vstack(_morphoframe[vectors_to_reduce])
         
+        # if persistence image, pixels can be filtered 
         if filter_pixels:
             filtered_image = self._image_filtering(persistence_images = X,
                                                   params = params, 
                                                   save_filename = save_filename)
             X = filtered_image
 
+        # normalize data 
         if normalize:
             print("Normalize the vectors")
             normalizer = Normalizer()
             X = normalizer.fit_transform(X)
 
-        embed_methods = embed_method_parameters.keys()
-        embed_method_names = '_'.join(list(embed_methods))
+        dimred_methods = dimred_method_parameters.keys()
+        dimred_method_names = '_'.join(list(dimred_methods))
 
-        print("Embeds the vectors with the following techniques %s " %(embed_method_names))
-        embedder = Embedder(tmd_vectors = X,
-                            embed_parameters = embed_method_parameters)
+        print("Reduces the vectors with the following techniques %s " %(dimred_method_names))
+        # initialize an instance of DimReducer
+        dimreducer = DimReducer(tmd_vectors = X,
+                                dimred_parameters = dimred_method_parameters)
         
-        fit_embedders = []
-        for embed_method in embed_methods:
-            perform_embed_method = getattr(embedder, embed_method)
-            fit_embedder, embedded_vectors = perform_embed_method()
+        # dim reduce the vectors
+        fit_dimreducers = []
+        for dimred_method in dimred_methods:
+            perform_dimred_method = getattr(dimreducer, dimred_method)
+            fit_dimreducer, reduced_vectors = perform_dimred_method()
 
-            self.metadata[embed_method] = fit_embedder
-            fit_embedders.append(fit_embedder)
+            self.metadata[dimred_method] = fit_dimreducer
+            fit_dimreducers.append(fit_dimreducer)
    
-            embedder.tmd_vectors = embedded_vectors
+            dimreducer.tmd_vectors = reduced_vectors
 
         # define output filename
-        default_save_filename = "%s.Embeddings-%s"%(self.file_prefix, embed_method_names)
-        save_filepath = self._set_filename(params = params, 
+        default_save_filename = "%s.DimReductions-%s"%(self.file_prefix, dimred_method_names)
+        save_filepath = self._set_filename(protocol_name = "Dim_reductions", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
 
-        # save the embedded vectors
+        # save the reduced vectors
         if save_filename is not None:
-            save_obj(obj = embedded_vectors, filepath = save_filepath + '_embedded_data')
-            save_obj(obj = fit_embedders, filepath = save_filepath + '_fitted_embedder')
+            save_obj(obj = reduced_vectors, filepath = save_filepath + '_reduced_data')
+            save_obj(obj = fit_dimreducers, filepath = save_filepath + '_fitted_dimreducer')
 
-        self.morphoframe[morphoframe_name][embed_method_names] = list(embedded_vectors)
-        print("Embedding done!")
+        self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
+        print("Reducing done!")
 
 
 
@@ -547,7 +575,7 @@ class Protocols(object):
         
         # define output filename
         file_prefix = "%s.Palantir"%(self.file_prefix)
-        save_filename = self._set_filename(params = params, 
+        save_filename = self._set_filename(protocol_name = "Palantir", 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])
@@ -557,14 +585,14 @@ class Protocols(object):
             self.metadata["X_umap"] = morphomics.utils.load_obj(params["X_umap_filepath"].replace(".pkl", ""))
         
         print("Calculating diffusion maps with Palantir...")
-        self.metadata["palantir_distances"] = morphomics.reduction.palantir_diffusion_maps(
+        self.metadata["palantir_distances"] = morphomics.old_reduction.palantir_diffusion_maps(
             self.metadata["X_umap"], 
             n_components=params["n_diffusion_components"], 
             knn=params["knn_diffusion"],
         )
 
         print("Calculating 2D coordinates with force-directed layout")
-        self.metadata["X_fdl"] = morphomics.reduction.force_directed_layout(
+        self.metadata["X_fdl"] = morphomics.old_reduction.force_directed_layout(
             self.metadata["palantir_distances"]["kernel"], 
             random_seed=params["fdl_random_seed"]
         )
@@ -577,27 +605,32 @@ class Protocols(object):
         
 
             
-    def Save_embedded(self):
+    def Save_reduced(self):
         """
-        Protocol: Takes the embedded manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
+        Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
         
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be processed out
-            conditions_to_save (list of str): the list of the keys in morphoframe you want to save with embedded vectors
-            embed_method (str): name of the colum containing embedded vectors to save
+            conditions_to_save (list of str): the list of the keys in morphoframe you want to save with reduced vectors
+            dimred_method (str): name of the colum containing reduced vectors to save
             coordinate_axisnames(str): general name of the saved columns in csv 
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
+
+        Returns
+        -------
+        A saved .csv file containing a column for each wanted condition and a column for each dimension of the reduced vectors. 
+        A row per sample.
         """
-        params = self.parameters["Save_embedded"]
+        params = self.parameters["Save_reduced"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
 
         conditions_to_save = params["conditions_to_save"]
-        embed_method = params["embed_method"]
+        dimred_method = params["dimred_method"]
         coordinate_axisnames = params["coordinate_axisnames"]
 
         save_data = params["save_data"]
@@ -612,28 +645,29 @@ class Protocols(object):
                                            variable_name = morphoframe_name,
                                            column_name = False)
         
-        _morphoframe_reduced_copy = _morphoframe[conditions_to_save].copy()
-        embedded_vectors = _morphoframe[embed_method].copy()
-        embedded_vectors = np.vstack(embedded_vectors)
+        _submorphoframe_copy = _morphoframe[conditions_to_save].copy()
+        reduced_vectors = _morphoframe[dimred_method].copy()
+        reduced_vectors = np.vstack(reduced_vectors)
 
-        for dims in range(embedded_vectors.shape[1]):
-            _morphoframe_reduced_copy["%s_%d"%(coordinate_axisnames, dims+1)] = embedded_vectors[:, dims]
+        for dims in range(reduced_vectors.shape[1]):
+            _submorphoframe_copy["%s_%d"%(coordinate_axisnames, dims+1)] = reduced_vectors[:, dims]
         
 
         # define output filename
         default_save_filename = "%s.ReductionInfo"%(self.file_prefix)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Save_reduced", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
 
-        # Ensure the directory exists
+        # ensure the directory exists
         save_directory = os.path.dirname(save_filepath)
         os.makedirs(save_directory, exist_ok = True)
-        _morphoframe_reduced_copy.to_csv(save_filepath, index = True)
+        # save the csv file
+        _submorphoframe_copy.to_csv(save_filepath, index = True)
 
-        print("Embedded coordinates splitted and saved!")
+        print("Reduced coordinates splitted and saved!")
         
 
 
@@ -642,29 +676,31 @@ class Protocols(object):
         Protocol: Takes a pre-calculated UMAP function, maps persistence images into the UMAP manifold and outputs the manifold coordinates
         
         Essential parameters:
-            fitted_embedder_filepath
-            embed_method
+            fitted_dimreducer_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            dimred_method (str): the dim reducer fitted and used for dim reduction.
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be processed out
-            vectors_to_embed_name
-
+            vectors_to_reduce_name (str): name of the vectors in morphoframe that will be reduced 
             filter_pixels (1 or 0): prompt to filter pixels in the persistence images
             FilteredPixelIndex_filepath (str): location of the filtered pixel indices before doing the UMAP of the generated phenotypic spectrum
             pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
-
-            normalize
+            normalize (bool): normalize data or not 
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
+
+        Returns
+        -------
+        Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
         params = self.parameters["Mapping"]
 
-        fitted_embedder_filepath = params["fitted_embedder_filepath"]
-        embed_method = params["embed_method"]
+        fitted_dimreducer_filepath = params["fitted_dimreducer_filepath"]
+        dimred_method = params["dimred_method"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
-        vectors_to_embed_name = params["vectors_to_embed_name"]
+        vectors_to_reduce_name = params["vectors_to_reduce_name"]
 
         filter_pixels = params["filter_pixels"]
         FilteredPixelIndex_filepath = params["FilteredPixelIndex_filepath"]
@@ -675,49 +711,49 @@ class Protocols(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        # define morphoframe that contains the fitted embedder
-        print("Loading fitted embedder function...")    
-        _metadata = self._get_variable(variable_filepath = fitted_embedder_filepath,
+        # define morphoframe that contains the fitted reducer
+        print("Loading fitted dim reduction function...")    
+        _metadata = self._get_variable(variable_filepath = fitted_dimreducer_filepath,
                                             variable_name = None,
-                                            column_name = embed_method,
+                                            column_name = dimred_method,
                                             morphoframe = False)
-        f_embedders = _metadata[embed_method]
+        f_dimreducers = _metadata[dimred_method]
 
-        print("Loading persistence vectors to embed file...")
+        print("Loading persistence vectors to reduce file...")
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name,
-                                            column_name = vectors_to_embed_name)
-        vectors_to_embed = _morphoframe[vectors_to_embed_name].copy()
-        vectors_to_embed = np.vstack(vectors_to_embed)
+                                            column_name = vectors_to_reduce_name)
+        vectors_to_reduce = _morphoframe[vectors_to_reduce_name].copy()
+        vectors_to_reduce = np.vstack(vectors_to_reduce)
        
         # define output filename
         default_save_filename = "%s.Mapping"%(self.file_prefix)
-        save_filepath = self._set_filename(params = params, 
+        save_filepath = self._set_filename(protocol_name = "Mapping", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)     
 
         if filter_pixels and os.path.isfile(FilteredPixelIndex_filepath):
-            self._image_filtering(persistence_images = vectors_to_embed,
+            self._image_filtering(persistence_images = vectors_to_reduce,
                                     params = params, 
                                     save_filename = save_filepath)
 
         if normalize:
             print("Normalize the vectors")
             normalizer = Normalizer()
-            vectors_to_embed = normalizer.fit_transform(vectors_to_embed)
+            vectors_to_reduce = normalizer.fit_transform(vectors_to_reduce)
 
-        print("Mapping vectors into the embedded space...")
-        for f_embedder in f_embedders:
-            embedded_vectors = f_embedder.transform(vectors_to_embed)
-            vectors_to_embed = embedded_vectors.copy()
+        print("Mapping vectors into the reduced space...")
+        for f_dimreducer in f_dimreducers:
+            reduced_vectors = f_dimreducer.transform(vectors_to_reduce)
+            vectors_to_reduce = reduced_vectors.copy()
 
         if save_data:
-            morphomics.utils.save_obj(obj = embedded_vectors,
-                                      filepath = "%s-EmbedCoords%dD" % (save_filepath, embedded_vectors.shape[1]) )
+            morphomics.utils.save_obj(obj = reduced_vectors,
+                                      filepath = "%s-reduceCoords%dD" % (save_filepath, reduced_vectors.shape[1]) )
         
-        self.morphoframe[morphoframe_name][embed_method + '_transformed'] = list(embedded_vectors)
+        self.morphoframe[morphoframe_name][dimred_method + '_transformed'] = list(reduced_vectors)
         print("Mapping done!")
 
        
@@ -740,7 +776,7 @@ class Protocols(object):
             
         # define output filename
         file_prefix = "%s.Sholl"%(self.file_prefix)
-        save_filename = self._set_filename(params = params, 
+        save_filename = self._set_filename(protocol_name = "Sholl_curves", 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
@@ -795,7 +831,7 @@ class Protocols(object):
 
         # define output filename
         file_prefix = "%s.Morphometrics"%(self.file_prefix)
-        save_filename = self._set_filename(params = params, 
+        save_filename = self._set_filename(protocol_name = "Morphometrics", 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
@@ -855,7 +891,7 @@ class Protocols(object):
         
         # define output filename
         file_prefix = "%s.Plot"%(self.file_prefix)
-        save_filename = self._set_filename(params = params, 
+        save_filename = self._set_filename(protocol_name = "Plotting", 
                                               save_folder_path = params["save_folder"], 
                                               file_prefix = file_prefix, 
                                               save_data = params["save_data"])   
@@ -939,6 +975,13 @@ class Protocols(object):
             ipv.close()
             
             
+
+    def Save_parameters(self):
+        # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility
+        params = self.parameters['Save_parameters']
+        params
+        morphomics.utils.save_obj(obj = params,
+                                    filepath = "%s-Experiment_Parameters" % (save_filepath) )
             
     def Clear_morphoframe(self):
         """

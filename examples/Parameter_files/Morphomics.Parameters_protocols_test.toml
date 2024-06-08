@@ -224,7 +224,7 @@ path_to_new_instance = "examples/trial_folder"
 
 
 
-[Save_embedded]
+[Save_reduced]
 "morphoframe_filepath" = 0
 # basically the TMD or the bootstrap_data
 "morphoframe_name" = 'tmd_test'
