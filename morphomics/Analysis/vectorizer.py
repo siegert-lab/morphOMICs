@@ -127,7 +127,7 @@ class Vectorizer(object):
 
         bar_differences = np.diff(barcode)
         lifespan_c = [np.sum([
-                            np.float(bar_diff) if vectorizations._index_bar(bar, t) else 0.
+                            float(bar_diff) if vectorizations._index_bar(bar, t) else 0.
                             for bar, bar_diff in zip(barcode, bar_differences)
                             ])
                         for t in t_list
