@@ -190,6 +190,9 @@ path_to_new_instance = "examples/trial_folder"
         "norm_method" = "id"
         "resolution" = 50
 
+        [Vectorizations.vect_method_parameters.stable_ranks]
+        "type" = "standard"
+
 
 
 
