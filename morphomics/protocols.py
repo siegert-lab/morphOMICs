@@ -637,8 +637,6 @@ class Protocols(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        save_filename = "%s.csv" % (save_filename)
-
         print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
 
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath, 
@@ -658,8 +656,9 @@ class Protocols(object):
         save_filepath = self._set_filename(protocol_name = "Save_reduced", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
-                                              default_save_filename = default_save_filename, 
-                                              save_data = save_data)
+                                              default_save_filename = default_save_filename)
+
+        save_filepath = "%s.csv" % (save_filepath)
 
         # ensure the directory exists
         save_directory = os.path.dirname(save_filepath)

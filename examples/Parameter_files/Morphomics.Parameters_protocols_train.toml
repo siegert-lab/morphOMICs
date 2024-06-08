@@ -1,16 +1,16 @@
 # morphOMICs pipeline and parameter setup
 
 # sequential list of executables
-# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Persistence_Images, 
-#                         , Plotting, Mapping, Clear_morphframe, Save_EmbedInfo, 
+# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions,
+#                         Plotting, Mapping, Clear_morphframe, Save_reduced, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols_train = [
         "Input",
         "Clean_frame",
         "Vectorizations",
-        "Embeddings",
-        "Save_embedded",
+        "Dim_reductions",
+        "Save_reduced",
 ]
 
 Parameters_ID = "train"
@@ -40,11 +40,11 @@ path_to_new_instance = "examples/trial_folder"
             "Sex",
             "Animal",
         ]
-        
+
 # saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
 # this must be an element of `conditions`
 "separated_by" = "Model"
-
+        
 # this is the TMD filtration function, can either be radial_distances, or path_distances
 "filtration_function" = "radial_distances"
 
@@ -60,7 +60,6 @@ path_to_new_instance = "examples/trial_folder"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[filtration_function].[separated_by]-
 # Otherwise, this will be used as the file prefix
 "save_filename" = 0
-
 
 
 [Clean_frame]
@@ -106,6 +105,7 @@ path_to_new_instance = "examples/trial_folder"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Cleaned.
 # Otherwise, this will be used as the file prefix
 "save_filename" = 0
+
 
 
 
@@ -192,27 +192,28 @@ path_to_new_instance = "examples/trial_folder"
 
 
 
-[Embeddings]
+
+[Dim_reductions]
 # if not 0, must contain the filepath to the morphoframe
 "morphoframe_filepath" = 0
 "morphoframe_name" = "tmd_train"
 
-"vectors_to_embed" = 'lsc_bc_lec'
+"vectors_to_reduce" = 'lsc_bc_lec'
 "filter_pixels" = false
 "normalize" = true
 
 "save_data" = true
-"save_folderpath" = "examples/trial_folder/embeddings_train"
+"save_folderpath" = "examples/trial_folder/dim_reductions_train"
 "save_filename" = 0
 
-    [Embeddings.embed_method_parameters] 
+    [Dim_reductions.dimred_method_parameters] 
 
-        [Embeddings.embed_method_parameters.pca]
-        "n_components" = 3
+        [Dim_reductions.dimred_method_parameters.pca]
+        "n_components" = 10
         "svd_solver" = true
         "pca_version" = 'normal'                 
                                 
-        [Embeddings.embed_method_parameters.umap]
+        [Dim_reductions.dimred_method_parameters.umap]
         "n_components" = 3
         "n_neighbors" = 20
         "min_dist" = 0.1
@@ -223,13 +224,12 @@ path_to_new_instance = "examples/trial_folder"
 
 
 
-[Save_embedded]
+[Save_reduced]
 "morphoframe_filepath" = 0
 # basically the TMD or the bootstrap_data
 "morphoframe_name" = 'tmd_train'
 
-"fitted_embedder_filepath" = 0
-"embed_method" = "pca_umap"
+"dimred_method" = "pca_umap"
 "coordinate_axisnames" = "pca_umap_2"
 "conditions_to_save" = ["Region",
                         "Model",
@@ -237,11 +237,10 @@ path_to_new_instance = "examples/trial_folder"
 
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folderpath" = "examples/trial_folder/reduction_train"
+"save_folderpath" = "examples/trial_folder/dim_reductions_train"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "save_filename" = 0
-
 
 
 # [Mapping]

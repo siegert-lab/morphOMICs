@@ -2,7 +2,7 @@
 
 # sequential list of executables
 # Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions,
-#                         Plotting, Mapping, Clear_morphframe, Save_embedded, 
+#                         Plotting, Mapping, Clear_morphframe, Save_reduced, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols_test = [
@@ -246,7 +246,7 @@ path_to_new_instance = "examples/trial_folder"
 
 [Mapping]
 
-"fitted_dimreducer_filepath" = 'examples/trial_folder/embeddings_train/Morphomics.PID_train.Embeddings-pca_umap_fitted_embedder.pkl'
+"fitted_dimreducer_filepath" = 'examples/trial_folder/dim_reductions_train/Morphomics.PID_train.DimReductions-pca_umap_fitted_dimreducer.pkl'
 "dimred_method" = "pca_umap"
 
 "morphoframe_filepath" = 0
