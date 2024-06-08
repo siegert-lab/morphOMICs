@@ -9,7 +9,7 @@ from scipy.cluster.hierarchy import linkage, fcluster
 from math import comb
 from itertools import combinations
 
-from morphomics.Analysis.reduction import get_distance_array
+from morphomics.Analysis.old_reduction import get_distance_array
 from morphomics.utils import save_obj
 
 bootstrap_methods = {
@@ -156,16 +156,16 @@ def _create_bootstrap_dataframe(_b_frame, _bs, morphology_idx, pooled_bars, boot
     Returns
     -------
         a DataFrame named `bootstrap_frame` with columns for the bootstrap resolution, "Bootstrapped
-    index", and "Barcodes". The function populates the "Bootstrapped index" and "Barcodes" columns with
+    index", and "barcodes". The function populates the "Bootstrapped index" and "Barcodes" columns with
     the values of `morphology_idx` and `pooled_bars` respectively. It then iterates over the bootstrap
     resolution values to populate the corresponding columns in the
     
     '''
     bootstrap_frame = pd.DataFrame(
-        columns=bootstrap_resolution + ["Bootstrapped index", "Barcodes"]
+        columns=bootstrap_resolution + ["Bootstrapped index", "barcodes"]
     )
     bootstrap_frame["Bootstrapped index"] = morphology_idx
-    bootstrap_frame["Barcodes"] = pooled_bars
+    bootstrap_frame["barcodes"] = pooled_bars
 
     for _bc in bootstrap_resolution:
         bootstrap_frame[_bc] = _b_frame.loc[
@@ -265,7 +265,7 @@ def get_subsampled_population_from_infoframe(
             ignore_index=True,
         )
     
-    _b_frame = _b_frame.loc[_b_frame["Morphologies"].notna()].reset_index(drop=True)
+    _b_frame = _b_frame.loc[_b_frame["tree"].notna()].reset_index(drop=True)
 
     # create the conditions for bootstrapping
     _b_frame["bootstrap_condition"] = ""
@@ -345,7 +345,7 @@ def get_subsampled_population_from_infoframe(
     )
     
     bootstrapped_morphologies = bootstrapped_morphologies.loc[
-        bootstrapped_morphologies["Barcodes"].notna()
+        bootstrapped_morphologies["barcodes"].notna()
     ].reset_index(drop=True)
 
     if save_filename is not None:

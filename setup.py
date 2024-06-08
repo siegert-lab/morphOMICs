@@ -27,7 +27,7 @@ def read_description():
 setup(
     name="Morphomics",
     version="2.0.6",
-    author='Amin Alam, Ryan Cubero',
+    author='Amin Alam, Ryan Cubero, Thomas Negrello',
     description=MINIMAL_DESCRIPTION,
     long_description=read_description(),
     long_description_content_type='text/markdown',
@@ -35,6 +35,6 @@ setup(
     python_requires='<=3.10',
     license='GNU',
     url='https://github.com/siegert-lab/morphOMICs',
-    keywords=['Morhpomics', 'MicroGlia', 'UMAP', 'TDA', 'Topological Data Analysis', 'Microscopy', 'Image Analysis', 'Cell Morphology'],
+    keywords=['Morphomics', 'MicroGlia', 'UMAP', 'TDA', 'Topological Data Analysis', 'Microscopy', 'Image Analysis', 'Cell Morphology'],
     packages=['morphomics'],
     include_package_data=True,)

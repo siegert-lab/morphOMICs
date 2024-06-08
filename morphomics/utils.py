@@ -11,7 +11,7 @@ term_dict = {"x": 0, "y": 1, "z": 2}
 tree_type = {1: "soma", 2: "axon", 3: "basal", 4: "apical"}
 
 array_operators = {
-    # make sure that arr is a numpy array
+    # Make sure that arr is a numpy array
     "<": lambda arr, a: np.array(arr) < a,
     "<=": lambda arr, a: np.array(arr) <= a,
     "==": lambda arr, a: np.array(arr) == a,
@@ -30,7 +30,7 @@ scipy_metric = {
 }
 
 norm_methods = {
-    # returns the normalization factor based on the method
+    # Returns the normalization factor based on the norm_method
     "max": lambda arr: np.amax(arr),
     "sum": lambda arr: np.sum(arr),
     "min": lambda arr: np.amin(arr),
@@ -38,6 +38,16 @@ norm_methods = {
     "std": lambda arr: np.std(arr),
     "l1": lambda arr: np.sum(np.abs(arr)),
     "l2": lambda arr: np.sqrt(np.dot(arr, arr)),
+    "id": lambda arr: np.ones_like(arr),
+}
+
+vectorization_codenames = {
+    # Returns a codename for a vectorization method name 
+    "persistence_image" : "pi",
+    "betti_curve" : "bc",
+    "life_entropy_curve" : "lec",
+    "lifespan_curve" : "lsc",
+    "stable_rank" : "sr"
 }
 
 
@@ -53,6 +63,8 @@ def save_obj(obj, filepath):
 
 
 def load_obj(name):
+    # Function to load a pkl file
+
     with open(name + ".pkl", "rb") as f:
         return pkl.load(f)
     

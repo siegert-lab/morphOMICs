@@ -22,7 +22,7 @@ Parameters_ID = "Brain_test"
 load_previous_instance = false
 # set this if you want to always save last instance
 save_last_instance = true
-path_to_last_instance = "saved_instances"
+path_to_last_instance = "examples/saved_instances"
 
 
 
@@ -42,7 +42,7 @@ path_to_last_instance = "saved_instances"
         ]
         
 # this is the TMD filtration function, can either be radial_distances, or path_distances
-"barcode_filter" = "radial_distances"
+"filtration_function" = "radial_distances"
 
 # this is how the variable will be called
 "morphoframe_name" = "morphoframe"
@@ -55,7 +55,7 @@ path_to_last_instance = "saved_instances"
 "separated_by" = "Model"
 
 # location where to save the data
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-
 # Otherwise, this will be used as the file prefix
@@ -102,7 +102,7 @@ path_to_last_instance = "saved_instances"
 "save_data" = true
 
 # location where to save the data
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Cleaned.
 # Otherwise, this will be used as the file prefix
@@ -160,7 +160,7 @@ path_to_last_instance = "saved_instances"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -187,7 +187,7 @@ path_to_last_instance = "saved_instances"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -225,7 +225,7 @@ path_to_last_instance = "saved_instances"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -242,7 +242,7 @@ path_to_last_instance = "saved_instances"
 "coordinate_axisnames" = "UMAP"
 
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "saved_instances"
+"save_folder" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "file_prefix" = 0
@@ -280,7 +280,7 @@ path_to_last_instance = "saved_instances"
 # Location to the color mapping that will be used
 # 
 "colormap_filepath" = [
-    "Parameter_files/colormap.1.csv",
+    "examples/Parameter_files/colormap.1.csv",
 # colapmap_filepath2,
 # colapmap_filepath3,
 ]
