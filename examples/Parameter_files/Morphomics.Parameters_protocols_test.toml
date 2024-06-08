@@ -10,7 +10,7 @@ Protocols_test = [
         "Clean_frame",
         "Vectorizations",
         "Dim_reductions",
-        "Save_embedded",
+        "Save_reduced",
         "Mapping",
     ]
 
@@ -237,7 +237,7 @@ path_to_new_instance = "examples/trial_folder"
 
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folderpath" = "examples/trial_folder/reduction_test"
+"save_folderpath" = "examples/trial_folder/dim_reductions_test"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
 "save_filename" = 0
