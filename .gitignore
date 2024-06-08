@@ -7,7 +7,3 @@ dist
 .ipynb_checkpoints
 saved_instances
 Morphomics.Parameters.0.toml
-examples/trial_folder
-trial_folder
-examples/trial_folder/tmd_test/Morphomics.PID_test.TMD-radial_distances.Model-1xKXA.pkl
-examples/trial_folder/tmd_test/Morphomics.PID_test.TMD-radial_distances.pkl
