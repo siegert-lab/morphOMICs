@@ -1,4 +1,6 @@
 import numpy as np
+import concurrent.futures
+from functools import partial
 
 from tmd.Topology import vectorizations
 
@@ -33,32 +35,61 @@ class Vectorizer(object):
                                     ylim = None,
                                     bw_method = None,
                                     weights = None,
-                                    resolution = 100):
+                                    resolution = 100,
+                                    parallel = False):
+        
         # Get the persistence image of each barcode.
-        pi_list = []
-        for barcode in self.tmd:
-            pi = vectorizations.persistence_image_data(ph = barcode, 
-                                                        norm_factor = norm_factor,
-                                                        xlim = xlim,
-                                                        ylim = ylim,
-                                                        bw_method = bw_method,
-                                                        weights = weights,
-                                                        resolution = resolution)
-            pi_list.append(pi)
+        if not parallel:
+            pi_list = [vectorizations.persistence_image_data(ph = barcode, 
+                                                            norm_factor = norm_factor,
+                                                            xlim = xlim,
+                                                            ylim = ylim,
+                                                            bw_method = bw_method,
+                                                            weights = weights,
+                                                            resolution = resolution)
+                        for barcode in self.tmd]
+
+        else:
+            partial_compute = partial(vectorizations.persistence_image_data,
+                                            norm_factor = norm_factor,
+                                            xlim = xlim,
+                                            ylim = ylim,
+                                            bw_method = bw_method,
+                                            weights = weights,
+                                            resolution = resolution)
+            
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                pi_list = executor.map(partial_compute,
+                                        self.tmd)
+                pi_list = list(pi_list)
+        
         return pi_list
-    
-    #TODO parallelize 
+
+
     def _get_curve_vectorization_list(self,
                         curve_method = vectorizations.betti_curve,
                         t_list = None,
-                        resolution = 1000):
+                        resolution = 1000,
+                        parallel = False):
+        
         # Get the curve vectorization for each barcode.
-        c_list = []
-        for barcode in self.tmd:
-            c, _ = curve_method(barcode,
-                                t_list,
-                                resolution)
-            c_list.append(c)
+        if not parallel:
+            c_list = []
+            for barcode in self.tmd:
+                c, _ = curve_method(barcode,
+                                    t_list,
+                                    resolution)
+                c_list.append(c)
+        else:
+            partial_compute = partial(curve_method,
+                                        bins = t_list,
+                                        num_bins = resolution)
+            
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                c_list = executor.map(partial_compute,
+                                        self.tmd)
+                c_list = list(c_list)
+        
         return c_list
     
 
@@ -116,23 +147,23 @@ class Vectorizer(object):
 
     def _lifespan_curve(self,
                         barcode,
-                        t_list = None,
-                        resolution = 1000):
+                        bins = None,
+                        num_bins = 1000):
         # The vectorization called lifespan curve.
         # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
-        if t_list is None:
-            t_list = np.linspace(np.min(barcode), np.max(barcode), resolution)
+        if bins is None:
+            bins = np.linspace(np.min(barcode), np.max(barcode), num_bins)
         else:
-            t_list = t_list
+            bins = bins
 
         bar_differences = np.diff(barcode)
         lifespan_c = [np.sum([
                             float(bar_diff) if vectorizations._index_bar(bar, t) else 0.
                             for bar, bar_diff in zip(barcode, bar_differences)
                             ])
-                        for t in t_list
+                        for t in bins
                     ]
-        return lifespan_c, t_list
+        return lifespan_c, bins
 
 
     ## Public
@@ -142,42 +173,36 @@ class Vectorizer(object):
         
         Parameters
         ----------
-        _info_frame
-            The `_info_frame` parameter is expected to be a DataFrame containing information about barcodes,
-        specifically with a column named "barcodes". This function calculates persistence images based on
-        the barcode information provided in the `_info_frame`.
-        xlims
-            The `xlims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+            The 'rescale_lims' is a boolean. 
+                True: adapt the boundaries of the barcode for each barcode
+                False: choose the widest boundaries that include all barcodes 
+            The `xlims` parameter used to specify the
         birth and death distance limits for the persistence images. If `xlims` is not provided as an
         argument when calling the function, it will default to the birth and death distance limits
         calculated from
         ylims
-            The `ylims` parameter in the `get_images_array_from_infoframe` function is used to specify the
+            The `ylims` parameter is used to specify the
         limits for the y-axis in the persistence images. If `ylims` is not provided as an argument when
         calling the function, it will default to `None` and then be set based
         bw_method
-            The `bw_method` parameter in the `get_images_array_from_infoframe` function is used to specify the
+            The `bw_method` parameter is used to specify the
         bandwidth method for kernel density estimation when generating persistence images. It controls the
         smoothness of the resulting images by adjusting the bandwidth of the kernel used in the estimation
         process. Different bandwidth methods can result
         norm_method, optional
-            The `norm_method` parameter in the `get_images_array_from_infoframe` function specifies the method
+            The `norm_method` parameter specifies the method
         used for normalizing the persistence images. The default value is set to "sum", which means that the
         images will be normalized by dividing each pixel value by the sum of all pixel values in the image
         barcode_weight
-            The `barcode_weight` parameter in the `get_images_array_from_infoframe` function is used to specify
+            The `barcode_weight` parameter is used to specify
         weights for each barcode in the calculation of persistence images. If `barcode_weight` is provided,
-        it will be used as weights for the corresponding barcode during the calculation. If it is not
-        provided (
-        save_filename
-            The `save_filename` parameter in the `get_images_array_from_infoframe` function is used to specify
-        the filename under which the array of images will be saved after processing. If you provide a value
-        for `save_filename`, the function will save the array of images to a file with that name.
+        it will be used as weights for the corresponding barcode during the calculation. 
+           The 'resolution' parameter is an integer that defines the number of pixels in a row and in a column of a persistence image.
+           The 'parallel' parameter is a boolean that determines if the vectorizations should be computed in parallel or not.
         
         Returns
         -------
-            The function `get_images_array_from_infoframe` returns a NumPy array of persistence images
-        calculated based on the input parameters and data provided in the `_info_frame` DataFrame.
+            The function returns a NumPy array of persistence images.
         
 
         '''
@@ -192,6 +217,7 @@ class Vectorizer(object):
         norm_method=pi_params["norm_method"]
         resolution=pi_params["resolution"]
         flatten = True
+        parallel = pi_params["parallel"]
 
         print("Computing persistence images...")
         
@@ -210,19 +236,20 @@ class Vectorizer(object):
                                                     ylim = ylims,
                                                     bw_method = bw_method,
                                                     weights = barcode_weight,
-                                                    resolution = resolution
+                                                    resolution = resolution,
+                                                    parallel = parallel
                                                 )
-        
         if flatten:
             flatten_method = lambda arr: arr.flatten()
         else:
             flatten_method = lambda arr: arr
-
+        
         images = []
         for pi in pi_list:
             if len(pi) > 0:
+                pi = flatten_method(pi)
                 norm = norm_methods[norm_method](pi)
-                images.append(flatten_method(pi) / norm)
+                images.append( pi / norm)
             else:
                 images.append(np.nan)
 
@@ -243,6 +270,7 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
+                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------
@@ -272,6 +300,7 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
+                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------
@@ -301,6 +330,7 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
+                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------

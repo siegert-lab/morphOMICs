@@ -119,6 +119,7 @@ class Protocols(object):
         filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
 
         if params["save_data"]:
+            print("The filtration is saved in %s" (save_filepath))
             morphomics.utils.save_obj(_tokeep, "%s-FilteredIndex" % (save_filepath))
             morphomics.utils.save_obj(self.morphoframe[params["morphoframe_name"]]["filtered_pi"], "%s-FilteredMatrix" % (save_filepath))
             
@@ -311,7 +312,8 @@ class Protocols(object):
         # save the file 
         if params["save_data"]:
             morphomics.utils.save_obj(_morphoframe, save_filepath)
-            
+            print("The cleaned morphoframe is saved in %s" (save_filepath))
+
         self.morphoframe[params["morphoframe_name"]] = _morphoframe
 
         
@@ -391,6 +393,8 @@ class Protocols(object):
         self.morphoframe[params["bootstrapframe_name"]] = bootstrapped_frame
         
         if save_filepath is not None:
+            print("The bootstraped morphoframe is saved in %s" (save_filepath))
+
             save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filepath)
             save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filepath)
             
@@ -448,7 +452,6 @@ class Protocols(object):
             output_vector = perform_vect_method()
             
             output_vectors.append(output_vector)
-
         output_vectors = np.concatenate(output_vectors, axis=1)
 
         # define output filename
@@ -461,6 +464,7 @@ class Protocols(object):
 
         # save the output vectors
         if save_filepath is not None:
+            print("The vectors are saved in %s" (save_filepath))
             save_obj(obj = output_vectors, filepath = save_filepath)
 
         self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
@@ -550,6 +554,8 @@ class Protocols(object):
 
         # save the reduced vectors
         if save_filename is not None:
+            print("The reduced vectors and fitted dimreducers are saved in %s" (save_filepath))
+
             save_obj(obj = reduced_vectors, filepath = save_filepath + '_reduced_data')
             save_obj(obj = fit_dimreducers, filepath = save_filepath + '_fitted_dimreducer')
 
@@ -600,6 +606,7 @@ class Protocols(object):
         print("Palantir done!")
         
         if params["save_data"]:
+            print("The palantir is saved in %s" (save_filepath))
             morphomics.utils.save_obj(self.metadata["palantir_distances"], "%s-PalantirDistances" % (save_filename) )
             morphomics.utils.save_obj(self.metadata["X_fdl"], "%s-PalantirFDCoords" % (save_filename) )
         
@@ -749,6 +756,8 @@ class Protocols(object):
             vectors_to_reduce = reduced_vectors.copy()
 
         if save_data:
+            print("The reduced vectors are saved in %s" (save_filepath))
+
             morphomics.utils.save_obj(obj = reduced_vectors,
                                       filepath = "%s-reduceCoords%dD" % (save_filepath, reduced_vectors.shape[1]) )
         
@@ -808,6 +817,7 @@ class Protocols(object):
         print("Sholl done!")
         
         if params["save_data"]:
+            #print("The Sholl curves are saved in %s" (save_filepath))
             morphomics.utils.save_obj(self.metadata[params["Sholl_colname"]], "%s" % (save_filename) )
             
             
@@ -863,6 +873,8 @@ class Protocols(object):
         print("Morphometrics done!")
         
         if params["save_data"]:
+            #print("The Sholl curves are saved in %s" (save_filepath))
+
             morphomics.utils.save_obj(self.metadata[params["Morphometric_colname"]], "%s" % (save_filename) )
             
             
@@ -978,9 +990,17 @@ class Protocols(object):
     def Save_parameters(self):
         # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility
         params = self.parameters['Save_parameters']
-        params
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        default_save_filename = "%s.Experiment_Parameters"%(self.file_prefix)
+        save_filepath = self._set_filename(protocol_name = "Save_parameters", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, )
         morphomics.utils.save_obj(obj = params,
-                                    filepath = "%s-Experiment_Parameters" % (save_filepath) )
+                                    filepath = save_filepath) 
+        print("The experiment parameters are saved in %s" (save_filepath))
 
 
 
