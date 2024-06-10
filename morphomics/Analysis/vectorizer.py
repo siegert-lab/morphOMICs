@@ -254,7 +254,6 @@ class Vectorizer(object):
                 images.append(np.nan)
 
         print("pi done! \n")
-        print(images)
         return np.array(images)
     
 
