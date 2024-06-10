@@ -890,22 +890,28 @@ class Protocols(object):
             coordinate_axisnames (str): name of the coordinate (e.g., UMAP)
             Coordinate_filepath (list, str or 0): if these are not 0, must point to the location of the manifold coordinates
             MorphoInfo_filepath (list, str or 0): if these are not 0, must point to the location of the morpho_infoframe that corresponds to each element of `Coordinate_filepath`
-            colormap_filepath (list, str): location to the color mapping that will be used
-            label_prefixes (list ,str): prefixes to use for legend labels, must be same size as `colormap_filepath`
+            
             Substitutions (list, (str, str, str)): ff you need to substitute the name of a condition in morpho_infoframe, use this
             show_plot (bool): trigger to show the interactive plot
+            colormap_filepath (list, str): location to the color mapping that will be used
+            label_prefixes (list ,str): prefixes to use for legend labels, must be same size as `colormap_filepath`
             save_data (bool): trigger to save output of protocol
-            save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
+            save_folderpath (str): location where to save the data
+            save_filename (str or 0): this will be used as the file name
         """
         params = self.parameters["Plotting"]
+
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
         
         # define output filename
-        file_prefix = "%s.Plot"%(self.file_prefix)
-        save_filename = self._set_filename(protocol_name = "Plotting", 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])   
+        default_save_filename = "%s.Plot"%(self.file_prefix)
+        save_filepath = self._set_filename(protocol_name = "Plotting", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)    
             
         assert len(params["colormap_filepath"]) > 0, "There must be a colormap_filepath!"
         assert np.sum([os.path.isfile(color_path) for color_path in params["colormap_filepath"]])==len(params["colormap_filepath"]), "Make sure that all files in colormap_filepath exists!"
@@ -943,11 +949,11 @@ class Protocols(object):
                     print("The following file was not found: %s"%params["ReductionInfo_filepath"][_idx])
                     print("Inferring the morpho_infoframe and manifold coordinates from Protocol class.")
                     
-                    assert params["coordinate_key"] in self.metadata.keys(), "Cannot infer manifold coordinates. Run UMAP first!"
+                    assert params["coordinate_key"] in self.morphoframe[params["morphoframe_name"]].keys(), "Cannot infer manifold coordinates. Run UMAP first!"
                     #assert params["morphoinfo_key"] in self.metadata.keys(), "Morpho_infoframe not found. Check this!"
                 
-                    morpho_info = self.metadata[params["morphoinfo_key"]]
-                    coordinates = self.metadata[params["coordinate_key"]]
+                    morpho_info = self.morphoframe[params["morphoframe_name"]][params["conditions"]]
+                    coordinates = self.morphoframe[params["morphoframe_name"]][params["coordinate_key"]]
 
             conditions = [
                 conds

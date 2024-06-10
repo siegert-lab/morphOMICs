@@ -327,5 +327,4 @@ label_prefixes = [
 
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-## Where is the prefix? Have a look
-"file_prefix" = "Brain"
+
