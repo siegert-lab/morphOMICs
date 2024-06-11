@@ -5,6 +5,7 @@ import os
 
 from morphomics.Analysis.vectorizer import Vectorizer
 from morphomics.Analysis.dim_reducer import DimReducer
+from morphomics.Analysis import plotting
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
 from sklearn.preprocessing import Normalizer
@@ -565,51 +566,52 @@ class Protocols(object):
 
 
     def Palantir(self):
-        """
-        Protocol: Takes the UMAP manifold, calculates diffusion maps using Palantir and outputs a force-directed layout of the maps
-        
-        Essential parameters:
-            X_umap_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-            n_diffusion_components (int): number of diffusion maps to generate
-            knn_diffusion (int): number of nearest neighbors that will be used to generate diffusion maps
-            fdl_random_seed (float): seed of the random number generator for the force-directed layout
-            save_data (bool): trigger to save output of protocol
-            save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
-        """
-        params = self.parameters["Palantir"]
-        
-        # define output filename
-        file_prefix = "%s.Palantir"%(self.file_prefix)
-        save_filename = self._set_filename(protocol_name = "Palantir", 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])
+        #     """
+        #     Protocol: Takes the UMAP manifold, calculates diffusion maps using Palantir and outputs a force-directed layout of the maps
             
-        if params["X_umap_filepath"]:
-            print("Loading UMAP coordinates...")
-            self.metadata["X_umap"] = morphomics.utils.load_obj(params["X_umap_filepath"].replace(".pkl", ""))
-        
-        print("Calculating diffusion maps with Palantir...")
-        self.metadata["palantir_distances"] = morphomics.old_reduction.palantir_diffusion_maps(
-            self.metadata["X_umap"], 
-            n_components=params["n_diffusion_components"], 
-            knn=params["knn_diffusion"],
-        )
+        #     Essential parameters:
+        #         X_umap_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+        #         n_diffusion_components (int): number of diffusion maps to generate
+        #         knn_diffusion (int): number of nearest neighbors that will be used to generate diffusion maps
+        #         fdl_random_seed (float): seed of the random number generator for the force-directed layout
+        #         save_data (bool): trigger to save output of protocol
+        #         save_folder (str): location where to save the data
+        #         file_prefix (str or 0): this will be used as the file prefix
+        #     """
+        #     params = self.parameters["Palantir"]
+            
+        #     # define output filename
+        #     file_prefix = "%s.Palantir"%(self.file_prefix)
+        #     save_filename = self._set_filename(protocol_name = "Palantir", 
+        #                                           save_folder_path = params["save_folder"], 
+        #                                           file_prefix = file_prefix, 
+        #                                           save_data = params["save_data"])
+                
+        #     if params["X_umap_filepath"]:
+        #         print("Loading UMAP coordinates...")
+        #         self.metadata["X_umap"] = morphomics.utils.load_obj(params["X_umap_filepath"].replace(".pkl", ""))
+            
+        #     print("Calculating diffusion maps with Palantir...")
+        #     self.metadata["palantir_distances"] = morphomics.old_reduction.palantir_diffusion_maps(
+        #         self.metadata["X_umap"], 
+        #         n_components=params["n_diffusion_components"], 
+        #         knn=params["knn_diffusion"],
+        #     )
 
-        print("Calculating 2D coordinates with force-directed layout")
-        self.metadata["X_fdl"] = morphomics.old_reduction.force_directed_layout(
-            self.metadata["palantir_distances"]["kernel"], 
-            random_seed=params["fdl_random_seed"]
-        )
+        #     print("Calculating 2D coordinates with force-directed layout")
+        #     self.metadata["X_fdl"] = morphomics.old_reduction.force_directed_layout(
+        #         self.metadata["palantir_distances"]["kernel"], 
+        #         random_seed=params["fdl_random_seed"]
+        #     )
 
-        print("Palantir done!")
-        
-        if params["save_data"]:
-            print("The palantir is saved in %s" %(save_filepath))
-            morphomics.utils.save_obj(self.metadata["palantir_distances"], "%s-PalantirDistances" % (save_filename) )
-            morphomics.utils.save_obj(self.metadata["X_fdl"], "%s-PalantirFDCoords" % (save_filename) )
-        
+        #     print("Palantir done!")
+            
+        #     if params["save_data"]:
+        #         print("The palantir is saved in %s" %(save_filepath))
+        #         morphomics.utils.save_obj(self.metadata["palantir_distances"], "%s-PalantirDistances" % (save_filename) )
+        #         morphomics.utils.save_obj(self.metadata["X_fdl"], "%s-PalantirFDCoords" % (save_filename) )
+        return
+
 
             
     def Save_reduced(self):
@@ -884,108 +886,58 @@ class Protocols(object):
         Protocol: Generates a 3D interactive plot from the Protocols results, or from the  ReductionInfo files, or from coordinate and morphoinfo files
         
         Essential parameters:
-            ReductionInfo_filepath (list, str)
-            coordinate_key (str): metadata key where UMAP coordinates are located, or will be stored
-            morphoinfo_key (str): metadata key where morphoinfo is located, or will be stored
-            coordinate_axisnames (str): name of the coordinate (e.g., UMAP)
-            Coordinate_filepath (list, str or 0): if these are not 0, must point to the location of the manifold coordinates
-            MorphoInfo_filepath (list, str or 0): if these are not 0, must point to the location of the morpho_infoframe that corresponds to each element of `Coordinate_filepath`
-            colormap_filepath (list, str): location to the color mapping that will be used
-            label_prefixes (list ,str): prefixes to use for legend labels, must be same size as `colormap_filepath`
-            Substitutions (list, (str, str, str)): ff you need to substitute the name of a condition in morpho_infoframe, use this
-            show_plot (bool): trigger to show the interactive plot
-            save_data (bool): trigger to save output of protocol
-            save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
+
         """
         params = self.parameters["Plotting"]
+            
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+        conditions = params['conditions']
+        reduced_vectors_name = params["reduced_vectors_name"]
+        axis_labels = params['axis_labels']
+        title = params['title']
+        colors = params['colors']
+        amount = params['amount']
+
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"] 
+
+        # define morphoframe that contains the data points to plot
+        print("Loading fitted dim reduction function...")    
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name,
+                                            column_name = False)
+        
+        # one column per coordinate
+        reduced_vectors = _morphoframe[reduced_vectors_name].copy()
+        reduced_vectors = np.vstack(reduced_vectors)
+        for dims in range(reduced_vectors.shape[1]):
+            _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
+
+        size= params['size']
+
+        fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+                                 axis_labels = axis_labels,
+                                 conditions = conditions,
+                                 colors = colors,
+                                 amount= amount,
+                                 size = size,
+                                 title = title)
         
         # define output filename
-        file_prefix = "%s.Plot"%(self.file_prefix)
-        save_filename = self._set_filename(protocol_name = "Plotting", 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])   
-            
-        assert len(params["colormap_filepath"]) > 0, "There must be a colormap_filepath!"
-        assert np.sum([os.path.isfile(color_path) for color_path in params["colormap_filepath"]])==len(params["colormap_filepath"]), "Make sure that all files in colormap_filepath exists!"
-        
-        print("Creating the interactive plot...")
-        ipv.figure(width=1920, height=1080)
-        ipv.style.box_off()
+        default_save_filename = "%s.Plotting"%(self.file_prefix)
+        save_filepath = self._set_filename(protocol_name = "Save_reduced", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename)
 
-        for _idx in range(len(params["label_prefixes"])):
-            # load colormap
-            colormap = pd.read_csv(params["colormap_filepath"][_idx], comment="#")
-            colormap.Color = colormap.Color.str.split(";")
-            colormap.GradientLimits = colormap.GradientLimits.str.split(";")
+        if save_data:
+            # Save the plot as an HTML file
+            fig.write_html(save_filepath)
+            print(f"Plot saved as {save_filepath}")
 
-            # check if reductioninfo file is given
-            if params["ReductionInfo_filepath"][_idx] == 0:
-                coordinates = morphomics.utils.load_obj(
-                    params["Coordinate_filepath"][_idx].replace(".pkl", "")
-                )
-                morpho_info = morphomics.utils.load_obj(
-                    params["MorphoInfo_filepath"][_idx].replace(".pkl", "")
-                )
-                
-            else:
-                if os.path.exists(params["ReductionInfo_filepath"][_idx]):
-                    morpho_info = pd.read_csv(params["ReductionInfo_filepath"][_idx], sep=",", header=0)
-                    print(morpho_info.columns)
-                    coordinate_columns = [
-                        _cols
-                        for _cols in morpho_info.columns
-                        if params["coordinate_axisnames"] in _cols
-                    ]
-                    coordinates = np.array(morpho_info[coordinate_columns].values)
-                else:
-                    print("The following file was not found: %s"%params["ReductionInfo_filepath"][_idx])
-                    print("Inferring the morpho_infoframe and manifold coordinates from Protocol class.")
-                    
-                    assert params["coordinate_key"] in self.metadata.keys(), "Cannot infer manifold coordinates. Run UMAP first!"
-                    #assert params["morphoinfo_key"] in self.metadata.keys(), "Morpho_infoframe not found. Check this!"
-                
-                    morpho_info = self.metadata[params["morphoinfo_key"]]
-                    coordinates = self.metadata[params["coordinate_key"]]
 
-            conditions = [
-                conds
-                for conds in colormap.columns
-                if conds not in ["Color_type", "Color", "GradientLimits"]
-            ]
-
-            try:
-                for _cond, _before, _after in params["Substitutions"][_idx]:
-                    morpho_info.loc[morpho_info[_cond] == _before, _cond] = _after
-            except:
-                print("No substitutions for coordinate set %d..."%(_idx+1))
-
-            morphomics.plotting.scatterplot_3D_conditions(
-                coordinates, morpho_info, conditions, colormap, params["label_prefixes"][_idx]
-            )
-            
-            # the first file is considered as the main spectrum
-            if _idx == 0:
-                morphomics.plotting.scatterplot_3D_all(coordinates)
-
-        ipv.xyzlabel("%s 1"%(params["coordinate_axisnames"]), 
-                     "%s 2"%(params["coordinate_axisnames"]), 
-                     "%s 3"%(params["coordinate_axisnames"]))
-
-        if params["save_data"]:
-            ipv.save(
-                "%s-Spectrum.html" % (save_filename),
-                title="Morphological spectrum",
-                offline=False,
-            )
-
-        if params["show_plot"]:
-            ipv.show()
-        else:
-            ipv.close()
-            
-            
 
     def Save_parameters(self):
         # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility

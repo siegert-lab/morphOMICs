@@ -13,8 +13,8 @@ class DimReducer(object):
 
         Parameters
         ----------
-        tmd_vectors (np.array): array containing vectors, one per sample in row.
-        dimred_parameters (dict): contains the parameters for each dim reduction techniques that would be run
+        tmd_vectors (np.array): array containing vectors, one vector per sample in row.
+        dimred_parameters (dict): contains the parameters for each dim reduction techniques that would be run in sequence.
                             dimred_parameters = {'dimred_method_1 : { parameter_1_1: x_1_1, ..., parameter_1_n: x_1_n},
                                             ...
                                             'dimred_method_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
@@ -163,3 +163,8 @@ class DimReducer(object):
         reduced_vectors = fit_tsne.fit_transform(X = self.tmd_vectors)
 
         return fit_tsne, reduced_vectors
+
+    def autoencoder(self):
+        return
+
+ 

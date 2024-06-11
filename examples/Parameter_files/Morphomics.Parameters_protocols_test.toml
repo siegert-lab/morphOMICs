@@ -29,7 +29,7 @@ path_to_new_instance = "examples/trial_folder"
 
 [Input]
 # filepath pointing to the parent folder containing the .swc files arranged hierarchically according to conditions
-"data_location_filepath" = "examples/data_test"
+"data_location_filepath" = "examples/data"
 
 # .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
 "extension" = "_corrected.swc"
@@ -327,5 +327,4 @@ label_prefixes = [
 
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-## Where is the prefix? Have a look
-"file_prefix" = "Brain"
+
