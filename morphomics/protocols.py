@@ -93,9 +93,10 @@ class Protocols(object):
         save_filepath (str): the path of the file containing the output of the protocol
         update save_folderpath and save_filename of the protocol in self.parameters
         """
-
+        print(save_filename)
         if save_data:
             if save_filename == 0:
+                print(default_save_filename)
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
@@ -540,7 +541,7 @@ class Protocols(object):
             perform_dimred_method = getattr(dimreducer, dimred_method)
             fit_dimreducer, reduced_vectors = perform_dimred_method()
 
-            self.metadata[dimred_method] = fit_dimreducer
+            self.metadata['fitted_' + dimred_method] = fit_dimreducer
             fit_dimreducers.append(fit_dimreducer)
    
             dimreducer.tmd_vectors = reduced_vectors
@@ -666,7 +667,7 @@ class Protocols(object):
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename)
-
+        print(save_filepath)
         save_filepath = "%s.csv" % (save_filepath)
 
         # ensure the directory exists
@@ -883,7 +884,7 @@ class Protocols(object):
             
     def Plotting(self):
         """
-        Protocol: Generates a 3D interactive plot from the Protocols results, or from the  ReductionInfo files, or from coordinate and morphoinfo files
+        Protocol: Generates a 3D interactive plot from a morphoframe, or from the ReductionInfo files, or from coordinate and morphoinfo files
         
         Essential parameters:
 

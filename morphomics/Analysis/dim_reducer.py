@@ -106,7 +106,7 @@ class DimReducer(object):
 
         Returns
         -------
-        fit_pca (UMAP): The fitted instance.
+        fit_umap (UMAP): The fitted instance.
         reduced_vectors (np.array): The dim reduced vectors.
         '''
         umap_params = self.dimred_parameters["umap"]
@@ -146,7 +146,7 @@ class DimReducer(object):
         
         Returns
         -------
-        fit_pca (TSNE): The fitted instance.
+        fit_tsne (TSNE): The fitted instance.
         reduced_vectors (np.array): The dim reduced vectors.
         '''
         tsne_params = self.dimred_parameters["tsne"]

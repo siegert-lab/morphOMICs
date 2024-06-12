@@ -2,7 +2,7 @@
 
 # sequential list of executables
 # Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions,
-#                         Plotting, Mapping, Clear_morphframe, Save_reduced, 
+#                         Plotting, Mapping, Clean_morphframe, Save_reduced, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols_test = [

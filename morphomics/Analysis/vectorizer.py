@@ -118,6 +118,7 @@ class Vectorizer(object):
         xlims = curve_params["xlims"]
         resolution = curve_params["resolution"]
         norm_method = curve_params["norm_method"]
+        parallel = curve_params["parallel"]
 
         # Define the sub intervals of the curve
         if rescale_lims:
@@ -132,7 +133,8 @@ class Vectorizer(object):
         # Get the curve
         curve_list = self._get_curve_vectorization_list(curve_method = curve_method, 
                                                t_list = t_list, 
-                                               resolution = resolution)
+                                               resolution = resolution,
+                                               parallel = parallel)
         # normalize the curve
         curves = []
         for curve in curve_list:
