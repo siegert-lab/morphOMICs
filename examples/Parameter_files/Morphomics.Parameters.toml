@@ -1,34 +1,37 @@
 # morphOMICs pipeline and parameter setup
 
 # sequential list of executables
-# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Persistence_Images, UMAP, 
-#                         Palantir, Plotting, Mapping, Clear_morphframe, Prepare_ReductionInfo, 
+# Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions, 
+#                         Plotting, Mapping, Clean_morphframe, Save_reduced, 
 #                         Sholl_curves, Morphometrics
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
 Protocols = [
         "Input",
         "Clean_frame",
         "Bootstrap",
-        "Persistence_Images",
-        "UMAP",
-        "Prepare_ReductionInfo",
+        "Vectorizations",
+        "Dim_reductions",
+        "Save_reduced",
+        "Mapping",
         "Plotting",
     ]
 
 Parameters_ID = "Brain_test"
   
-# set this if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance
+# set load_previous_instance = true if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols
 # use case: you tried running run_morphomics.py but it failed at some protocol
 load_previous_instance = false
-# set this if you want to always save last instance
+path_to_last_instance = "examples/trial_folder"
+
+# set save_last_instance = true if you want to always save last instance of protocols
 save_last_instance = true
-path_to_last_instance = "examples/saved_instances"
+path_to_new_instance = "examples/trial_folder"
 
 
 
 [Input]
 # filepath pointing to the parent folder containing the .swc files arranged hierarchically according to conditions
-"data_location_filepath" = "./data"
+"data_location_filepath" = "examples/data"
 
 # .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
 "extension" = "_corrected.swc"
@@ -41,6 +44,10 @@ path_to_last_instance = "examples/saved_instances"
             "Animal",
         ]
         
+# saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
+# this must be an element of `conditions`
+"separated_by" = "Model"
+
 # this is the TMD filtration function, can either be radial_distances, or path_distances
 "filtration_function" = "radial_distances"
 
@@ -50,16 +57,13 @@ path_to_last_instance = "examples/saved_instances"
 # I would advise saving the loaded data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 
-# saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
-# this must be an element of `conditions`
-"separated_by" = "Model"
-
 # location where to save the data
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
+
 
 
 [Clean_frame]
@@ -102,11 +106,11 @@ path_to_last_instance = "examples/saved_instances"
 "save_data" = true
 
 # location where to save the data
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Cleaned.
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
 
@@ -116,7 +120,7 @@ path_to_last_instance = "examples/saved_instances"
 "morphoframe_name" = "morphoframe"
 
 # must be an array with two elements [feature (one of the headers in morphoframe), "bars", "scalar" or "array"]
-"feature_to_bootstrap" = ["Barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
+"feature_to_bootstrap" = ["barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
 # "feature_to_bootstrap" = ["Barcode_length", "scalar"] # bootstraps by taking the average of an array
 # "feature_to_bootstrap" = ["Sholl", "array"]           # # bootstraps by taking the element-wise average of a high-dimensional NumPy array
 
@@ -129,7 +133,6 @@ path_to_last_instance = "examples/saved_instances"
 
         ]
         
-
 # which conditions combinations which bootstrapping will consider as a unique condition
 "bootstrap_resolution" = [
                     "Region",
@@ -160,155 +163,180 @@ path_to_last_instance = "examples/saved_instances"
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
-[Persistence_Images]
-# if not 0, must contain the filepath to the bootstrapframe
+
+[Vectorizations]
+# if not 0, must contain the filepath to the morphoframe
 "morphoframe_filepath" = 0
 "morphoframe_name" = "bootstrap_frame"
-
-
-# paramteres for calculating persistence images
-# spread of the Gaussian
-"bw_method" = 0.5
-# how to normalize the persistence image, can be "sum" or "max"
-"norm_method" = "sum"
-# constraints to the axes limits
-"xlims" = [0, 200]
-"ylims" = [0, 200]
-# if not 0, must point to the location containing the weights to each bar
-"barcode_weight" = 0
-
 
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 # path to folder where to store bootstrapped conditions
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
+
+    [Vectorizations.vect_method_parameters]
+        [Vectorizations.vect_method_parameters.persistence_image]
+            # Compute de interval of the vectorization for each barcode
+            "rescale_lims" = false
+            # fix interval
+            "xlims" = "None"
+            "ylims" = "None"
+            # vaqriance of the gaussian kernel
+            "bw_method" = "None"
+            # weight the bars of the barcode
+            "barcode_weight" = "None"
+            # normalize the vector (see norm methods in utils.py)
+            "norm_method" = "sum"
+            # number of pixels in a row and column
+            "resolution" = 100
+            # compute the vectors in parallel
+            "parallel" = false
+
+        # [Vectorizations.vect_method_parameters.lifespan_curve]
+        # # Compute de interval of the vectorization for each barcode
+        # "rescale_lims" = false
+        # # fix interval
+        # "xlims" = "None"
+        # # normalize the vector (see norm methods in utils.py)
+        # "norm_method" = "one"
+        # # number of bins in the interval, determines the dimensions of the ouput vector
+        # "resolution" = 50
+        # # compute the vectors in parallel
+        #"parallel" = false
 
 
-[UMAP]
+        # [Vectorizations.vect_method_parameters.betti_curve]
+        # "rescale_lims" = false
+        # "xlims" = "None"
+        # "norm_method" = "one"
+        # "resolution" = 50
+        #"parallel" = false
+
+
+        # [Vectorizations.vect_method_parameters.life_entropy_curve]
+        # "rescale_lims" = false
+        # "xlims" = "None"
+        # "norm_method" = "one"
+        # "resolution" = 50
+        #"parallel" = false
+
+
+
+[Dim_reductions]
 # if not 0, must contain the filepath to the bootstrapframe
-"PersistenceImages_filepath" = 0
+"morphoframe_filepath" = 0
+# Name of the mrophoframe that contains the vectors to dim reduce
+"morphoframe_name" = "bootstrap_frame"
 
-
-# if 0, no pixel filtering will be done
-"filter_pixels" = 1
-# if not 0, must contain the filepath to the indices of the persistence image that will be filtered
-"filteredpixelindex_filepath" = 0
-# if filteredpixedindex_filepath is not zero, this will be ignored
-"pixel_std_cutoff" = 1e-4
-
-
-# if 0, the persistence image array will not be initially reduced
-# do not do this if you plan to use the UMAP function for mapping
-"run_PCA" = 0
-"n_PCs" = 50
-
-
-# UMAP parameters
-"n_neighbors" = 300
-"min_dist" = 0.05
-"spread" = 3.0
-"random_state" = 34151
-"metric" = "manhattan"
-"densmap" = 0 # zero is false
-"n_components" = 3
-
+# the name of the column in morphoframe that contains the vectors to dim reduce
+"vectors_to_reduce" = 'pi'
+# a function that put to 0 the value of pixel that exeed a certain value computed by the std of the image
+"filter_pixels" = false
+# normalize the columns (standard method before pca)
+"normalize" = true
 
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
+# path to folder where to store bootstrapped conditions
+"save_folderpath" = "examples/saved_instances"
+# if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].Bootstrap.
+# Otherwise, this will be used as the file prefix
+"save_filename" = 0
+
+    [Dim_reductions.dimred_method_parameters] 
+
+        [Dim_reductions.dimred_method_parameters.pca]
+        # parameters for pca
+        # see doc of pca in morphomics.Analysis.dim_reducer.py
+        "n_components" = 10
+        "svd_solver" = true
+        "pca_version" = 'normal'                 
+                                
+        [Dim_reductions.dimred_method_parameters.umap]
+        # parameters for umap
+        # see doc of pca in morphomics.Analysis.dim_reducer.py
+        "n_components" = 3
+        "n_neighbors" = 20
+        "min_dist" = 0.1
+        "spread" = 3.0
+        "random_state" = 10
+        "metric" = "manhattan"
+        "densmap" = false
+
+
+
+[Save_reduced]
+
+# if not 0, must contain the filepath to the reduced vectors
+"morphoframe_filepath" = 0
+# basically the TMD or the bootstrap_data
+"morphoframe_name" = 'bootstrap_frame'
+# name of other features that you want to save from morphoframe to csv file
+"conditions_to_save" = ["Region",
+                        "Model",
+                        "Sex"]
+# the method that was used tu dim reduce
+"dimred_method" = "pca_umap"
+# the prefix name of the columns where the coordinates are stored
+"coordinate_axisnames" = "pca_umap_2"
+
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
 
 
-[Prepare_ReductionInfo]
-"declare_filepaths" = false
-"UMAP_filepath" = 0
-"BootstrapInfo_filepath" = 0
 
-# dictionary keys to the metadata
-"coordinate_key" = "X_umap"
-"morphoinfo_key" = "bootstrap_info"
-"coordinate_axisnames" = "UMAP"
+[Mapping]
+# if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+# otherwise, it is the self.metadata that will be used 
+"fitted_dimreducer_filepath" = 0
+# The name of the fitted dim reducers
+"dimred_method" = "fitted_pca_umap"
 
+# if not 0, must contain the filepath to the vectors to map
+"morphoframe_filepath" = 0
+"morphoframe_name" = 'morphoframe'
+"vectors_to_reduce_name" = 'pi'
+"filter_pixels" = false
+"FilteredPixelIndex_filepath" = 'None'
+"normalize" = true
+
+"save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "examples/saved_instances"
+"save_folderpath" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-"file_prefix" = 0
+"save_filename" = 0
+
 
 
 [Plotting]
-# if 0, you must supply Coordinate_filepath AND MorphoInfo_filepath
-# else, you can either supply the ReductionInfo_filepath, 
-# or if you want to infer the manifold coordinates and morphoinfo_frame from Protocol instance, supply any character other than '0'
-"ReductionInfo_filepath" = [
-"infer",
-# reductioninfo_filepath2,
-# reductioninfo_filepath3,
-]
-"coordinate_axisnames" = "UMAP"
 
+"morphoframe_filepath" = 0
+"morphoframe_name" = "bootstrap_frame"
+"conditions" = ["Region", "Model", "Sex"]
+"reduced_vectors_name" = "pca_umap"
+"axis_labels" = ['x', 'y', 'z']
+"title" = "trial_plot"
 
-"coordinate_key" = "X_umap"
-"morphoinfo_key" = "bootstrap_info"
-
-
-# If these are not 0, must point to the location of the manifold coordinates
-"Coordinate_filepath" = [ 
-# coordinate_filepath1,
-# coordinate_filepath2,
-# coordinate_filepath3,
-]
-# If these are not 0, must point to the location of the morpho_infoframe that corresponds to each element of `Coordinate_filepath`
-"MorphoInfo_filepath" = [ 
-# morphoinfo_filepath1,
-# morphoinfo_filepath2,
-# morphoinfo_filepath3,
-]
-
-# Location to the color mapping that will be used
-# 
-"colormap_filepath" = [
-    "examples/Parameter_files/colormap.1.csv",
-# colapmap_filepath2,
-# colapmap_filepath3,
-]
-
-# Must correspond to each element in `Coordinate_filepath`
-label_prefixes = [
-    "Sample"
-# label_prefix2,
-# label_prefix3,
-]
-
-# If you need to substitute the name of a condition in morpho_infoframe, use this
-# 
-"Substitutions" = [
-#   [ substitutions for morphoinfo_filepath1 ],
-#   [ substitutions for morphoinfo_filepath2 ],
-#   [ substitutions for morphoinfo_filepath3 ],
-]
-
-# Trigger to show the interactive plot
-"show_plot" = true
-
-# I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
+"size" = 3
+"colors" = []
+'amount' = 0.1
+                                
 "save_data" = true
-
 # path to folder where to store UMAP function and reduced manifold coordinates
-"save_folder" = "saved_instances"
-
+"save_folderpath" = "examples/saved_instances"
 # if 0, morphOMICs will automatically create a file prefix
 # Otherwise, this will be used as the file prefix
-"file_prefix" = "Brain"
+"save_filename" = 0

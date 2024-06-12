@@ -22,3 +22,4 @@ def vect_dim_dist(vectors, save_plot = False, save_filepath = None):
         # Save the plot as an HTML file
         fig.write_html(save_filepath)
         print(f"Plot saved as {save_filepath}")
+

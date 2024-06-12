@@ -539,10 +539,11 @@ class Protocols(object):
             perform_dimred_method = getattr(dimreducer, dimred_method)
             fit_dimreducer, reduced_vectors = perform_dimred_method()
 
-            self.metadata['fitted_' + dimred_method] = fit_dimreducer
             fit_dimreducers.append(fit_dimreducer)
    
             dimreducer.tmd_vectors = reduced_vectors
+
+        self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
 
         # define output filename
         default_save_filename = "%s.DimReductions-%s"%(self.file_prefix, dimred_method_names)
@@ -641,7 +642,6 @@ class Protocols(object):
         dimred_method = params["dimred_method"]
         coordinate_axisnames = params["coordinate_axisnames"]
 
-        save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
@@ -896,6 +896,7 @@ class Protocols(object):
         axis_labels = params['axis_labels']
         title = params['title']
         colors = params['colors']
+        size= params['size']
         amount = params['amount']
 
         save_data = params["save_data"]
@@ -918,7 +919,6 @@ class Protocols(object):
             for dims in range(reduced_vectors.shape[1]):
                 _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
 
-        size= params['size']
 
         fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
                                  axis_labels = axis_labels,

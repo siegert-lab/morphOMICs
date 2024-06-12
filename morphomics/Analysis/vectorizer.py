@@ -215,7 +215,11 @@ class Vectorizer(object):
         xlims=pi_params["xlims"]
         ylims=pi_params["ylims"]
         bw_method=pi_params["bw_method"]
+        if bw_method == "None":
+            bw_method = None
         barcode_weight=pi_params["barcode_weight"]
+        if barcode_weight == "None":
+            barcode_weight = None
         norm_method=pi_params["norm_method"]
         resolution=pi_params["resolution"]
         flatten = True
