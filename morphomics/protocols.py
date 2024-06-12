@@ -93,10 +93,8 @@ class Protocols(object):
         save_filepath (str): the path of the file containing the output of the protocol
         update save_folderpath and save_filename of the protocol in self.parameters
         """
-        print(save_filename)
         if save_data:
             if save_filename == 0:
-                print(default_save_filename)
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
@@ -905,16 +903,20 @@ class Protocols(object):
         save_filename = params["save_filename"] 
 
         # define morphoframe that contains the data points to plot
-        print("Loading fitted dim reduction function...")    
-        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                            variable_name = morphoframe_name,
-                                            column_name = False)
-        
-        # one column per coordinate
-        reduced_vectors = _morphoframe[reduced_vectors_name].copy()
-        reduced_vectors = np.vstack(reduced_vectors)
-        for dims in range(reduced_vectors.shape[1]):
-            _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
+        print("Loading fitted dim reduction function...")   
+
+        if type(morphoframe_filepath) is str:
+            if "csv" in morphoframe_filepath:
+                _morphoframe = pd.read_csv(morphoframe_filepath,index_col = 0)
+        else:
+            _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                                variable_name = morphoframe_name,
+                                                column_name = False)
+            # one column per coordinate
+            reduced_vectors = _morphoframe[reduced_vectors_name].copy()
+            reduced_vectors = np.vstack(reduced_vectors)
+            for dims in range(reduced_vectors.shape[1]):
+                _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
 
         size= params['size']
 
