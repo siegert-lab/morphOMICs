@@ -93,10 +93,8 @@ class Protocols(object):
         save_filepath (str): the path of the file containing the output of the protocol
         update save_folderpath and save_filename of the protocol in self.parameters
         """
-        print(save_filename)
         if save_data:
             if save_filename == 0:
-                print(default_save_filename)
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
@@ -185,6 +183,7 @@ class Protocols(object):
         )
 
         print("Input done!")
+        print("")
 
 
 
@@ -541,10 +540,11 @@ class Protocols(object):
             perform_dimred_method = getattr(dimreducer, dimred_method)
             fit_dimreducer, reduced_vectors = perform_dimred_method()
 
-            self.metadata['fitted_' + dimred_method] = fit_dimreducer
             fit_dimreducers.append(fit_dimreducer)
    
             dimreducer.tmd_vectors = reduced_vectors
+
+        self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
 
         # define output filename
         default_save_filename = "%s.DimReductions-%s"%(self.file_prefix, dimred_method_names)
@@ -563,6 +563,7 @@ class Protocols(object):
 
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
         print("Reducing done!")
+        print("")
 
 
 
@@ -643,7 +644,6 @@ class Protocols(object):
         dimred_method = params["dimred_method"]
         coordinate_axisnames = params["coordinate_axisnames"]
 
-        save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
@@ -677,7 +677,8 @@ class Protocols(object):
         _submorphoframe_copy.to_csv(save_filepath, index = True)
 
         print("Reduced coordinates splitted and saved!")
-        
+        print("")
+
 
 
     def Mapping(self):
@@ -766,6 +767,7 @@ class Protocols(object):
         
         self.morphoframe[morphoframe_name][dimred_method + '_transformed'] = list(reduced_vectors)
         print("Mapping done!")
+        print("")
 
        
         
@@ -818,11 +820,12 @@ class Protocols(object):
         self.metadata[params["Sholl_colname"]] = sholl_curves[["Files", "Sholl_curves"]]
         
         print("Sholl done!")
-        
+        print("")
+
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
             morphomics.utils.save_obj(self.metadata[params["Sholl_colname"]], "%s" % (save_filename) )
-            
+
             
             
     def Morphometrics(self):
@@ -874,7 +877,8 @@ class Protocols(object):
         self.metadata[params["Morphometric_colname"]] = morphometrics
         
         print("Morphometrics done!")
-        
+        print("")
+
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
 
@@ -898,6 +902,7 @@ class Protocols(object):
         axis_labels = params['axis_labels']
         title = params['title']
         colors = params['colors']
+        size= params['size']
         amount = params['amount']
 
         save_data = params["save_data"]
@@ -905,18 +910,21 @@ class Protocols(object):
         save_filename = params["save_filename"] 
 
         # define morphoframe that contains the data points to plot
-        print("Loading fitted dim reduction function...")    
-        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                            variable_name = morphoframe_name,
-                                            column_name = False)
-        
-        # one column per coordinate
-        reduced_vectors = _morphoframe[reduced_vectors_name].copy()
-        reduced_vectors = np.vstack(reduced_vectors)
-        for dims in range(reduced_vectors.shape[1]):
-            _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
+        print("Loading fitted dim reduction function...")   
 
-        size= params['size']
+        if type(morphoframe_filepath) is str:
+            if "csv" in morphoframe_filepath:
+                _morphoframe = pd.read_csv(morphoframe_filepath,index_col = 0)
+        else:
+            _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                                variable_name = morphoframe_name,
+                                                column_name = False)
+            # one column per coordinate
+            reduced_vectors = _morphoframe[reduced_vectors_name].copy()
+            reduced_vectors = np.vstack(reduced_vectors)
+            for dims in range(reduced_vectors.shape[1]):
+                _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
+
 
         fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
                                  axis_labels = axis_labels,
@@ -937,6 +945,8 @@ class Protocols(object):
             # Save the plot as an HTML file
             fig.write_html(save_filepath)
             print(f"Plot saved as {save_filepath}")
+        print("Plotting done!")
+        print("")
 
 
 
@@ -954,6 +964,7 @@ class Protocols(object):
         morphomics.utils.save_obj(obj = params,
                                     filepath = save_filepath) 
         print("The experiment parameters are saved in %s" %(save_filepath))
+        print("")
 
 
 

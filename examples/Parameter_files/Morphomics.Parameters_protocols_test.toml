@@ -21,7 +21,7 @@ Parameters_ID = "test"
 load_previous_instance = false
 path_to_last_instance = "examples/trial_folder"
 
-# set save_last_instance = true if you want to always save last instance of protocols
+# set save_last_instance = true if you want to save last instance of Protocols
 save_last_instance = true
 path_to_new_instance = "examples/trial_folder"
 
