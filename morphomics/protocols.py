@@ -183,6 +183,7 @@ class Protocols(object):
         )
 
         print("Input done!")
+        print("")
 
 
 
@@ -562,6 +563,7 @@ class Protocols(object):
 
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
         print("Reducing done!")
+        print("")
 
 
 
@@ -675,7 +677,8 @@ class Protocols(object):
         _submorphoframe_copy.to_csv(save_filepath, index = True)
 
         print("Reduced coordinates splitted and saved!")
-        
+        print("")
+
 
 
     def Mapping(self):
@@ -764,6 +767,7 @@ class Protocols(object):
         
         self.morphoframe[morphoframe_name][dimred_method + '_transformed'] = list(reduced_vectors)
         print("Mapping done!")
+        print("")
 
        
         
@@ -816,11 +820,12 @@ class Protocols(object):
         self.metadata[params["Sholl_colname"]] = sholl_curves[["Files", "Sholl_curves"]]
         
         print("Sholl done!")
-        
+        print("")
+
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
             morphomics.utils.save_obj(self.metadata[params["Sholl_colname"]], "%s" % (save_filename) )
-            
+
             
             
     def Morphometrics(self):
@@ -872,7 +877,8 @@ class Protocols(object):
         self.metadata[params["Morphometric_colname"]] = morphometrics
         
         print("Morphometrics done!")
-        
+        print("")
+
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
 
@@ -939,6 +945,8 @@ class Protocols(object):
             # Save the plot as an HTML file
             fig.write_html(save_filepath)
             print(f"Plot saved as {save_filepath}")
+        print("Plotting done!")
+        print("")
 
 
 
@@ -956,6 +964,7 @@ class Protocols(object):
         morphomics.utils.save_obj(obj = params,
                                     filepath = save_filepath) 
         print("The experiment parameters are saved in %s" %(save_filepath))
+        print("")
 
 
 

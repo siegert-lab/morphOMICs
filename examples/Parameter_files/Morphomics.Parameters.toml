@@ -12,7 +12,7 @@ Protocols = [
         "Vectorizations",
         "Dim_reductions",
         "Save_reduced",
-        "Mapping",
+        #"Mapping",
         "Plotting",
     ]
 
@@ -199,7 +199,7 @@ path_to_new_instance = "examples/trial_folder"
             # number of pixels in a row and column
             "resolution" = 100
             # compute the vectors in parallel
-            "parallel" = false
+            "parallel" = true
 
         # [Vectorizations.vect_method_parameters.lifespan_curve]
         # # Compute de interval of the vectorization for each barcode
@@ -275,7 +275,6 @@ path_to_new_instance = "examples/trial_folder"
 
 
 [Save_reduced]
-
 # if not 0, must contain the filepath to the reduced vectors
 "morphoframe_filepath" = 0
 # basically the TMD or the bootstrap_data
@@ -306,7 +305,7 @@ path_to_new_instance = "examples/trial_folder"
 
 # if not 0, must contain the filepath to the vectors to map
 "morphoframe_filepath" = 0
-"morphoframe_name" = 'morphoframe'
+"morphoframe_name" = 'bootstrap_frame'
 "vectors_to_reduce_name" = 'pi'
 "filter_pixels" = false
 "FilteredPixelIndex_filepath" = 'None'
@@ -322,8 +321,10 @@ path_to_new_instance = "examples/trial_folder"
 
 
 [Plotting]
-
+# if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+# otherwise, it is the self.metadata that will be used 
 "morphoframe_filepath" = 0
+# The name of the fitted dim reducers
 "morphoframe_name" = "bootstrap_frame"
 "conditions" = ["Region", "Model", "Sex"]
 "reduced_vectors_name" = "pca_umap"
