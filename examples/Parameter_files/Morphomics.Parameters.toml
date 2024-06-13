@@ -21,11 +21,11 @@ Parameters_ID = "Brain_test"
 # set load_previous_instance = true if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols
 # use case: you tried running run_morphomics.py but it failed at some protocol
 load_previous_instance = false
-path_to_last_instance = "examples/trial_folder"
+path_to_last_instance = "examples/saved_instances"
 
 # set save_last_instance = true if you want to always save last instance of protocols
 save_last_instance = true
-path_to_new_instance = "examples/trial_folder"
+path_to_new_instance = "examples/saved_instances"
 
 
 
