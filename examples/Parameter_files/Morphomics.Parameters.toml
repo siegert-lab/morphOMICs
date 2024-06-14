@@ -138,7 +138,7 @@ path_to_new_instance = "examples/saved_instances"
                     "Region",
                     "Model",
                     "Sex",
-        ]
+                        ]
         
         
 # set the seed of the random number, for reproducibility
