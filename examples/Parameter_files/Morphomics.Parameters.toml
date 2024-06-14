@@ -90,7 +90,7 @@ path_to_new_instance = "examples/saved_instances"
 #                                       the new name of the merged conditions]
 # if not used, comment the elements of `combine_conditions` out
 "combine_conditions" = [
-    ["Model", ["Saline_4h", "Saline_48h"], "Adult"]
+    #["Model", ["Saline_4h", "Saline_48h"], "Adult"]
 ]
 
 # enumerate restrictions
@@ -314,30 +314,44 @@ path_to_new_instance = "examples/saved_instances"
 "save_data" = true
 # path to folder where to store UMAP function and reduced manifold coordinates
 "save_folderpath" = "examples/saved_instances"
-# if 0, morphOMICs will automatically create a file prefix
-# Otherwise, this will be used as the file prefix
+# If 0, morphOMICs will automatically create a file prefix
+# Otherwise, this will be used as the file prefix.
 "save_filename" = 0
 
 
 
 [Plotting]
-# if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-# otherwise, it is the self.metadata that will be used 
+# If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+# Otherwise, it is the self.morphoframe that will be used.
 "morphoframe_filepath" = 0
-# The name of the fitted dim reducers
+# The name of the dataframe containing the reduced vectors (dim should be 3).
 "morphoframe_name" = "bootstrap_frame"
+# Conditions that make a category.
 "conditions" = ["Region", "Model", "Sex"]
+# Name of the column containing reduced vectors (dim 3).
 "reduced_vectors_name" = "pca_umap"
-"axis_labels" = ['x', 'y', 'z']
-"title" = "trial_plot"
 
+# Name of the axis.
+"axis_labels" = ['x', 'y', 'z']
+# Title of the plot.
+"title" = "trial_plot"
+# The size of the points on the figure.
 "size" = 3
+# Colors of each category of data point.
+# If empty list, the choice of colors is by default.
+# If the number of colors in the list is equal to the number of categoies,
+# they will be distributed.
+# If the number of colors is half the number of categories,
+# they will be distributed without taking into account gender.
+# Different genders will have different shade of the color.
 "colors" = []
+# Shade difference of the color (in third case).
 'amount' = 0.1
-                                
+
+# Save the data or not.                       
 "save_data" = true
-# path to folder where to store UMAP function and reduced manifold coordinates
+# Path to folder where to store the html file of the figure to plot.
 "save_folderpath" = "examples/saved_instances"
-# if 0, morphOMICs will automatically create a file prefix
-# Otherwise, this will be used as the file prefix
+# If 0, morphOMICs will automatically create a file prefix.
+# Otherwise, this will be used as the file name.
 "save_filename" = 0
