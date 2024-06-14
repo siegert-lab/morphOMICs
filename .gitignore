@@ -9,3 +9,4 @@ saved_instances
 Morphomics.Parameters.0.toml
 examples/trial_folder
 br_experiments
+vae_experiments

@@ -48,7 +48,6 @@ class Protocols(object):
     ## Private
     def _get_variable(self, variable_filepath, 
                        variable_name, 
-                       column_name = False,
                        morphoframe = True):
         """
         Finds the variable that should be processed/used by the protocol
@@ -57,7 +56,6 @@ class Protocols(object):
         ----------
         variable_filepath (str): path to the file that contains the variable of interest
         variable_name (str): name of the variable of interest in self.morphoframe
-        column_name (str or False): name of the the variable from variable_filepath 
         morphoframe (bool): choose betwenn self.morphoframe and self.metadata
         
         Returns
@@ -67,9 +65,7 @@ class Protocols(object):
 
         if variable_filepath:
             print("Loading %s file..." %(variable_filepath))
-            _column = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
-            if column_name:
-                _morphoframe = {column_name : _column}
+            _morphoframe = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
         elif morphoframe:
             _morphoframe = self.morphoframe[variable_name]  
         else:
@@ -119,11 +115,12 @@ class Protocols(object):
             )[0]
             
         filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
+        self.metadata["pixes_tokeep"] = _tokeep
 
         if params["save_data"]:
             print("The filtration is saved in %s" %(save_filepath))
-            morphomics.utils.save_obj(_tokeep, "%s-FilteredIndex" % (save_filepath))
-            morphomics.utils.save_obj(self.morphoframe[params["morphoframe_name"]]["filtered_pi"], "%s-FilteredMatrix" % (save_filepath))
+            morphomics.utils.save_obj(self.metadata, "%s-FilteredIndex" % (save_filepath))
+            morphomics.utils.save_obj(self.morphoframe[params["morphoframe_name"]], "%s-FilteredMatrix" % (save_filepath))
             
         return filtered_image
 
@@ -183,6 +180,7 @@ class Protocols(object):
             separated_by = separated_by,
             save_filename = save_filepath,
         )
+        
 
         print("Input done!")
         print("")
@@ -256,8 +254,7 @@ class Protocols(object):
 
         # define morphoframe to clean
         _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"],
-                                            column_name = False)
+                                            variable_name = params["morphoframe_name"])
 
         # drops empty morphologies, potentially artifacts
         _morphoframe = _morphoframe.loc[~_morphoframe.barcodes.isna()].reset_index(
@@ -353,8 +350,7 @@ class Protocols(object):
                 
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"],
-                                            column_name = False)   
+                                            variable_name = params["morphoframe_name"])   
 
         # define output filename
         default_save_filename = "%s.Bootstrapped"%(self.file_prefix)
@@ -399,7 +395,7 @@ class Protocols(object):
             print("The bootstraped morphoframe is saved in %s" %(save_filepath))
 
             save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filepath)
-            save_obj(self.metadata[params["morphoinfo_name"]], "%s-MorphoInfo"%save_filepath)
+            save_obj(self.metadata, "%s-MorphoInfo"%save_filepath)
             
 
 
@@ -432,17 +428,21 @@ class Protocols(object):
 
         # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                           variable_name = morphoframe_name,
-                                           column_name = 'barcodes')
+                                           variable_name = morphoframe_name)
+        
         assert (
             "barcodes" in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
 
+        # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
         vect_methods_names = [vectorization_codenames[vect_method] for vect_method in vect_methods]
         vect_methods_codename = '_'.join(vect_methods_names)
 
-        print("Computes %s and concatenates the vectors" %(vect_methods_codename))
+        if '_' not in vect_methods_codename:
+            print("Computes %s ." %(vect_methods_codename))
+        else:
+            print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
         # initalize an instance of Vectorizer
         vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
@@ -464,14 +464,16 @@ class Protocols(object):
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe
+        self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
+
+        print("Vectorization done!")
 
         # save the output vectors
         if save_filepath is not None:
             print("The vectors are saved in %s" %(save_filepath))
-            save_obj(obj = output_vectors, filepath = save_filepath)
-
-        self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
-        print("Vectorization done!")
+            save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath)
 
 
 
@@ -511,8 +513,8 @@ class Protocols(object):
 
         # define morphoframe containing vectors to compute dim reduction
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                           variable_name = morphoframe_name,
-                                           column_name = vectors_to_reduce)
+                                           variable_name = morphoframe_name)
+        
         X = np.vstack(_morphoframe[vectors_to_reduce])
         
         # if persistence image, pixels can be filtered 
@@ -556,14 +558,16 @@ class Protocols(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
 
+        self.morphoframe[morphoframe_name] = _morphoframe
+        self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
+
         # save the reduced vectors
         if save_filename is not None:
             print("The reduced vectors and fitted dimreducers are saved in %s" %(save_filepath))
 
-            save_obj(obj = reduced_vectors, filepath = save_filepath + '_reduced_data')
-            save_obj(obj = fit_dimreducers, filepath = save_filepath + '_fitted_dimreducer')
+            save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath + '_reduced_data')
+            save_obj(obj = self.metadata, filepath = save_filepath + '_fitted_dimreducer')
 
-        self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
         print("Reducing done!")
         print("")
 
@@ -652,8 +656,7 @@ class Protocols(object):
         print("Preparing .csv file that can be loaded into the morphOMICs dashboard...")
 
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath, 
-                                           variable_name = morphoframe_name,
-                                           column_name = False)
+                                           variable_name = morphoframe_name)
         
         _submorphoframe_copy = _morphoframe[conditions_to_save].copy()
         reduced_vectors = _morphoframe[dimred_method].copy()
@@ -727,14 +730,13 @@ class Protocols(object):
         print("Loading fitted dim reduction function...")    
         _metadata = self._get_variable(variable_filepath = fitted_dimreducer_filepath,
                                             variable_name = None,
-                                            column_name = dimred_method,
                                             morphoframe = False)
         f_dimreducers = _metadata[dimred_method]
 
         print("Loading persistence vectors to reduce file...")
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                            variable_name = morphoframe_name,
-                                            column_name = vectors_to_reduce_name)
+                                            variable_name = morphoframe_name)
+        
         vectors_to_reduce = _morphoframe[vectors_to_reduce_name].copy()
         vectors_to_reduce = np.vstack(vectors_to_reduce)
        
@@ -761,13 +763,15 @@ class Protocols(object):
             reduced_vectors = f_dimreducer.transform(vectors_to_reduce)
             vectors_to_reduce = reduced_vectors.copy()
 
+        self.morphoframe[morphoframe_name] = _morphoframe
+        self.morphoframe[morphoframe_name][dimred_method + '_transformed'] = list(reduced_vectors)
+
         if save_data:
             print("The reduced vectors are saved in %s" %(save_filepath))
 
-            morphomics.utils.save_obj(obj = reduced_vectors,
+            morphomics.utils.save_obj(obj = self.morphoframe[morphoframe_name],
                                       filepath = "%s-reduceCoords%dD" % (save_filepath, reduced_vectors.shape[1]) )
         
-        self.morphoframe[morphoframe_name][dimred_method + '_transformed'] = list(reduced_vectors)
         print("Mapping done!")
         print("")
 
@@ -826,7 +830,7 @@ class Protocols(object):
 
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
-            morphomics.utils.save_obj(self.metadata[params["Sholl_colname"]], "%s" % (save_filename) )
+            morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
 
             
             
@@ -884,7 +888,7 @@ class Protocols(object):
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
 
-            morphomics.utils.save_obj(self.metadata[params["Morphometric_colname"]], "%s" % (save_filename) )
+            morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
             
             
             
@@ -919,8 +923,7 @@ class Protocols(object):
                 _morphoframe = pd.read_csv(morphoframe_filepath,index_col = 0)
         else:
             _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                                variable_name = morphoframe_name,
-                                                column_name = False)
+                                                variable_name = morphoframe_name)
             # one column per coordinate
             reduced_vectors = _morphoframe[reduced_vectors_name].copy()
             reduced_vectors = np.vstack(reduced_vectors)
@@ -938,12 +941,14 @@ class Protocols(object):
         
         # define output filename
         default_save_filename = "%s.Plotting"%(self.file_prefix)
-        save_filepath = self._set_filename(protocol_name = "Save_reduced", 
+        save_filepath = self._set_filename(protocol_name = "Plotting", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename)
 
         if save_data:
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
             fig.write_html(save_filepath)
             print(f"Plot saved as {save_filepath}")
