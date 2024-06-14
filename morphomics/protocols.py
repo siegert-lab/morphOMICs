@@ -96,6 +96,8 @@ class Protocols(object):
         if save_data:
             if save_filename == 0:
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
+            else:
+                self.parameters[protocol_name]["save_filename"] = self.file_prefix + '.' + save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
             save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.parameters[protocol_name]["save_filename"])
