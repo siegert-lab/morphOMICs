@@ -37,7 +37,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     
     # create a column with joined conditions.
     morphoframe['condition'] = morphoframe[conditions].apply(lambda x: '_'.join(x), axis=1)
-    
+
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
     
@@ -71,6 +71,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
                         color_discrete_map = color_map,
                         title = title,
                        )
+    
     fig.update_traces(marker=dict(size=size),
                         
                     )
@@ -78,11 +79,11 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     # Update layout to adjust legend size
     fig.update_layout(
         legend=dict(
-            font=dict(
-                size=20  # Adjust the font size as needed
-            )
+            font=dict(size=20),  # Adjust the font size as needed
+            itemsizing='constant', # Adjust the legend marker size
         )
     )
+
     if show:
         fig.show()
 

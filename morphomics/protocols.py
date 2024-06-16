@@ -925,10 +925,11 @@ class Protocols(object):
             _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                                 variable_name = morphoframe_name)
             # one column per coordinate
+            _morphoframe = _morphoframe.copy()
             reduced_vectors = _morphoframe[reduced_vectors_name].copy()
             reduced_vectors = np.vstack(reduced_vectors)
             for dims in range(reduced_vectors.shape[1]):
-                _morphoframe[axis_labels[dims]] = reduced_vectors[:, dims]
+                _morphoframe[axis_labels[dims]]  = reduced_vectors[:, dims]
 
 
         fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
@@ -950,7 +951,7 @@ class Protocols(object):
             # Ensure the directory exists
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
-            fig.write_html(save_filepath)
+            fig.write_html(save_filepath + '.html')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")
