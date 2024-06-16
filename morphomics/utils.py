@@ -29,6 +29,8 @@ scipy_metric = {
     "l2": "euclidean",
 }
 
+barcode_dist = {"bd": "bottleneck_distance"}
+
 norm_methods = {
     # Returns the normalization factor based on the norm_method
     "max": lambda arr: np.amax(arr),

@@ -47,6 +47,10 @@ def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
 def test(data, model, sample_size, loss_fn):
     # Pass the data through the model
     out, z_mean, z_log_var = model(data, sample_size = sample_size)
-    loss = loss_fn(data, out, z_mean, z_log_var)
-    return out, z_mean, z_log_var, loss
+
+    # compute mse
+    x_expanded = data.unsqueeze(0).expand(*out.shape)
+    mse = torch.nn.functional.mse_loss(x_expanded, out, reduction='mean')
+
+    return out, z_mean, z_log_var, mse
 
