@@ -43,7 +43,8 @@ class Protocols(object):
         self.morphoframe = morphoframe
         self.metadata = metadata
         
-        print("Unless you have specified the file prefix in the succeeding executables, \nthis will be the file prefix: %s"%(self.file_prefix))
+        #print("Unless you have specified the file prefix in the succeeding executables, 
+        print("this will be the file prefix: %s"%(self.file_prefix))
 
     ## Private
     def _get_variable(self, variable_filepath, 
@@ -194,7 +195,6 @@ class Protocols(object):
         Essential parameters:
             folderpath_to_data (str): location to the pickle file outputs to Protocols.Input 
             filepath_to_data (0 or str): full path to file to be loaded
-            filename_prefix (str): common prefix of the pickle files to be loaded, must be inside `folderpath_to_data`
             conditions_to_include (list of str): the different conditions that you want to load
             morphoframe_name (str): this is how the morphoframe will be called
         
@@ -204,17 +204,24 @@ class Protocols(object):
         """
         params = self.parameters["Load_data"]
         
-        if params["filepath_to_data"] == 0:
-            self.morphoframe[params["morphoframe_name"]] = load_obj(params["filepath_to_data"])
+        filepath_to_data = params["filepath_to_data"]
+        morphoframe_name = params["morphoframe_name"]
+
+
+        if filepath_to_data != 0:
+            self.morphoframe[morphoframe_name] = load_obj(filepath_to_data)
 
         else:
+            conditions_to_include = params["conditions_to_include"]
+            folderpath_to_data = params["folderpath_to_data"]
+            filename_prefix = params["filename_prefix"]
             _morphoframe = {}
-            for _c in params["conditions_to_include"]:
+            for _c in conditions_to_include:
                 print("...loading %s" % _c)
-                filepath = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
+                filepath = "%s/%s%s" % (folderpath_to_data, filename_prefix, _c)
                 _morphoframe[_c] = morphomics.utils.load_obj(filepath.replace(".pkl", ""))
 
-            self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
+            self.morphoframe[morphoframe_name] = pd.concat([_morphoframe[_c] for _c in conditions_to_include], ignore_index=True)
         
         
 
@@ -952,6 +959,7 @@ class Protocols(object):
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
             fig.write_html(save_filepath + '.html')
+            fig.write_image(save_filepath + '.pdf', format = 'pdf')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")
