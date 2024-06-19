@@ -8,7 +8,7 @@ from morphomics.Analysis.dim_reducer import DimReducer
 from morphomics.Analysis import plotting
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
-from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
 import pandas as pd
@@ -534,7 +534,7 @@ class Protocols(object):
         # normalize data 
         if normalize:
             print("Normalize the vectors")
-            normalizer = Normalizer()
+            normalizer = StandardScaler()
             X = normalizer.fit_transform(X)
 
         dimred_methods = dimred_method_parameters.keys()
@@ -762,7 +762,7 @@ class Protocols(object):
 
         if normalize:
             print("Normalize the vectors")
-            normalizer = Normalizer()
+            normalizer = StandardScaler()
             vectors_to_reduce = normalizer.fit_transform(vectors_to_reduce)
 
         print("Mapping vectors into the reduced space...")
@@ -939,7 +939,15 @@ class Protocols(object):
                 _morphoframe[axis_labels[dims]]  = reduced_vectors[:, dims]
 
 
-        fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+        fig3d = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+                                 axis_labels = axis_labels,
+                                 conditions = conditions,
+                                 colors = colors,
+                                 amount= amount,
+                                 size = size,
+                                 title = title)
+        
+        fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
                                  axis_labels = axis_labels,
                                  conditions = conditions,
                                  colors = colors,
@@ -958,8 +966,10 @@ class Protocols(object):
             # Ensure the directory exists
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
-            fig.write_html(save_filepath + '.html')
-            fig.write_image(save_filepath + '.pdf', format = 'pdf')
+            fig3d.write_html(save_filepath + '3d.html')
+            fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
+            fig2d.write_html(save_filepath + '2d.html')
+            fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")
