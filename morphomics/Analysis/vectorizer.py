@@ -47,7 +47,7 @@ class Vectorizer(object):
         
     ## Private
     def _get_persistence_image_list(self, 
-                                    norm_factor = 1,
+                                    norm_factor = 1.,
                                     xlim = None,
                                     ylim = None,
                                     bw_method = None,
@@ -235,7 +235,7 @@ class Vectorizer(object):
             if ylims is None or ylims == "None":
                 ylims = _ylims
 
-        pi_list = self._get_persistence_image_list(norm_factor = 1,
+        pi_list = self._get_persistence_image_list(norm_factor = 1.,
                                                     xlim = xlims,
                                                     ylim = ylims,
                                                     bw_method = bw_method,

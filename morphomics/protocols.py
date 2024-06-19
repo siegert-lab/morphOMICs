@@ -447,7 +447,7 @@ class Protocols(object):
         vect_methods_codename = '_'.join(vect_methods_names)
 
         if '_' not in vect_methods_codename:
-            print("Computes %s ." %(vect_methods_codename))
+            print("Computes %s." %(vect_methods_codename))
         else:
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
