@@ -351,8 +351,27 @@ class Vectorizer(object):
         return lifespan_cuves
 
 
-
     def stable_ranks(self):
-        return
 
+        stable_ranks_params = self.vect_parameters["stable_ranks"]
+
+        print("Computing stable ranks...")
+
+        if stable_ranks_params["type"] == "standard":
+            
+            bar_lengths = self.tmd.apply(lambda x: np.array(x)[:, 1] - np.array(x)[:, 0] if x is not None else None)
+            bar_lengths_filtered = bar_lengths.apply(lambda x: np.abs(x[x < 0]) if isinstance(x, np.ndarray) else None)
+            num_bars = bar_lengths_filtered.apply(lambda x: len(x) if x is not None else 0)
+
+            bc_lengths = np.zeros((self.tmd.shape[0], num_bars.max()))
+            for i, barcode_lengths in bar_lengths_filtered.items():
+                if barcode_lengths is not None:
+                    barcode_lengths_sorted = np.sort(barcode_lengths)[::-1]
+                    bc_lengths[i, :len(barcode_lengths_sorted)] = barcode_lengths_sorted
+
+            print("sr done! \n")
+            return bc_lengths
+    
+        else:
+            pass
     
