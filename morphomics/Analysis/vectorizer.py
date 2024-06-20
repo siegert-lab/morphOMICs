@@ -6,6 +6,23 @@ from tmd.Topology import vectorizations
 
 from morphomics.utils import norm_methods
 
+def lifespan_curve(barcode, bins = None, num_bins = 1000):
+    # The vectorization called lifespan curve.
+    # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
+    if bins is None:
+        bins = np.linspace(np.min(barcode), np.max(barcode), num_bins)
+    else:
+        bins = bins
+
+    bar_differences = np.diff(barcode).ravel().astype(float)
+    lifespan_c = [np.sum([
+                        bar_diff if vectorizations._index_bar(bar, t) else 0.
+                        for bar, bar_diff in zip(barcode, bar_differences)
+                        ])
+                    for t in bins
+                ]
+    return lifespan_c, bins
+
 class Vectorizer(object):
     
     def __init__(self, tmd, vect_parameters):
@@ -30,7 +47,7 @@ class Vectorizer(object):
         
     ## Private
     def _get_persistence_image_list(self, 
-                                    norm_factor = 1,
+                                    norm_factor = 1.,
                                     xlim = None,
                                     ylim = None,
                                     bw_method = None,
@@ -88,7 +105,9 @@ class Vectorizer(object):
             with concurrent.futures.ProcessPoolExecutor() as executor:
                 c_list = executor.map(partial_compute,
                                         self.tmd)
-                c_list = list(c_list)
+            c_list = list(c_list)
+                # the second element in the 1 dimension of c_list is the list of bins
+            c_list = np.array(c_list)[:, 0, :]
         
         return c_list
     
@@ -145,28 +164,7 @@ class Vectorizer(object):
                 curves.append(np.nan)
 
         return np.array(curves)
-
-
-    def _lifespan_curve(self,
-                        barcode,
-                        bins = None,
-                        num_bins = 1000):
-        # The vectorization called lifespan curve.
-        # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
-        if bins is None:
-            bins = np.linspace(np.min(barcode), np.max(barcode), num_bins)
-        else:
-            bins = bins
-
-        bar_differences = np.diff(barcode)
-        lifespan_c = [np.sum([
-                            float(bar_diff) if vectorizations._index_bar(bar, t) else 0.
-                            for bar, bar_diff in zip(barcode, bar_differences)
-                            ])
-                        for t in bins
-                    ]
-        return lifespan_c, bins
-
+    
 
     ## Public
     def persistence_image(self):
@@ -237,7 +235,7 @@ class Vectorizer(object):
             if ylims is None or ylims == "None":
                 ylims = _ylims
 
-        pi_list = self._get_persistence_image_list(norm_factor = 1,
+        pi_list = self._get_persistence_image_list(norm_factor = 1.,
                                                     xlim = xlims,
                                                     ylim = ylims,
                                                     bw_method = bw_method,
@@ -260,6 +258,7 @@ class Vectorizer(object):
                 images.append(np.nan)
 
         print("pi done! \n")
+        print(np.array(images).shape)
         return np.array(images)
     
 
@@ -346,8 +345,9 @@ class Vectorizer(object):
         print("Computing lifespan curves...")
 
         lifespan_cuves = self._curve_vectorization(curve_params = lifespan_params,
-                                                    curve_method = self._lifespan_curve)
+                                                    curve_method = lifespan_curve)
         print("lsc done! \n")
+
         return lifespan_cuves
 
 

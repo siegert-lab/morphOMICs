@@ -8,7 +8,15 @@ def dataloader(data, batch_size):
     return loader
 
 
-def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
+def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
+          feature_scaler = None, sample_scaler = None):
+    
+    if sample_scaler:
+        data = sample_scaler.fit_transform(data)
+
+    if feature_scaler:
+        data = feature_scaler.fit_transform(data)
+    
     # Create a DataLoader
     loader = dataloader(data, batch_size)
     
@@ -44,13 +52,22 @@ def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
     return model
 
 
-def test(data, model, sample_size, loss_fn):
+def test(data, model, sample_size, loss_fn = None,
+         sample_scaler = None, feature_scaler = None):
+
+    if sample_scaler:
+        data = sample_scaler.fit_transform(data)
+
+    if feature_scaler:
+        data = feature_scaler.fit_transform(data)
+
     # Pass the data through the model
     out, z_mean, z_log_var = model(data, sample_size = sample_size)
 
     # compute mse
     x_expanded = data.unsqueeze(0).expand(*out.shape)
-    mse = torch.nn.functional.mse_loss(x_expanded, out, reduction='mean')
+    l2 = torch.norm(out - x_expanded, dim = -1, p=2)
+    mse = torch.mean(l2)
 
     return out, z_mean, z_log_var, mse
 

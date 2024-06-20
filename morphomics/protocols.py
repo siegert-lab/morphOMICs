@@ -8,7 +8,7 @@ from morphomics.Analysis.dim_reducer import DimReducer
 from morphomics.Analysis import plotting
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
-from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
 import pandas as pd
@@ -43,7 +43,8 @@ class Protocols(object):
         self.morphoframe = morphoframe
         self.metadata = metadata
         
-        print("Unless you have specified the file prefix in the succeeding executables, \nthis will be the file prefix: %s"%(self.file_prefix))
+        #print("Unless you have specified the file prefix in the succeeding executables, 
+        print("this will be the file prefix: %s"%(self.file_prefix))
 
     ## Private
     def _get_variable(self, variable_filepath, 
@@ -194,7 +195,6 @@ class Protocols(object):
         Essential parameters:
             folderpath_to_data (str): location to the pickle file outputs to Protocols.Input 
             filepath_to_data (0 or str): full path to file to be loaded
-            filename_prefix (str): common prefix of the pickle files to be loaded, must be inside `folderpath_to_data`
             conditions_to_include (list of str): the different conditions that you want to load
             morphoframe_name (str): this is how the morphoframe will be called
         
@@ -204,17 +204,24 @@ class Protocols(object):
         """
         params = self.parameters["Load_data"]
         
-        if params["filepath_to_data"] == 0:
-            self.morphoframe[params["morphoframe_name"]] = load_obj(params["filepath_to_data"])
+        filepath_to_data = params["filepath_to_data"]
+        morphoframe_name = params["morphoframe_name"]
+
+
+        if filepath_to_data != 0:
+            self.morphoframe[morphoframe_name] = load_obj(filepath_to_data)
 
         else:
+            conditions_to_include = params["conditions_to_include"]
+            folderpath_to_data = params["folderpath_to_data"]
+            filename_prefix = params["filename_prefix"]
             _morphoframe = {}
-            for _c in params["conditions_to_include"]:
+            for _c in conditions_to_include:
                 print("...loading %s" % _c)
-                filepath = "%s/%s%s" % (params["folderpath_to_data"], params["filename_prefix"], _c)
+                filepath = "%s/%s%s" % (folderpath_to_data, filename_prefix, _c)
                 _morphoframe[_c] = morphomics.utils.load_obj(filepath.replace(".pkl", ""))
 
-            self.morphoframe[params["morphoframe_name"]] = pd.concat([_morphoframe[_c] for _c in params["conditions_to_include"]], ignore_index=True)
+            self.morphoframe[morphoframe_name] = pd.concat([_morphoframe[_c] for _c in conditions_to_include], ignore_index=True)
         
         
 
@@ -440,7 +447,7 @@ class Protocols(object):
         vect_methods_codename = '_'.join(vect_methods_names)
 
         if '_' not in vect_methods_codename:
-            print("Computes %s ." %(vect_methods_codename))
+            print("Computes %s." %(vect_methods_codename))
         else:
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
@@ -527,7 +534,7 @@ class Protocols(object):
         # normalize data 
         if normalize:
             print("Normalize the vectors")
-            normalizer = Normalizer()
+            normalizer = StandardScaler()
             X = normalizer.fit_transform(X)
 
         dimred_methods = dimred_method_parameters.keys()
@@ -755,7 +762,7 @@ class Protocols(object):
 
         if normalize:
             print("Normalize the vectors")
-            normalizer = Normalizer()
+            normalizer = StandardScaler()
             vectors_to_reduce = normalizer.fit_transform(vectors_to_reduce)
 
         print("Mapping vectors into the reduced space...")
@@ -932,7 +939,15 @@ class Protocols(object):
                 _morphoframe[axis_labels[dims]]  = reduced_vectors[:, dims]
 
 
-        fig = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+        fig3d = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+                                 axis_labels = axis_labels,
+                                 conditions = conditions,
+                                 colors = colors,
+                                 amount= amount,
+                                 size = size,
+                                 title = title)
+        
+        fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
                                  axis_labels = axis_labels,
                                  conditions = conditions,
                                  colors = colors,
@@ -951,7 +966,10 @@ class Protocols(object):
             # Ensure the directory exists
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
-            fig.write_html(save_filepath + '.html')
+            fig3d.write_html(save_filepath + '3d.html')
+            fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
+            fig2d.write_html(save_filepath + '2d.html')
+            fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")
