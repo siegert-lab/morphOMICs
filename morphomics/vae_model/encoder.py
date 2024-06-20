@@ -6,6 +6,7 @@ class Encoder(torch.nn.Module):
         super(Encoder, self).__init__()
         
         # Define the layer dimensions
+        # time 2 laten dim because we need the mean and the variance of the dist.
         self.layer_dimensions = [input_dim] + hidden_dimensions + [2*latent_dim]
         self.z_dist_dim = int(self.layer_dimensions[-1]/2)
 
