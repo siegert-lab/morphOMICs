@@ -333,13 +333,11 @@ class Protocols(object):
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be filtered out
             feature_to_bootstrap (list, (str, str)): a column in morphoframe and the type (either bars, scalar or array) to bootstrap
-            condition_column (str): column name in morphoframe where the `bootstrap_conditions` are located
             bootstrap_conditions (list, str): if you want to bootstrap over all the conditions in "morphoframe_name", then leave this as is and leave the "bootstrap_conditions" empty
-            bootstrap_resolution (list ,str): which conditions combinations which bootstrapping will consider as a unique condition restrictions
             rand_seed (int): seed of the random number generator
+            N_bags (int): number of morphologies to take averages of
+            n_samples (int): number of bootstrap samples to create
             ratio (float): a number between 0 and 1, if this is opted, N_pop will be calculated as ratio*(total number of morphologies in a given condition combination)
-            N_pop (int): number of morphologies to take averages of
-            N_samples (int): number of bootstrap samples to create
             bootstrapframe_name (str): where the bootstrapped morphoframes will be stored
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
@@ -351,13 +349,43 @@ class Protocols(object):
         """
         params = self.parameters["Bootstrap"]
 
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
+        feature_to_bootstrap = params["feature_to_bootstrap"]
+        bootstrap_conditions = params["bootstrap_conditions"]
+
+        N_bags = params["N_bags"]
+        n_samples = params["n_samples"]
+        ratio = params["ratio"]
+
+        rand_seed = params["rand_seed"]
+
+        bootstrapframe_name = params["bootstrapframe_name"]
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
                 
         # initialize morphoframe to bootstrap
-        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"])   
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)   
+        
+        print("Bootstrapping with the following parameters: ")
+        print("bootstrap resolution: %s"%("-".join(bootstrap_conditions)))
+        print("bag size: %d"%(int(n_samples)))
+        print("number of bootstrap bags: %d"%(int(N_bags)))
+        bootstrapped_frame = (
+            morphomics.bootstrapping.get_bootstrap_frame(
+                _morphoframe,
+                feature_to_bootstrap = feature_to_bootstrap,
+                bootstrap_conditions = bootstrap_conditions,
+                N_bags = N_bags,
+                replacement = True,
+                n_samples = n_samples,
+                ratio = ratio,
+                rand_seed = rand_seed,
+            )
+        )
 
         # define output filename
         default_save_filename = "%s.Bootstrapped"%(self.file_prefix)
@@ -366,44 +394,15 @@ class Protocols(object):
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
-            
-        if params["ratio"] == 0:
-            ratio = None
         
-        print("Bootstrapping with the following parameters: ")
-        print("bootstrap resolution: %s"%("-".join(params["bootstrap_resolution"])))
-        print("bootstrap size: %d"%(int(params["N_pop"])))
-        print("number of bootstraps: %d"%(int(params["N_samples"])))
-        bootstrapped_frame = (
-            morphomics.bootstrapping.get_subsampled_population_from_infoframe(
-                _morphoframe,
-                feature_to_bootstrap=params["feature_to_bootstrap"],
-                condition_column=params["condition_column"],
-                bootstrap_conditions=params["bootstrap_conditions"],
-                bootstrap_resolution=params["bootstrap_resolution"],
-                N_pop=params["N_pop"],
-                N_samples=params["N_samples"],
-                rand_seed=params["rand_seed"],
-                ratio=ratio,
-                save_filename=save_filepath,
-            )
-        )
-        print("Bootstrap done!")
-        
-        self.metadata[params["morphoinfo_name"]] = (
-            bootstrapped_frame[params["bootstrap_resolution"]]
-            .reset_index(drop=True)
-            .astype("category")
-        )
-        
-        self.morphoframe[params["bootstrapframe_name"]] = bootstrapped_frame
+        self.morphoframe[bootstrapframe_name] = bootstrapped_frame
         
         if save_filepath is not None:
+            save_obj(self.morphoframe[bootstrapframe_name], save_filepath)
             print("The bootstraped morphoframe is saved in %s" %(save_filepath))
 
-            save_obj(self.morphoframe[params["bootstrapframe_name"]], save_filepath)
-            save_obj(self.metadata, "%s-MorphoInfo"%save_filepath)
-            
+        print("Bootstrap done!")
+
 
 
     def Vectorizations(self):
