@@ -568,7 +568,7 @@ class Protocols(object):
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
 
         # save the reduced vectors
-        if save_filename is not None:
+        if save_filepath is not None:
             print("The reduced vectors and fitted dimreducers are saved in %s" %(save_filepath))
 
             save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath + '_reduced_data')
