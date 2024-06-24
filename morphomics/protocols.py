@@ -94,10 +94,10 @@ class Protocols(object):
             if save_filename == 0:
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             else:
-                self.parameters[protocol_name]["save_filename"] = self.file_prefix + '.' + save_filename
+                self.parameters[protocol_name]["save_filename"] = save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
-            save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.parameters[protocol_name]["save_filename"])
+            save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
             save_filepath = None
 
@@ -162,7 +162,7 @@ class Protocols(object):
         save_filename = params["save_filename"]
         
         # define output filename
-        default_save_filename = "%s.TMD-%s"%(self.file_prefix, filtration_function)
+        default_save_filename = "TMD-%s"%(filtration_function)
         save_filepath = self._set_filename(protocol_name = "Input", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -308,7 +308,7 @@ class Protocols(object):
         print("Clean done!")
         
         # initialize output filename
-        default_save_filename = "%s.Cleaned"%(self.file_prefix)
+        default_save_filename = "Cleaned"
         save_filepath = self._set_filename(protocol_name = "Clean_frame", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -388,7 +388,7 @@ class Protocols(object):
         )
 
         # define output filename
-        default_save_filename = "%s.Bootstrapped"%(self.file_prefix)
+        default_save_filename = "Bootstrapped"
         save_filepath = self._set_filename(protocol_name = "Bootstrap", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -464,7 +464,7 @@ class Protocols(object):
         output_vectors = np.concatenate(output_vectors, axis=1)
 
         # define output filename
-        default_save_filename = "%s.Vectorizations-%s"%(self.file_prefix, vect_methods_codename)
+        default_save_filename = "Vectorizations-%s"%(vect_methods_codename)
         save_filepath = self._set_filename(protocol_name = "Vectorizations", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -557,7 +557,7 @@ class Protocols(object):
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
 
         # define output filename
-        default_save_filename = "%s.DimReductions-%s"%(self.file_prefix, dimred_method_names)
+        default_save_filename = "DimReductions-%s"%(dimred_method_names)
         save_filepath = self._set_filename(protocol_name = "Dim_reductions", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -673,7 +673,7 @@ class Protocols(object):
         
 
         # define output filename
-        default_save_filename = "%s.ReductionInfo"%(self.file_prefix)
+        default_save_filename = "ReductionInfo"
         save_filepath = self._set_filename(protocol_name = "Save_reduced", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -747,7 +747,7 @@ class Protocols(object):
         vectors_to_reduce = np.vstack(vectors_to_reduce)
        
         # define output filename
-        default_save_filename = "%s.Mapping"%(self.file_prefix)
+        default_save_filename = "Mapping"
         save_filepath = self._set_filename(protocol_name = "Mapping", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -903,7 +903,18 @@ class Protocols(object):
         Protocol: Generates a 3D interactive plot from a morphoframe, or from the ReductionInfo files, or from coordinate and morphoinfo files
         
         Essential parameters:
-
+            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            morphoframe_name (str): 
+            conditions (list of str):
+            reduced_vectors_name
+            axis_labels
+            title
+            colors
+            size (float)
+            amount (float [0,1])
+            save_data (bool)
+            save_folderpath
+            save_filename
         """
         params = self.parameters["Plotting"]
             
@@ -955,7 +966,7 @@ class Protocols(object):
                                  title = title)
         
         # define output filename
-        default_save_filename = "%s.Plotting"%(self.file_prefix)
+        default_save_filename = "Plotting"
         save_filepath = self._set_filename(protocol_name = "Plotting", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
@@ -966,8 +977,8 @@ class Protocols(object):
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
             fig3d.write_html(save_filepath + '3d.html')
-            fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
-            fig2d.write_html(save_filepath + '2d.html')
+            #fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
+            #fig2d.write_html(save_filepath + '2d.html')
             fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
@@ -976,17 +987,44 @@ class Protocols(object):
 
 
     def Save_parameters(self):
+        """
+        Protocol: Save the wanted parameters in a .pkl for reproducibility.
+
+        Parameters:
+        -----------
+            parameters_to_save (dict of lists): The names of the parameters for wish you want to store the values.
+                                        Should be of the form: {protocol_name_1 : [param_name_1_1, ..., param_name_N_M]
+                                                                ...
+                                                                protocol_name_N : [param_name_N_1, ..., param_name_N_K]
+                                                                }
+            save_folderpath (str): The path to the folder where the file containing parameters will be saved.
+            save_filename (str): Name of the saved .pkl file.
+
+        Returns:
+        --------
+            The .pkl file containg a dict of the parameters and their values.
+        """
         # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility
         params = self.parameters['Save_parameters']
+        
+        parameters_to_save = params['parameters_to_save']
+        stored_parameters = {}
+        for protocol_name in parameters_to_save.keys():
+            stored_parameters[protocol_name] = {}
+            for param_name in parameters_to_save[protocol_name]:
+                stored_parameters[protocol_name][param_name] = self.parameters[protocol_name][param_name]
+
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        default_save_filename = "%s.Experiment_Parameters"%(self.file_prefix)
+        default_save_filename = "Experiment_Parameters"
         save_filepath = self._set_filename(protocol_name = "Save_parameters", 
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
-                                              default_save_filename = default_save_filename, )
-        morphomics.utils.save_obj(obj = params,
+                                              default_save_filename = default_save_filename)
+        
+        self.metadata['exp_param'] = stored_parameters
+        morphomics.utils.save_obj(obj = stored_parameters,
                                     filepath = save_filepath) 
         print("The experiment parameters are saved in %s" %(save_filepath))
         print("")

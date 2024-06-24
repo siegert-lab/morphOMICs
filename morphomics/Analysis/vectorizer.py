@@ -14,7 +14,8 @@ def lifespan_curve(barcode, bins = None, num_bins = 1000):
     else:
         bins = bins
 
-    bar_differences = np.diff(barcode).ravel().astype(float)
+    bar_differences = barcode[:, 1] - barcode[:, 0]
+    bar_differences = bar_differences.ravel().astype(float)
     lifespan_c = [np.sum([
                         bar_diff if vectorizations._index_bar(bar, t) else 0.
                         for bar, bar_diff in zip(barcode, bar_differences)
@@ -31,7 +32,7 @@ class Vectorizer(object):
 
         Parameters
         ----------
-        tmd (list of list of pairs): the barcodes of trees
+        tmd (list of np.arrays of pairs): the barcodes of trees
         parameters (dict): contains the parameters for each protocol that would be run
                             vect_parameters = {'vect_method_1 : { parameter_1_1: x_1_1, ..., parameter_1_n: x_1_n},
                                             ...
@@ -143,9 +144,9 @@ class Vectorizer(object):
         if rescale_lims:
             t_list = None
         else:
-            # get the birth and death distance limits for the curve
-            _xlims, _ylims = vectorizations.get_limits(self.tmd)
             if xlims is None or xlims == "None":
+                # get the birth and death distance limits for the curve
+                _xlims, _ylims = vectorizations.get_limits(self.tmd)
                 xlims = [np.min([_xlims[0], _ylims[0]]), np.max([_xlims[1], _ylims[1]])]
             t_list = np.linspace(xlims[0], xlims[1], resolution)
        
@@ -349,6 +350,7 @@ class Vectorizer(object):
         print("lsc done! \n")
 
         return lifespan_cuves
+
 
 
     def stable_ranks(self):
