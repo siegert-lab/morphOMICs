@@ -108,6 +108,11 @@ def get_bootstrap_frame(
             n_samples = int(ratio * pop_length)
         
         # Get the list of the bags. A bag is composed of randomly chose sampled indxs.    
+        # But if the nb of samples is higher than the size of the pop, n_samples is reajusted.
+        if not replacement and n_samples > pop_length:
+            sampled_idxs_list = [np.random.choice(pop_idxs, pop_length, replace=replacement) 
+                                for _ in range(N_bags)]
+        
         sampled_idxs_list = [np.random.choice(pop_idxs, n_samples, replace=replacement) 
                              for _ in range(N_bags)]
 

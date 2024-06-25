@@ -925,6 +925,7 @@ class Protocols(object):
         axis_labels = params['axis_labels']
         title = params['title']
         colors = params['colors']
+        circle_color = params['circle_colors']
         size= params['size']
         amount = params['amount']
 
@@ -945,25 +946,28 @@ class Protocols(object):
             _morphoframe = _morphoframe.copy()
             reduced_vectors = _morphoframe[reduced_vectors_name].copy()
             reduced_vectors = np.vstack(reduced_vectors)
-            for dims in range(reduced_vectors.shape[1]):
+            nb_dims = reduced_vectors.shape[1]
+            for dims in range(nb_dims):
                 _morphoframe[axis_labels[dims]]  = reduced_vectors[:, dims]
 
-
-        fig3d = plotting.plot_3d_scatter(morphoframe = _morphoframe,
-                                 axis_labels = axis_labels,
-                                 conditions = conditions,
-                                 colors = colors,
-                                 amount= amount,
-                                 size = size,
-                                 title = title)
-        
-        fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
-                                 axis_labels = axis_labels,
-                                 conditions = conditions,
-                                 colors = colors,
-                                 amount= amount,
-                                 size = size,
-                                 title = title)
+        if nb_dims >= 3:
+            fig3d = plotting.plot_3d_scatter(morphoframe = _morphoframe,
+                                    axis_labels = axis_labels,
+                                    conditions = conditions,
+                                    colors = colors,
+                                    circle_color = circle_color,
+                                    amount= amount,
+                                    size = size,
+                                    title = title)
+        if nb_dims >= 2:
+            fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
+                                    axis_labels = axis_labels,
+                                    conditions = conditions,
+                                    colors = colors,
+                                    circle_color = circle_color,
+                                    amount= amount,
+                                    size = size,
+                                    title = title)
         
         # define output filename
         default_save_filename = "Plotting"
@@ -976,10 +980,12 @@ class Protocols(object):
             # Ensure the directory exists
             os.makedirs(os.path.dirname(save_filepath), exist_ok=True)
             # Save the plot as an HTML file
-            fig3d.write_html(save_filepath + '3d.html')
+            if nb_dims >= 3:
+                fig3d.write_html(save_filepath + '3d.html')
             #fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
             #fig2d.write_html(save_filepath + '2d.html')
-            fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
+            if nb_dims >= 2:
+                fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")

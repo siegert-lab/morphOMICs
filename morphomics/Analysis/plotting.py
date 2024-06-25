@@ -2,11 +2,13 @@ import numpy as np
 import plotly.express as px
 import colorsys
 import matplotlib.colors as mcolors
+import plotly.graph_objects as go
 
 # Get the dictionary of color names and their hex codes
 color_hex_dict = mcolors.CSS4_COLORS
 
 def _darken_lighten_color(color, a=0.):
+    # Takes a color and returns a lighter and a darker shade of this color.
     try:
         c = np.array(px.colors.hex_to_rgb(color)) / 255.0
         c = colorsys.rgb_to_hls(*c)
@@ -49,7 +51,7 @@ def _set_colormap(colors, condition_list, amount):
     return color_map
 
 
-def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, title, show=True):
+def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, title, circle_color=None, show=True):
     """
     Plots a 3D interactive scatter plot and optionally displays it.
 
@@ -61,9 +63,13 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     - conditions: list of str
         Columns in morphoframe to concatenate for condition labels.
     - colors: dict or list of str
-        Dictionary mapping conditions to colors or a list of colors.
+        Dictionary mapping conditions to colors or a list of colors of data points.
+    - circle_color: dict or None
+        Dictionary mapping conditions to colors of the circle around data points.   
+    - amount: float between 0 and 1
+        Influence the shade (darker/lighter) of the color.
     - size: int
-        Size of markers in the scatter plot.
+        Size of data points in the scatter plot.
     - title: str
         Title of the plot.
     - show: bool, optional, default=True
@@ -74,21 +80,45 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
         Plotly figure object.
     """
     # Create a column with joined conditions
-    morphoframe['condition'] = morphoframe[conditions].apply(lambda x: '_'.join(x), axis=1)
+    morphoframe['condition'] = morphoframe[conditions].apply(lambda x: '-'.join(x), axis=1)
 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
     
-    fig = px.scatter_3d(morphoframe, 
-                        x = axis_labels[0], 
-                        y = axis_labels[1], 
-                        z = axis_labels[2], 
-                        color = 'condition',
-                        color_discrete_map = color_map,
-                        title = title,
-                       )
+    if circle_color is None:
+        fig = px.scatter_3d(morphoframe, 
+                            x = axis_labels[0], 
+                            y = axis_labels[1], 
+                            z = axis_labels[2], 
+                            color = 'condition',
+                            color_discrete_map = color_map,
+                            title = title,
+                        )
+    
+
+    else:
+        fig = go.Figure()
+        for condition in condition_list:
+            # Filter data for each condition
+            condition_data = morphoframe[morphoframe['condition'] == condition]
+            
+            # Add scatter trace for each condition
+            fig.add_trace(go.Scatter3d(
+                x=condition_data[axis_labels[0]],
+                y=condition_data[axis_labels[1]],
+                z=condition_data[axis_labels[2]],
+                mode='markers',
+                name=condition,
+                marker=dict(
+                    color = color_map[condition],
+                    line = dict(
+                        color=circle_color[condition],
+                        width=0.2
+                    )
+                )
+            ))
     
     fig.update_traces(marker=dict(size=size),
                         
@@ -109,7 +139,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
 
 
 
-def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, title, show=True):
+def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, amount, size, title, show=True):
     """
     Plots a 2D interactive scatter plot and optionally displays it.
 
@@ -134,29 +164,49 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
         Plotly figure object.
     """
     # Create a column with joined conditions
-    morphoframe['condition'] = morphoframe[conditions].apply(lambda x: '_'.join(x), axis=1)
+    morphoframe['condition'] = morphoframe[conditions].apply(lambda x: '-'.join(x), axis=1)
 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
     
-    
-    # Create the Plotly scatter plot
-    fig = px.scatter(morphoframe, 
-                     x=axis_labels[0], 
-                     y=axis_labels[1], 
-                     color='condition',
-                     color_discrete_map=color_map,
-                     title=title
+    if circle_color is None:
+        # Create the Plotly scatter plot
+        fig = px.scatter(morphoframe, 
+                        x=axis_labels[0], 
+                        y=axis_labels[1], 
+                        color='condition',
+                        color_discrete_map=color_map,
+                        title=title
+                        )
+
+    else:
+        fig = go.Figure()
+        for condition in condition_list:
+            # Filter data for each condition
+            condition_data = morphoframe[morphoframe['condition'] == condition]
+            
+            # Add scatter trace for each condition
+            fig.add_trace(go.Scatter(
+                x=condition_data[axis_labels[0]],
+                y=condition_data[axis_labels[1]],
+                mode='markers',
+                name=condition,
+                marker=dict(
+                    color = color_map[condition],
+                    line = dict(
+                        color=circle_color[condition],
+                        width=0.2
                     )
+                )
+            ))
     
-    fig.update_traces(marker=dict(size=size),
-                        
-                    )
+    fig.update_traces(marker=dict(size=size))
     
     # Update layout to adjust legend size
     fig.update_layout(
+        title = title,
         legend=dict(
             font=dict(size=20),  # Adjust the font size as needed
             itemsizing='constant', # Adjust the legend marker size
