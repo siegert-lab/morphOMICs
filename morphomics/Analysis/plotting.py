@@ -3,6 +3,7 @@ import plotly.express as px
 import colorsys
 import matplotlib.colors as mcolors
 import plotly.graph_objects as go
+import seaborn as sns
 
 # Get the dictionary of color names and their hex codes
 color_hex_dict = mcolors.CSS4_COLORS
@@ -33,15 +34,18 @@ def _set_colormap(colors, condition_list, amount):
         nb_conditions = len(condition_list)
 
         if nb_colors == 0:
-            color_map = None
+            palette = sns.color_palette("hsv", nb_conditions)
+            colors = ["#%02x%02x%02x" % (int(r*255), int(g*255), int(b*255)) for r, g, b in palette]
+            for i in range(nb_conditions):
+                color_map[condition_list[i]] = colors[i]
 
         elif nb_colors == nb_conditions:
-            for i in range(len(colors)):
+            for i in range(nb_colors):
                 color_name = colors[i]
                 color_map[condition_list[i]] = color_name
 
         elif nb_colors == int(nb_conditions/2):
-            for i in range(len(colors)):
+            for i in range(nb_colors):
                 color_name = colors[i]
                 color_hex = color_hex_dict[color_name]
                 lighten_c, darken_c = _darken_lighten_color(color_hex, a=amount)
@@ -86,7 +90,8 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
-    
+    circle_color_map = _set_colormap(circle_color, condition_list, amount)
+
     if circle_color is None:
         fig = px.scatter_3d(morphoframe, 
                             x = axis_labels[0], 
@@ -114,7 +119,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
                 marker=dict(
                     color = color_map[condition],
                     line = dict(
-                        color=circle_color[condition],
+                        color=circle_color_map[condition],
                         width=0.2
                     )
                 )
@@ -170,7 +175,8 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
-    
+    circle_color_map = _set_colormap(circle_color, condition_list, amount)
+
     if circle_color is None:
         # Create the Plotly scatter plot
         fig = px.scatter(morphoframe, 
@@ -196,7 +202,7 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
                 marker=dict(
                     color = color_map[condition],
                     line = dict(
-                        color=circle_color[condition],
+                        color=circle_color_map[condition],
                         width=0.2
                     )
                 )

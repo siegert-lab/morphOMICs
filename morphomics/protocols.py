@@ -110,10 +110,11 @@ class Protocols(object):
             print("Loading indices used for filtering persistence images...")
             _tokeep = morphomics.utils.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
         else:
-            print("Keeping pixels in persistence image with standard deviation of %.3f..."%float(params["pixel_std_cutoff"]))
+            print("Keeping pixels in persistence image with standard deviation higher than %.3f..."%float(params["pixel_std_cutoff"]))
             _tokeep = np.where(
                 np.std(persistence_images, axis=0) >= params["pixel_std_cutoff"]
             )[0]
+            print(len(_tokeep), 'pppp', persistence_images.shape)
             
         filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
         self.metadata["pixes_tokeep"] = _tokeep
@@ -121,7 +122,7 @@ class Protocols(object):
         if params["save_data"]:
             print("The filtration is saved in %s" %(save_filepath))
             morphomics.utils.save_obj(self.metadata, "%s-FilteredIndex" % (save_filepath))
-            morphomics.utils.save_obj(self.morphoframe[params["morphoframe_name"]], "%s-FilteredMatrix" % (save_filepath))
+            morphomics.utils.save_obj(filtered_image, "%s-FilteredMatrix" % (save_filepath))
             
         return filtered_image
 
@@ -523,11 +524,20 @@ class Protocols(object):
         
         X = np.vstack(_morphoframe[vectors_to_reduce])
         
+        dimred_methods = dimred_method_parameters.keys()
+        dimred_method_names = '_'.join(list(dimred_methods))
+        # define output filename
+        default_save_filename = "DimReductions-%s"%(dimred_method_names)
+        save_filepath = self._set_filename(protocol_name = "Dim_reductions", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
         # if persistence image, pixels can be filtered 
         if filter_pixels:
             filtered_image = self._image_filtering(persistence_images = X,
                                                   params = params, 
-                                                  save_filename = save_filename)
+                                                  save_filepath = save_filepath)
             X = filtered_image
 
         # normalize data 
@@ -535,9 +545,6 @@ class Protocols(object):
             print("Normalize the vectors")
             normalizer = StandardScaler()
             X = normalizer.fit_transform(X)
-
-        dimred_methods = dimred_method_parameters.keys()
-        dimred_method_names = '_'.join(list(dimred_methods))
 
         print("Reduces the vectors with the following techniques %s " %(dimred_method_names))
         # initialize an instance of DimReducer
@@ -555,14 +562,6 @@ class Protocols(object):
             dimreducer.tmd_vectors = reduced_vectors
 
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
-
-        # define output filename
-        default_save_filename = "DimReductions-%s"%(dimred_method_names)
-        save_filepath = self._set_filename(protocol_name = "Dim_reductions", 
-                                              save_folderpath = save_folderpath, 
-                                              save_filename = save_filename,
-                                              default_save_filename = default_save_filename, 
-                                              save_data = save_data)
 
         self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
@@ -982,10 +981,16 @@ class Protocols(object):
             # Save the plot as an HTML file
             if nb_dims >= 3:
                 fig3d.write_html(save_filepath + '3d.html')
+                self.metadata['fig3d'] = fig3d
+
             #fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
             #fig2d.write_html(save_filepath + '2d.html')
             if nb_dims >= 2:
                 fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
+                self.metadata['fig2d'] = fig2d
+            
+            save_obj(obj = self.metadata, filepath = save_filepath + '_figures')
+
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")

@@ -2,7 +2,7 @@ import numpy as np
 import concurrent.futures
 from functools import partial
 
-from tmd.Topology import vectorizations
+from morphomics.tmd.Topology import vectorizations
 
 from morphomics.utils import norm_methods
 
@@ -230,7 +230,8 @@ class Vectorizer(object):
             xlims, ylims = None, None
         else:
             # get the birth and death distance limits for the persistence images
-            _xlims, _ylims = vectorizations.get_limits(self.tmd)
+            ph_list = list(self.tmd)
+            _xlims, _ylims = vectorizations.get_limits(ph_list)
             if xlims is None or xlims == "None":
                 xlims = _xlims
             if ylims is None or ylims == "None":
