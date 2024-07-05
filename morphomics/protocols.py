@@ -6,6 +6,7 @@ import os
 from morphomics.Analysis.vectorizer import Vectorizer
 from morphomics.Analysis.dim_reducer import DimReducer
 from morphomics.Analysis import plotting
+from morphomics.Analysis import subsampler
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
 from sklearn.preprocessing import Normalizer, StandardScaler
@@ -327,7 +328,77 @@ class Protocols(object):
         self.morphoframe[params["morphoframe_name"]] = _morphoframe
 
      
+    def Subsample(self):
+        """
+        Protocol: subsample/modify a tree or a barcode to reduce its "noise".
+
+        Essential parameters:
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be subsampled out.
+            feature_to_subsample (list, (str, str)): A column in morphoframe .i.e the type (either barcodes, or tree) to subsample.
+            k_elements (int or ratio): The number of elements that will be subsampled to generate a subbarcode or subtree.
+            n_samples (int): Number of subbarcodes per barcode.
+            rand_seed (int): Seed of the random number generator.
+            extendedframe_name (str): Where the subsampled morphoframe will be stored.
+            save_data (bool): Trigger to save output of protocol.
+            save_folderpath (str): Location where to save the data.
+            save_filename (str or 0): Name of the file containing the bootstrap frame.
+
+        """
+        params = self.parameters["Subsample"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
         
+        extendedframe_name = params["extendedframe_name"]
+
+        feature_to_subsample = params["feature_to_subsample"]
+        #could be a ratio of the number of bars
+        k_elements = params["k_elements"]
+        n_samples = params["n_samples"]
+
+        rand_seed = params["rand_seed"]
+
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        # initialize morphoframe to bootstrap
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)   
+        _morphoframe_copy = _morphoframe.copy()
+
+        features = _morphoframe_copy[feature_to_subsample]
+        _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(feature_list = features)
+        probas = _morphoframe_copy[feature_to_subsample + "_proba"]
+        _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(feature_list = features,
+                                                                                                      probas = probas, 
+                                                                                                      k_elements = k_elements, 
+                                                                                                      n_samples = n_samples, 
+                                                                                                      rand_seed = rand_seed)
+        _morphoframe_copy[feature_to_subsample + '_id'] = _morphoframe_copy.index
+        extendedframe = _morphoframe_copy.explode(feature_to_subsample + "_subsampled").reset_index(drop = True)
+
+        # initialize output filename
+        default_save_filename = "Subsampled"
+        save_filepath = self._set_filename(protocol_name = "Subsample", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
+        self.morphoframe[extendedframe_name] = extendedframe[[feature_to_subsample + "_subsampled", feature_to_subsample + '_id']]
+
+        # save the file 
+        if params["save_data"]:
+            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extanded')
+
+            print("The Subsampled morphoframe is saved in %s" %(save_filepath))
+
+
+
     def Bootstrap(self):
         """
         Protocol: Takes the morphoframe and bootstraps the variable specified in  `feature_to_bootstrap` and returns a new morphoframe with the bootstrapped samples
@@ -341,7 +412,7 @@ class Protocols(object):
             N_bags (int): Number of bootstrapped/averaged points in one population (i.e. per combination of conditions).
             n_samples (int): Number of sampled points to create a bootstrapped point.
             ratio (float): Only used if n_samples = 0. A number between 0 and 1, defines the number of samples per population with respect to the pop size. 
-            bootstrapframe_name (str): Where the bootstrapped morphoframes will be stored.
+            bootstrapframe_name (str): Where the bootstrapped morphoframe will be stored.
             save_data (bool): Trigger to save output of protocol.
             save_folderpath (str): Location where to save the data.
             save_filename (str or 0): Name of the file containing the bootstrap frame.
@@ -410,6 +481,7 @@ class Protocols(object):
 
         print("Bootstrap done!")
         print("")
+
 
 
     def Vectorizations(self):
