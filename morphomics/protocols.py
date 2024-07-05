@@ -130,18 +130,18 @@ class Protocols(object):
     ## Public
     def Input(self):
         """
-        Protocol: Load .swc files, transform them into TMD barcodes and store them as a morphoframe.
+        Protocol: Load .swc files, transform them into TMD barcodes and store them as an element of self.morphoframe.
         
         Essential parameters:
-            data_location_filepath (str): location of the filepath
-            extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
-            conditions (list, str): this must match the hierarchical structure of `data_location_filepath`
-            separated_by (str): saving chunks of the morphoframe via this condition, this must be an element of `conditions`
-            filtration_function (str): this is the TMD filtration function, can either be radial_distances, or path_distances
-            morphoframe_name (str): this is how the morphoframe will be called
-            save_data (bool): trigger to save output of protocol
-            save_folderpath (str): location where to save the data
-            save_filename (str or 0): this will be used as the file name
+            data_location_filepath (str): Tocation of the parent folder containinf the .swc files arranged hierarchically according to conditions.
+            extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
+            conditions (list, str): This must match the hierarchical structure of `data_location_filepath`.
+            separated_by (str): Taving chunks of the morphoframe via this condition, this must be an element of `conditions`.
+            filtration_function (str): This is the TMD filtration function, can either be radial_distances, or path_distances.
+            morphoframe_name (str): This is how the variable in self.morphoframe will be called.
+            save_data (bool): Trigger to save output of protocol.
+            save_folderpath (str): Location where to save the variable.
+            save_filename (str or 0): This will be used as the file name.
         
         Returns
         -------
@@ -171,7 +171,6 @@ class Protocols(object):
                                               save_data = save_data)
 
         print("Loading the data from %s"%(data_location_filepath))
-        print("Saving dataset in %s"%(save_filepath))
 
         # load the data
         self.morphoframe[morphoframe_name] = morphomics.io.load_data(
@@ -182,8 +181,8 @@ class Protocols(object):
             separated_by = separated_by,
             save_filename = save_filepath,
         )
-        
 
+        print("Saving dataset in %s"%(save_filepath))
         print("Input done!")
         print("")
 
@@ -194,11 +193,11 @@ class Protocols(object):
         Protocol: Load morphoframe from .pkl files.
         
         Essential parameters:
+            filepath_to_data (0 or str): Full path to file to be loaded.
+            morphoframe_name (str): This is how the variable in self.morphoframe will be called.
             folderpath_to_data (str): location to the pickle file outputs to Protocols.Input 
-            filepath_to_data (0 or str): full path to file to be loaded
             conditions_to_include (list of str): the different conditions that you want to load
-            morphoframe_name (str): this is how the morphoframe will be called
-        
+
         Returns
         -------
         Add a dataframe to morphoframe.
@@ -224,18 +223,21 @@ class Protocols(object):
 
             self.morphoframe[morphoframe_name] = pd.concat([_morphoframe[_c] for _c in conditions_to_include], ignore_index=True)
         
-        
+        print('Loading done!')
+        print("")
+
+
 
     def Clean_frame(self):
         """
         Protocol: Clean out the morphoframe, to filter out artifacts and unwanted conditions.
         
         Essential parameters:
-            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-            morphoframe_name (str): morphoframe key which will be filtered out
-            barcode_size_cutoff (int): remove morphologies if the number of bars is less than the cutoff
-            barlength_cutoff (list, (str, float)): retain bars whose length satisfy a certain cutoff
-                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff]
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be filtered out.
+            barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
+            barlength_cutoff (list, (str, float)): Retain bars whose length satisfy a certain cutoff
+                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff].
             combine_conditions (list, (str, list, str)): # enumerate which conditions will be merged
                                     must be an array with three elements 
                                         [a header of the info_frame (is an element of `Input.conditions`),
@@ -324,29 +326,29 @@ class Protocols(object):
 
         self.morphoframe[params["morphoframe_name"]] = _morphoframe
 
-        
+     
         
     def Bootstrap(self):
         """
         Protocol: Takes the morphoframe and bootstraps the variable specified in  `feature_to_bootstrap` and returns a new morphoframe with the bootstrapped samples
         
         Essential parameters:
-            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-            morphoframe_name (str): morphoframe key which will be filtered out
-            feature_to_bootstrap (list, (str, str)): a column in morphoframe and the type (either bars, scalar or array) to bootstrap
-            bootstrap_conditions (list, str): if you want to bootstrap over all the conditions in "morphoframe_name", then leave this as is and leave the "bootstrap_conditions" empty
-            rand_seed (int): seed of the random number generator
-            N_bags (int): number of morphologies to take averages of
-            n_samples (int): number of bootstrap samples to create
-            ratio (float): a number between 0 and 1, if this is opted, N_pop will be calculated as ratio*(total number of morphologies in a given condition combination)
-            bootstrapframe_name (str): where the bootstrapped morphoframes will be stored
-            save_data (bool): trigger to save output of protocol
-            save_folderpath (str): location where to save the data
-            default_save_filename (str or 0): this will be used as the file prefix
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be bootstrapped out.
+            feature_to_bootstrap (list, (str, str)): A column in morphoframe and the type (either bars, scalar or array) to bootstrap.
+            bootstrap_conditions (list, str): Conditions to bootstrap together. If you want to bootstrap over all the conditions in "morphoframe_name", then leave the "bootstrap_conditions" empty
+            rand_seed (int): Seed of the random number generator.
+            N_bags (int): Number of bootstrapped/averaged points in one population (i.e. per combination of conditions).
+            n_samples (int): Number of sampled points to create a bootstrapped point.
+            ratio (float): Only used if n_samples = 0. A number between 0 and 1, defines the number of samples per population with respect to the pop size. 
+            bootstrapframe_name (str): Where the bootstrapped morphoframes will be stored.
+            save_data (bool): Trigger to save output of protocol.
+            save_folderpath (str): Location where to save the data.
+            save_filename (str or 0): Name of the file containing the bootstrap frame.
 
         Returns
         -------
-        Add a dataframe containing bootstrapped data to morphoframe. The samples are sub groups of microglia.
+        Add a dataframe containing bootstrapped data to morphoframe. The samples are bootstrapped points of microglia.
         """
         params = self.parameters["Bootstrap"]
 
@@ -370,14 +372,18 @@ class Protocols(object):
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)   
-        
+        _morphoframe_copy = _morphoframe.copy()
+
         print("Bootstrapping with the following parameters: ")
         print("bootstrap resolution: %s"%("-".join(bootstrap_conditions)))
-        print("bag size: %d"%(int(n_samples)))
+        if n_samples == 0 :
+            print("bag size = n_samples/pop_size: %d"%(int(ratio)))
+        else:
+            print("bag size: %d"%(int(n_samples)))
         print("number of bootstrap bags: %d"%(int(N_bags)))
         bootstrapped_frame = (
             morphomics.bootstrapping.get_bootstrap_frame(
-                _morphoframe,
+                _morphoframe_copy,
                 feature_to_bootstrap = feature_to_bootstrap,
                 bootstrap_conditions = bootstrap_conditions,
                 N_bags = N_bags,
@@ -403,17 +409,18 @@ class Protocols(object):
             print("The bootstraped morphoframe is saved in %s" %(save_filepath))
 
         print("Bootstrap done!")
-
+        print("")
 
 
     def Vectorizations(self):
         """
-        Protocol: Takes a morphoframe called morphoframe_name and vectorize the barcodes within the morphoframe
+        Protocol: Takes a morphoframe called morphoframe_name and vectorize the barcodes within the morphoframe.
+        Must be a column called barcodes.
         
         Essential parameters:
-            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-            morphoframe_name (str): morphoframe key which will be filtered out
-            vect_method_parameters (dict): keys are the vectorization methods applied on the TMD and attributes are the parameters of each vetorization method
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be vectotized out.
+            vect_method_parameters (dict): Keys are the vectorization methods applied on the TMD and attributes are the parameters of each vetorization method
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
@@ -436,9 +443,9 @@ class Protocols(object):
         # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
-        
+        _morphoframe_copy = _morphoframe.copy()
         assert (
-            "barcodes" in _morphoframe.keys()
+            "barcodes" in _morphoframe_copy.keys()
         ), "Missing `barcodes` column in info_frame..."
 
         # define the name of the vect method
@@ -452,7 +459,7 @@ class Protocols(object):
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
         # initalize an instance of Vectorizer
-        vectorizer = Vectorizer(tmd = _morphoframe["barcodes"], 
+        vectorizer = Vectorizer(tmd = _morphoframe_copy["barcodes"], 
                                 vect_parameters = vect_method_parameters)
         
         # compute vectors
@@ -472,7 +479,6 @@ class Protocols(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
-        self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
 
         print("Vectorization done!")
@@ -497,6 +503,7 @@ class Protocols(object):
             FilteredPixelIndex_filepath (float): spread of the Gaussian kernel
             pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
             normalize (bool): normalize data before reduction
+            standardize (bool): standardize data before reduction
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
@@ -513,6 +520,7 @@ class Protocols(object):
         vectors_to_reduce = params["vectors_to_reduce"]
         filter_pixels = params["filter_pixels"]
         normalize = params['normalize']
+        standardize = params['standardize']
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -521,8 +529,9 @@ class Protocols(object):
         # define morphoframe containing vectors to compute dim reduction
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
-        
-        X = np.vstack(_morphoframe[vectors_to_reduce])
+        _morphoframe_copy = _morphoframe.copy()
+
+        X = np.vstack(_morphoframe_copy[vectors_to_reduce])
         
         dimred_methods = dimred_method_parameters.keys()
         dimred_method_names = '_'.join(list(dimred_methods))
@@ -542,9 +551,14 @@ class Protocols(object):
 
         # normalize data 
         if normalize:
-            print("Normalize the vectors")
-            normalizer = StandardScaler()
+            print("Standardize the vectors")
+            normalizer = Normalizer()
             X = normalizer.fit_transform(X)
+        # standardize data 
+        if standardize:
+            print("Standardize the vectors")
+            standardize = StandardScaler()
+            X = standardize.fit_transform(X)
 
         print("Reduces the vectors with the following techniques %s " %(dimred_method_names))
         # initialize an instance of DimReducer
@@ -563,7 +577,6 @@ class Protocols(object):
 
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
 
-        self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
 
         # save the reduced vectors
@@ -705,6 +718,8 @@ class Protocols(object):
             FilteredPixelIndex_filepath (str): location of the filtered pixel indices before doing the UMAP of the generated phenotypic spectrum
             pixel_std_cutoff (str): how to normalize the persistence image, can be "sum" or "max"
             normalize (bool): normalize data or not 
+            standardize (bool): standardize data or not 
+
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
             save_filename (str or 0): this will be used as the file name
@@ -726,7 +741,8 @@ class Protocols(object):
         FilteredPixelIndex_filepath = params["FilteredPixelIndex_filepath"]
         
         normalize = params['normalize']
-        
+        standardize = params['standardize']
+
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
@@ -757,11 +773,14 @@ class Protocols(object):
             self._image_filtering(persistence_images = vectors_to_reduce,
                                     params = params, 
                                     save_filename = save_filepath)
-
         if normalize:
             print("Normalize the vectors")
-            normalizer = StandardScaler()
+            normalizer = Normalizer()
             vectors_to_reduce = normalizer.fit_transform(vectors_to_reduce)
+        if standardize:
+            print("Standardize the vectors")
+            standardizer = StandardScaler()
+            vectors_to_reduce = standardizer.fit_transform(vectors_to_reduce)
 
         print("Mapping vectors into the reduced space...")
         for f_dimreducer in f_dimreducers:

@@ -23,6 +23,7 @@ def _darken_lighten_color(color, a=0.):
     except ValueError:
         raise ValueError(f"Cannot lighten color {color}")
     
+
 def _set_colormap(colors, condition_list, amount):
     # Define the colormap for the functions that plot.
     if isinstance(colors, dict):
@@ -90,7 +91,6 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
-    circle_color_map = _set_colormap(circle_color, condition_list, amount)
 
     if circle_color is None:
         fig = px.scatter_3d(morphoframe, 
@@ -104,6 +104,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
     
 
     else:
+        circle_color_map = _set_colormap(circle_color, condition_list, amount)
         fig = go.Figure()
         for condition in condition_list:
             # Filter data for each condition
@@ -175,7 +176,6 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
     condition_list = condition_list.tolist()
     
     color_map = _set_colormap(colors, condition_list, amount)
-    circle_color_map = _set_colormap(circle_color, condition_list, amount)
 
     if circle_color is None:
         # Create the Plotly scatter plot
@@ -188,6 +188,7 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
                         )
 
     else:
+        circle_color_map = _set_colormap(circle_color, condition_list, amount)
         fig = go.Figure()
         for condition in condition_list:
             # Filter data for each condition

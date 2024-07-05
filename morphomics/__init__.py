@@ -9,4 +9,4 @@ from morphomics.Analysis import plotting
 from morphomics.Analysis import morphometrics
 from morphomics.Analysis import vectorizer
 from morphomics.Analysis import dim_reducer
-from morphomics import utils
+from morphomics import utils, protocols, params

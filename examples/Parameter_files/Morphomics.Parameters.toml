@@ -2,41 +2,41 @@
 
 # sequential list of executables
 # Choices of executables: Input, Load_data, Clean_frame, Bootstrap, Vectorizations, Dim_reductions, 
-#                         Plotting, Mapping, Clean_morphframe, Save_reduced, 
-#                         Sholl_curves, Morphometrics
-# This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum
+#                         Plotting, Mapping, Save_reduced, Save_parameters,
+#                         Sholl_curves, Morphometrics,
+#                         Clear_morphoframe.
+# This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum.
 Protocols = [
         "Input",
         "Clean_frame",
-        "Bootstrap",
         "Vectorizations",
+        "Bootstrap",
         "Dim_reductions",
         "Save_reduced",
-        #"Mapping",
         "Plotting",
     ]
 
-Parameters_ID = "Brain_test"
+Parameters_ID = "Brain_trial"
   
-# set load_previous_instance = true if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols
-# use case: you tried running run_morphomics.py but it failed at some protocol
+# Set load_previous_instance = true if you have ran morphOMICs with this set of parameters and you want to re-do it but with the latest saved instance of protocols.
+# Use case: you tried running run_morphomics.py but it failed at some protocol.
 load_previous_instance = false
 path_to_last_instance = "examples/saved_instances"
 
-# set save_last_instance = true if you want to always save last instance of protocols
-save_last_instance = true
+# Set save_instance = true if you want to always save last instance of protocols.
+save_instance = true
 path_to_new_instance = "examples/saved_instances"
 
 
 
 [Input]
-# filepath pointing to the parent folder containing the .swc files arranged hierarchically according to conditions
+# Path pointing to the parent folder containing the .swc files arranged hierarchically according to 'conditions'.
 "data_location_filepath" = "examples/data"
 
-# .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter
+# .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
 "extension" = "_corrected.swc"
 
-# this must match the hierarchical structure of `data_location_filepath`
+# This must match the hierarchical structure of `data_location_filepath`.
 "conditions" = [
             "Region",
             "Model",
@@ -44,38 +44,40 @@ path_to_new_instance = "examples/saved_instances"
             "Animal",
         ]
         
-# saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`
-# this must be an element of `conditions`
+# Saving chunks of the whole data (according to `separated_by`) makes it less painful if there was a problem with the file processing in the middle of running `Input`.
+# This must be an element of `conditions`.
 "separated_by" = "Model"
 
-# this is the TMD filtration function, can either be radial_distances, or path_distances
+# This is the TMD filtration function, can either be radial_distances, or path_distances.
 "filtration_function" = "radial_distances"
 
-# this is how the variable will be called
+# This is how the variable will be called.
+# The variable is a PandaDataframe stored in Protocols.morphoframe.
+# It contains computed information about microglia (filepath, Region, barcode ...)
 "morphoframe_name" = "morphoframe"
 
 # I would advise saving the loaded data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
 
-# location where to save the data
+# Location where to save the data.
 "save_folderpath" = "examples/saved_instances"
 
-# if 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-
-# Otherwise, this will be used as the file prefix
+# If 0, morphOMICs will automatically create a file prefix, i.e., Morphomics.PID[xxx].[barcode_filter].[separated_by]-.
+# Otherwise, this will be used as the file prefix.
 "save_filename" = 0
 
 
 
 [Clean_frame]
-# if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
-# otherwise, `morphoframe_name` is the morphoframe that will be cleaned up
+# If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+# Otherwise, `morphoframe_name` is the morphoframe that will be cleaned up.
 "morphoframe_filepath" = 0
 "morphoframe_name" = "morphoframe"
 
-# remove morphologies if the number of bars is less than the cutoff
+# Remove morphologies if the number of bars is less than the cutoff.
 "barcode_size_cutoff" = 5
 
-# retain bars whose length satisfy a certain cutoff
+# Retain bars whose length satisfy a certain cutoff
 # must be an array with three elements, ["greater_than" "less_than" or "within", bar length condition (must be an array if using "within"), "drop" or "keep"]
 # the example below keeps bars whose length is greater than 0, and less than 200.
 # if not used, comment the elements of `barlength_cutoff` out

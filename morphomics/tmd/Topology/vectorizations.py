@@ -23,6 +23,10 @@ from .statistics import get_lengths
 
 def get_limits(phs_list):
     """Returns the x-y coordinates limits (min, max) for a list of persistence diagrams."""
+    # if any((isinstance(ph[0], list) for ph in phs_list)):
+    #     phs = [list(ph_bar) for ph in phs_list for ph_bar in ph]
+    # else:
+    #     phs = phs_list
     phs = np.vstack(phs_list)
     xlim = [min(np.transpose(phs)[0]), max(np.transpose(phs)[0])]
     ylim = [min(np.transpose(phs)[1]), max(np.transpose(phs)[1])]
