@@ -289,9 +289,10 @@ def load_data(
                 .copy()
                 .reset_index(drop=True)
             )
-
             if save_filename is not None:
                 _save_filename = "%s.%s-%s" % (save_filename, separated_by, _v)
+            else:
+                _save_filename = None
             info_frame[_v] = get_barcodes_from_df(
                 _sub_info_frame, filtration_function=filtration_function, save_filename=_save_filename
             )

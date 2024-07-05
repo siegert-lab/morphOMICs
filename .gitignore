@@ -11,4 +11,7 @@ examples/trial_folder
 br_experiments
 vae_experiments
 reproduce_experiments
-bt_exp
+retina_experiments
+bt_pi_experiments
+br_proper_experiments
+br2_experiments

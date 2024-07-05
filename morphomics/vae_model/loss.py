@@ -13,4 +13,4 @@ class Loss(torch.nn.Module):
         # Compute the KL divergence loss
         kl_loss = -0.5 * torch.mean(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
 
-        return mse + self.kl_factor*kl_loss
+        return mse + self.kl_factor*kl_loss, mse

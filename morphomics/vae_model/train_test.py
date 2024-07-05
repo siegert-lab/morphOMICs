@@ -24,7 +24,7 @@ def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
     for epoch in range(epochs):
         # Initialize the loss
         tot_loss = 0
-        
+        tot_mse = 0
         # Loop through the DataLoader
         for i, x in enumerate(loader):
             # Zero the gradients
@@ -34,7 +34,7 @@ def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
             out, z_mean, z_log_var = model(x, sample_size = sample_size)
             
             # Calculate the loss
-            loss = loss_fn(x, out, z_mean, z_log_var)
+            loss, mse = loss_fn(x, out, z_mean, z_log_var)
             
             # Backpropagate
             loss.backward()
@@ -44,10 +44,10 @@ def train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
             
             # Add the loss to the total loss
             tot_loss += loss.item()
-        
+            tot_mse += mse
         # Print the loss every 10 epochs
         if epoch % 10 == 0:
-            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}')
+            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}')
     
     return model
 
@@ -56,18 +56,20 @@ def test(data, model, sample_size, loss_fn = None,
          sample_scaler = None, feature_scaler = None):
 
     if sample_scaler:
-        data = sample_scaler.fit_transform(data)
+        data = sample_scaler.transform(data)
 
     if feature_scaler:
-        data = feature_scaler.fit_transform(data)
+        data = feature_scaler.transform(data)
+    
+    model.eval()
+    with torch.no_grad():
+        # Pass the data through the model
+        out, z_mean, z_log_var = model(data, sample_size = sample_size)
 
-    # Pass the data through the model
-    out, z_mean, z_log_var = model(data, sample_size = sample_size)
-
-    # compute mse
-    x_expanded = data.unsqueeze(0).expand(*out.shape)
-    l2 = torch.norm(out - x_expanded, dim = -1, p=2)
-    mse = torch.mean(l2)
+        # compute mse
+        x_expanded = data.unsqueeze(0).expand(*out.shape)
+        l2 = torch.norm(out - x_expanded, dim = -1, p=2)
+        mse = torch.mean(l2)
 
     return out, z_mean, z_log_var, mse
 
