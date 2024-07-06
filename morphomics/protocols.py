@@ -336,6 +336,8 @@ class Protocols(object):
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be subsampled out.
             feature_to_subsample (list, (str, str)): A column in morphoframe .i.e the type (either barcodes, or tree) to subsample.
+            main_branches (str or None): If you want to force main branches to be kept = 'keep'. 
+                                        If you want to remove them, and keep only subbranches = 'remove'.
             k_elements (int or ratio): The number of elements that will be subsampled to generate a subbarcode or subtree.
             n_samples (int): Number of subbarcodes per barcode.
             rand_seed (int): Seed of the random number generator.
@@ -353,6 +355,7 @@ class Protocols(object):
         extendedframe_name = params["extendedframe_name"]
 
         feature_to_subsample = params["feature_to_subsample"]
+        main_branches = params["main_branches"]
         #could be a ratio of the number of bars
         k_elements = params["k_elements"]
         n_samples = params["n_samples"]
@@ -369,13 +372,17 @@ class Protocols(object):
         _morphoframe_copy = _morphoframe.copy()
 
         features = _morphoframe_copy[feature_to_subsample]
-        _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(feature_list = features)
+        _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(#feature_to_subsample = feature_to_subsample,
+                                                                                    feature_list = features, 
+                                                                                    main_branches = main_branches)
         probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-        _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(feature_list = features,
+        _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
+                                                                                                    feature_list = features,
                                                                                                       probas = probas, 
                                                                                                       k_elements = k_elements, 
                                                                                                       n_samples = n_samples, 
-                                                                                                      rand_seed = rand_seed)
+                                                                                                      rand_seed = rand_seed,
+                                                                                                      main_branches = main_branches)
         _morphoframe_copy[feature_to_subsample + '_id'] = _morphoframe_copy.index
         extendedframe = _morphoframe_copy.explode(feature_to_subsample + "_subsampled").reset_index(drop = True)
 
@@ -393,7 +400,7 @@ class Protocols(object):
         # save the file 
         if params["save_data"]:
             morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
-            morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extanded')
+            morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extended')
 
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
 

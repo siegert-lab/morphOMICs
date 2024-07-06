@@ -1,18 +1,27 @@
 import numpy as np
 
-def set_proba(feature_list):
+def set_proba(feature_list, main_branches = None):
+    if main_branches == 'keep' or main_branches == 'remove':
+        feature_list = feature_list.apply(lambda x: np.array(x)[np.all(np.array(x) >= 0.001, axis=-1)])    
+
     bar_lengths = feature_list.apply(lambda x: np.abs(np.array(x)[:, 1] - np.array(x)[:, 0]) if x is not None else None)
     probas = bar_lengths.apply(lambda x: x/sum(np.sort(x, axis=-1)))
     return probas
 
-def subsample_w_replacement(feature_list, probas, k_elements, n_samples, rand_seed = 0):
+def subsample_w_replacement(feature_list, probas, k_elements, n_samples, rand_seed = 0, main_branches = None):
     np.random.seed(rand_seed)
 
     subsampled_features = []
     for feature, proba in zip(feature_list, probas):
-        indices_list = [[np.random.choice(len(proba), p=proba) for _ in range(k_elements)] for _ in range(n_samples)] 
-        subsamples = []
         feature = np.array(feature)
+
+        if main_branches == 'keep':
+            main_branches_mask = np.any(feature < 0.001, axis=-1)
+            main_branches_indices = np.where(main_branches_mask)[0]
+        else:
+            main_branches_indices = np.array([], dtype=int)
+        indices_list = [np.hstack(([np.random.choice(len(proba), p=proba) for _ in range(k_elements)], main_branches_indices)) for _ in range(n_samples)] 
+        subsamples = []
         for indices in indices_list:
             subsamples.append(feature[indices])
         subsampled_features.append(subsamples)

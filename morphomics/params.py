@@ -25,7 +25,7 @@ def pipeline(path_to_data,
                 bt_cond = ['Model'],
                 ratio = 0,
                 N_bags = 100,
-                n_samples = 15,
+                n_samples = 30,
                 #umap
                 dimred_method_parameters = {"pca" : {"n_components" : 50,
                                                                         "svd_solver" : False,
@@ -45,7 +45,7 @@ def pipeline(path_to_data,
                 #plot
                 plot_title = 'UMAP',
                 colors = [],
-                circle_colors = []):
+                circle_colors = None):
         
         parameters = {}
         parameters["Parameters_ID"] = pid
@@ -148,7 +148,6 @@ def pipeline(path_to_data,
                                 }
         
         for prot, save_data in zip(protocol.parameters['Protocols'], save_list):
-                print('oui', prot, save_data)
                 protocol.parameters[prot]['save_data'] = save_data
                 perform_this = getattr(protocol, prot)
                 perform_this()
