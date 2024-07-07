@@ -14,7 +14,7 @@ def lifespan_curve(barcode, bins = None, num_bins = 1000):
     else:
         bins = bins
 
-    bar_differences = barcode[:, 1] - barcode[:, 0]
+    bar_differences = np.array(barcode)[:, 1] - np.array(barcode)[:, 0]
     bar_differences = bar_differences.ravel().astype(float)
     lifespan_c = [np.sum([
                         bar_diff if vectorizations._index_bar(bar, t) else 0.
@@ -367,7 +367,7 @@ class Vectorizer(object):
             num_bars = bar_lengths_filtered.apply(lambda x: len(x) if x is not None else 0)
 
             bc_lengths = np.zeros((self.tmd.shape[0], num_bars.max()))
-            for i, barcode_lengths in bar_lengths_filtered.items():
+            for i, barcode_lengths in enumerate(bar_lengths_filtered):
                 if barcode_lengths is not None:
                     barcode_lengths_sorted = np.sort(barcode_lengths)[::-1]
                     bc_lengths[i, :len(barcode_lengths_sorted)] = barcode_lengths_sorted
