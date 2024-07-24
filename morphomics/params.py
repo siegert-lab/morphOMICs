@@ -12,6 +12,7 @@ def pipeline(path_to_data,
              save_list,
              # Input
              conditions,
+             extension = "_corrected.swc",
           #vect
         vect_method_parameters = {'persistence_image' : {"rescale_lims" : False,
                         "xlims" : [-10, 160],
@@ -56,14 +57,14 @@ def pipeline(path_to_data,
         
         # Input parameters
         protocol.parameters["Input"] = {"data_location_filepath" : path_to_data,
-                        "extension" : "_corrected.swc",
+                        "extension" : extension,
                         "conditions" : conditions,  
                         "separated_by" : conditions[0],
                         "filtration_function" : "radial_distances",
                         "morphoframe_name" : mf_name,
                         "save_data" : False,
                         "save_folderpath" : save_folderpath + "/tmd",
-                        "save_filename" : "mf"
+                        "save_filename" : mf_name
                         }
 
         # Clean_frame parameters
@@ -75,7 +76,7 @@ def pipeline(path_to_data,
                                 "restrict_conditions" : [],
                                 "save_data" : False,
                                 "save_folderpath" : save_folderpath + "/tmd",
-                                "save_filename" : "mf_cleaned",
+                                "save_filename" : mf_name + "_cleaned",
                                 }
 
 
@@ -88,7 +89,7 @@ def pipeline(path_to_data,
                                         "morphoframe_name" : mf_name,
                                         "save_data" : False,
                                         "save_folderpath" : save_folderpath + "/vectorized" + param_id,
-                                        "save_filename" : "mf",
+                                        "save_filename" : mf_name,
                                         "vect_method_parameters" :
                                              vect_method_parameters
                                         }
@@ -105,7 +106,7 @@ def pipeline(path_to_data,
                                 "bootstrapframe_name" : bf_name,
                                 "save_data" : False,
                                 "save_folderpath" : save_folderpath + "/bootstrap" + param_id,
-                                "save_filename" : "bf",
+                                "save_filename" : bf_name,
                                 }
         
         # Dim reductions parameters
@@ -117,7 +118,7 @@ def pipeline(path_to_data,
                                         "standardize" : stand,
                                         "save_data" : False,
                                         "save_folderpath" : save_folderpath + "/dim_reduced" + param_id,
-                                        "save_filename" : "bf",
+                                        "save_filename" : bf_name,
                                         "dimred_method_parameters" : dimred_method_parameters
                                         }
         
@@ -128,7 +129,7 @@ def pipeline(path_to_data,
                                 "dimred_method" : "pca_umap",
                                 "coordinate_axisnames" : "umap_dim_",
                                 "save_folderpath" : save_folderpath + "/dim_reduced" + param_id,
-                                "save_filename" : "bf",
+                                "save_filename" : fmf_name,
                                 }
         
         # Plotting parameters
@@ -144,7 +145,7 @@ def pipeline(path_to_data,
                                 'amount' : 0.1,    
                                 "save_data" : False,
                                 "save_folderpath" : save_folderpath + "/plot",
-                                "save_filename" : "bf_plot",
+                                "save_filename" : fmf_name,
                                 }
         
         for prot, save_data in zip(protocol.parameters['Protocols'], save_list):

@@ -360,21 +360,90 @@ class Vectorizer(object):
 
         print("Computing stable ranks...")
 
-        if stable_ranks_params["type"] == "standard":
             
-            bar_lengths = self.tmd.apply(lambda x: np.array(x)[:, 1] - np.array(x)[:, 0] if x is not None else None)
+        bar_lengths = self.tmd.apply(lambda x: np.array(x)[:, 1] - np.array(x)[:, 0] if x is not None else None)
+        if stable_ranks_params["type"] == "standard":
+            bar_lengths_filtered = bar_lengths.apply(lambda x: -x if isinstance(x, np.ndarray) else None)
+        elif stable_ranks_params["type"] == "abs":
+            bar_lengths_filtered = bar_lengths.apply(lambda x: np.abs(x) if isinstance(x, np.ndarray) else None)
+        elif stable_ranks_params["type"] == "positiv":
             bar_lengths_filtered = bar_lengths.apply(lambda x: np.abs(x[x < 0]) if isinstance(x, np.ndarray) else None)
-            num_bars = bar_lengths_filtered.apply(lambda x: len(x) if x is not None else 0)
 
-            bc_lengths = np.zeros((self.tmd.shape[0], num_bars.max()))
-            for i, barcode_lengths in enumerate(bar_lengths_filtered):
-                if barcode_lengths is not None:
-                    barcode_lengths_sorted = np.sort(barcode_lengths)[::-1]
-                    bc_lengths[i, :len(barcode_lengths_sorted)] = barcode_lengths_sorted
+        num_bars = bar_lengths_filtered.apply(lambda x: len(x) if x is not None else 0)
 
-            print("sr done! \n")
-            return bc_lengths
+        bc_lengths = np.zeros((self.tmd.shape[0], num_bars.max()))
+        for i, barcode_lengths in enumerate(bar_lengths_filtered):
+            if barcode_lengths is not None:
+                barcode_lengths_sorted = np.sort(barcode_lengths)[::-1]
+                bc_lengths[i, :len(barcode_lengths_sorted)] = barcode_lengths_sorted
+
+        print("sr done! \n")
+        return bc_lengths
     
-        else:
-            pass
+
+
+    def betti_hist(self):
+        ''' Computes the betti histogram of each barcode in self.tmd.
+
+        Parameters
+        ----------
+        betti_hist_params (dict): the parameters for the betti histogram vectorization:
+                            -bins (list, pair): the list of subintervals where betti number is computed.
+                            -norm_method (str): the method to normalize the vector
+                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
+
+        Returns
+        -------
+        A numpy array of shape (nb barcodes, len(bins)) i.e. a vector for each barcode. 
+        '''
+        betti_hist_params = self.vect_parameters["betti_hist"]
+        bins = betti_hist_params['bins']
+        print("Computing betti histograms...")
+        betti_hists = []
+        for barcode in self.tmd:
+            
+            masks = mask_bars(barcode, bins)
+            
+            betti_h = np.sum(masks, axis=-1)
+
+            betti_hists.append(betti_h)
+
+        print("bh done! \n")
+
+        return betti_hists
     
+    def lifespan_hist(self):
+
+        betti_hist_params = self.vect_parameters["betti_hist"]
+        bins = betti_hist_params['bins']
+        print("Computing betti histograms...")
+        lifespan_hists = []
+        for barcode in self.tmd:
+            lifespan_h = []
+
+            bar_differences = np.array(barcode)[:, 1] - np.array(barcode)[:, 0]
+            bar_differences = bar_differences.ravel().astype(float)
+
+            masks = mask_bars(barcode, bins)
+
+            lifespan_h = [np.sum([
+                                bar_diff if m else 0.
+                                for m, bar_diff in zip(mask, bar_differences)
+                                ])
+                            for mask in masks
+                        ]
+            lifespan_hists.append(lifespan_h)
+        return lifespan_hists
+    
+
+def mask_bars(barcode, bins):
+    barcode = np.sort(np.array(barcode))
+    starts = barcode[:,0]
+    ends = barcode[:,1]
+    masks = []
+    for bin in bins:
+        mask_a = starts < bin[1]
+        mask_b = bin[0] < ends
+        mask = np.logical_and(mask_a, mask_b)
+        masks.append(mask)
+    return masks

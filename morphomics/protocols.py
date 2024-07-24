@@ -328,6 +328,7 @@ class Protocols(object):
         self.morphoframe[params["morphoframe_name"]] = _morphoframe
 
      
+     
     def Subsample(self):
         """
         Protocol: subsample/modify a tree or a barcode to reduce its "noise".

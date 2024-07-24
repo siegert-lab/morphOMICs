@@ -16,14 +16,14 @@ def subsample_w_replacement(feature_list, probas, k_elements, n_samples, rand_se
     subsampled_features = []
     for feature, proba in zip(feature_list, probas):
         feature = np.array(feature)
-        if k_elements < 1:
-            k_elements = int(k_elements*feature.shape[0])
+        if not isinstance(k_elements, int) :
+            k = int(k_elements*feature.shape[0])
         if main_branches == 'keep':
             main_branches_mask = np.any(feature < 0.001, axis=-1)
             main_branches_indices = np.where(main_branches_mask)[0]
         else:
             main_branches_indices = np.array([], dtype=int)
-        indices_list = [np.hstack(([np.random.choice(len(proba), p=proba) for _ in range(k_elements)], main_branches_indices)) for _ in range(n_samples)] 
+        indices_list = [np.hstack(([np.random.choice(len(proba), p=proba) for _ in range(k)], main_branches_indices)) for _ in range(n_samples)] 
         subsamples = []
         for indices in indices_list:
             subsamples.append(feature[indices])
