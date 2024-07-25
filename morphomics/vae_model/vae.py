@@ -17,7 +17,8 @@ class VAE(torch.nn.Module):
         
     def sample(self, z_mean, z_log_var, sample_size):
         # Generate a random sample
-        epsilon = torch.randn(sample_size, *z_mean.shape)
+        device = z_mean.device
+        epsilon = torch.randn(sample_size, *z_mean.shape).to(device)
         # Re-parameterization trick
         z = z_mean + torch.exp(z_log_var / 2) * epsilon
         

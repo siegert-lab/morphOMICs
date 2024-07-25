@@ -174,7 +174,6 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
-    
     color_map = _set_colormap(colors, condition_list, amount)
 
     if circle_color is None:
