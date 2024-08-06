@@ -1,6 +1,6 @@
-from morphomics import protocols, utils
+from morphomics import pipeline, utils
 
-def pipeline(path_to_data,
+def run_pipeline(path_to_data,
              pid, mf_name,
              bf_name,
              fmf_name ,
@@ -52,7 +52,7 @@ def pipeline(path_to_data,
         parameters["Parameters_ID"] = pid
         parameters["Protocols"] = protocol_list
 
-        protocol = protocols.Protocols(parameters = parameters, 
+        protocol = pipeline.Protocols(parameters = parameters, 
                                         Parameters_ID = parameters["Parameters_ID"])
         
         # Input parameters

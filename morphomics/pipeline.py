@@ -3,10 +3,10 @@ import morphomics.io
 
 import os
 
-from morphomics.Analysis.vectorizer import Vectorizer
-from morphomics.Analysis.dim_reducer import DimReducer
-from morphomics.Analysis import plotting
-from morphomics.Analysis import subsampler
+from morphomics.protocols.vectorizer import Vectorizer
+from morphomics.protocols.dim_reducer import DimReducer
+from morphomics.protocols import plotting
+from morphomics.protocols import subsampler
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
 from sklearn.preprocessing import Normalizer, StandardScaler
@@ -17,11 +17,11 @@ import ipyvolume as ipv  # https://ipyvolume.readthedocs.io/en/latest/install.ht
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt
 
-class Protocols(object):
+class Pipeline(object):
     
     def __init__(self, parameters, Parameters_ID, morphoframe = {}, metadata = {}) :
         """
-        Initializes the Protocols instance.
+        Initializes the Pipeline instance.
 
         Parameters
         ----------
@@ -30,13 +30,13 @@ class Protocols(object):
                                             ...
                                             'protocol_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
                                         } 
-        Parameters_ID (str): a way to characterize the name of all saved files from the same Protocols instance i.e. prefix
+        Parameters_ID (str): a way to characterize the name of all saved files from the same Pipeline instance i.e. prefix
         morphoframe (dict): contais the data from cells, each column is a feature and each row is a cell
         metadata (dict): contains the tools that the pipeline use, contains the data that are not ordered by row/cell
 
         Returns
         -------
-        An instance of protocols.
+        An instance of Pipeline.
         """
 
         self.parameters = parameters

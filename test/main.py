@@ -3,11 +3,13 @@ import os
 import shutil
 import unittest
 
+from morphomics import pipeline
+
 class TestCases_0(unittest.TestCase):
     def test_0(self):
         os.system('pip install -U morphomics')
 
-        from morphomics import protocols, utils
+        from morphomics import utils
         import tomli
 
         parameters_filepath = "./test/Morphomics.Parameters.toml"
@@ -18,7 +20,7 @@ class TestCases_0(unittest.TestCase):
         if parameters["load_previous_instance"]:
             protocol = utils.load_obj("%s/last_instance_%d"%(parameters["path_to_last_instance"], parameters["Parameters_ID"]))
         else:
-            protocol = protocols.Protocols(parameters, parameters["Parameters_ID"])
+            protocol = pipeline.Protocols(parameters, parameters["Parameters_ID"])
 
         script_sequence = parameters["Protocols"]
         for sequence in script_sequence:
