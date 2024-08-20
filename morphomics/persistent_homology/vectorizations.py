@@ -84,23 +84,20 @@ def lifespan_curve(ph, t_list = None, resolution = 1000):
                 ]
     return lifespan_c, t_list
 
-
-def _bar_entropy(ph_bar, lifetime):
+def _bar_entropy(bar, lifetime):
     """Absolute difference of a bar divided by lifetime."""
-    Zn = np.abs(ph_bar[0] - ph_bar[1]) / lifetime
+    Zn = np.abs(bar[0] - bar[1]) / lifetime
     return Zn * np.log(Zn)
 
-def life_entropy_curve(ph_diagram, bins=None, num_bins=1000):
+def life_entropy_curve(ph, t_list=None, resolution=1000):
     """The life entropy curve, computes life entropy at different t values."""
-    lifetime = get_total_length(ph_diagram)
+    lifetime = get_total_length(ph)
     # Compute the entropy of each bar
-    entropy = [_bar_entropy(ph_bar, lifetime) for ph_bar in ph_diagram]
-    if bins is None:
-        t_list = np.linspace(np.min(ph_diagram), np.max(ph_diagram), num_bins)
-    else:
-        t_list = bins
+    entropy = [_bar_entropy(bar, lifetime) for bar in ph]
+    if t_list is None:
+        t_list = np.linspace(np.min(ph), np.max(ph), resolution)
     t_entropy = [
-        -np.sum([_index_bar(ph_bar, t) * e for (e, ph_bar) in zip(entropy, ph_diagram)])
+        -np.sum([_index_bar(ph_bar, t) * e for (e, ph_bar) in zip(entropy, ph)])
         for t in t_list
     ]
     return t_entropy, t_list
@@ -145,12 +142,9 @@ def _mask_bars(ph, bins):
         masks.append(mask)
     return masks
 
-def _subintervals(ph, x_lims = None, num_bins = 1000):
+def _subintervals(xlims, num_bins = 1000):
     # Generate the linspace array
-    if x_lims is None:
-        linspace_array = np.linspace(np.min(ph), np.max(ph), num_bins+1)
-    else:
-        linspace_array = np.linspace(x_lims[0], x_lims[1], num_bins+1)
+    linspace_array = np.linspace(xlims[0], xlims[1], num_bins+1)
     # Create subintervals
     subintervals = np.array([[linspace_array[i], linspace_array[i + 1]] for i in range(num_bins)])
     return subintervals
@@ -164,7 +158,8 @@ def betti_hist(ph, bins = None, num_bins = 1000):
 
 def lifespan_hist(ph, bins = None, num_bins = 1000):
     if bins is None:
-        bins = _subintervals(ph, num_bins=num_bins)
+        xlims = [np.min(ph), np.max(ph)]
+        bins = _subintervals(xlims=xlims, num_bins=num_bins)
     masks = _mask_bars(ph, bins)
 
     bars_length = get_lengths(ph, abs = False)

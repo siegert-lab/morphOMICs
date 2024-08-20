@@ -11,16 +11,13 @@ def get_limits(phs_list):
     ylim = [min(np.transpose(phs)[1]), max(np.transpose(phs)[1])]
     return xlim, ylim
 
-
 def get_bifurcations(ph):
     """Return the bifurcations from the diagram."""
     return np.array(ph)[:, 1]
 
-
 def get_terminations(ph):
     """Return the terminations from the diagram."""
     return np.array(ph)[:, 0]
-
 
 def get_lengths(ph, abs = True):
     """Return the length of the bars from the diagram."""
@@ -28,7 +25,6 @@ def get_lengths(ph, abs = True):
     if abs:
         lengths = np.abs(lengths)
     return lengths
-
 
 def get_total_length(ph, abs = True):
     """Calculate the total length of a barcode.

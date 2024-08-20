@@ -3,6 +3,7 @@ import concurrent.futures
 from functools import partial
 
 from morphomics.persistent_homology import vectorizations
+from morphomics.persistent_homology.ph_analysis import get_limits
 
 from morphomics.utils import norm_methods
 
@@ -30,72 +31,6 @@ class Vectorizer(object):
         self.vect_parameters = vect_parameters
         
     ## Private
-    def _get_persistence_image_list(self, 
-                                    norm_factor = 1.,
-                                    xlim = None,
-                                    ylim = None,
-                                    bw_method = None,
-                                    weights = None,
-                                    resolution = 100,
-                                    parallel = False):
-        
-        # Get the persistence image of each barcode.
-        if not parallel:
-            pi_list = [vectorizations.persistence_image(ph = barcode, 
-                                                            norm_factor = norm_factor,
-                                                            xlim = xlim,
-                                                            ylim = ylim,
-                                                            bw_method = bw_method,
-                                                            weights = weights,
-                                                            resolution = resolution)
-                        for barcode in self.tmd]
-
-        else:
-            partial_compute = partial(vectorizations.persistence_image,
-                                            norm_factor = norm_factor,
-                                            xlim = xlim,
-                                            ylim = ylim,
-                                            bw_method = bw_method,
-                                            weights = weights,
-                                            resolution = resolution)
-            
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                pi_list = executor.map(partial_compute,
-                                        self.tmd)
-                pi_list = list(pi_list)
-        
-        return pi_list
-
-
-    def _get_curve_vectorization_list(self,
-                        curve_method = vectorizations.betti_curve,
-                        t_list = None,
-                        resolution = 1000,
-                        parallel = False):
-        
-        # Get the curve vectorization for each barcode.
-        if not parallel:
-            c_list = []
-            for barcode in self.tmd:
-                c, _ = curve_method(barcode,
-                                    t_list,
-                                    resolution)
-                c_list.append(c)
-        else:
-            partial_compute = partial(curve_method,
-                                        bins = t_list,
-                                        num_bins = resolution)
-            
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                c_list = executor.map(partial_compute,
-                                        self.tmd)
-            c_list = list(c_list)
-                # the second element in the 1 dimension of c_list is the list of bins
-            c_list = np.array(c_list)[:, 0, :]
-        
-        return c_list
-    
-
     def _curve_vectorization(self, 
                              curve_method,
                              curve_params):
@@ -104,12 +39,12 @@ class Vectorizer(object):
         Parameters
         ----------
         curve_method (method): the actual curve like vectorization method, the method has 2 parameters: (t_list, resolution).
-                                example: _lifespan_curve.
+                                example: lifespan_curve.
         curve_params (dict): the parameters for the curve vectorization:
                             -rescale_lims (bool): True: adapt the boundaries of the barcode for each barcode
                                                 False: choose the widest boundaries that include all barcodes 
                             -xlims (pair of double): the boundaries
-                            -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
+                            -resolution (int): number of real values for which the fonction is computed .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
 
         Returns
@@ -121,33 +56,73 @@ class Vectorizer(object):
         xlims = curve_params["xlims"]
         resolution = curve_params["resolution"]
         norm_method = curve_params["norm_method"]
-        parallel = curve_params["parallel"]
 
-        # Define the sub intervals of the curve
+        # Define the real values where the curve is computed
         if rescale_lims:
             t_list = None
         else:
             if xlims is None or xlims == "None":
                 # get the birth and death distance limits for the curve
-                _xlims, _ylims = vectorizations.get_limits(self.tmd)
+                _xlims, _ylims = get_limits(self.tmd)
                 xlims = [np.min([_xlims[0], _ylims[0]]), np.max([_xlims[1], _ylims[1]])]
             t_list = np.linspace(xlims[0], xlims[1], resolution)
-       
         # Get the curve
-        curve_list = self._get_curve_vectorization_list(curve_method = curve_method, 
-                                               t_list = t_list, 
-                                               resolution = resolution,
-                                               parallel = parallel)
+        curve_list = self.tmd.apply(lambda ph: curve_method(ph,
+                                                            t_list = t_list, 
+                                                            resolution = resolution)
+        )
         # normalize the curve
-        curves = []
-        for curve in curve_list:
-            if len(curve) > 0:
-                norm = norm_methods[norm_method](curve)
-                curves.append(curve / norm)
-            else:
-                curves.append(np.nan)
+        norm_m = norm_methods[norm_method]
+        curves = curve_list.apply(lambda curve: curve/norm_m(curve) if len(curve)>0 else np.nan)
 
-        return np.array(curves)
+        return np.array(list(curves))
+    
+        ## Private
+    def _histogram_vectorization(self, 
+                             hist_params,
+                             hist_method):
+        '''General method to compute vectorization for histogram methods.
+
+        Parameters
+        ----------
+        hist_method (method): the actual histogram like vectorization method, the method has 2 parameters: (bins, num_bins).
+                                example: betti_hist.
+        hist_params (dict): the parameters for the histogram vectorization:
+                            -rescale_lims (bool): True: adapt the boundaries of the barcode for each barcode
+                                                False: choose the widest boundaries that include all barcodes 
+                            -xlims (pair of double): the boundaries
+                            -num_bins (int): number of sub intervals between boudaries .aka. size of the output vector 
+                            -norm_method (str): the method to normalize the vector
+
+        Returns
+        -------
+        A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
+        '''
+        
+        rescale_lims = hist_params["rescale_lims"]
+        xlims = hist_params["xlims"]
+        num_bins = hist_params["resolution"]
+        norm_method = hist_params["norm_method"]
+
+        # Define the sub intervals of the histogram
+        if rescale_lims:
+            bins = None
+        else:
+            if xlims is None or xlims == "None":
+                # get the birth and death distance limits for the curve
+                _xlims, _ylims = get_limits(self.tmd)
+                xlims = [np.min([_xlims[0], _ylims[0]]), np.max([_xlims[1], _ylims[1]])]
+            bins = vectorizations._subintervals(xlims = xlims, num_bins = 1000)
+        # Get the curve
+        hist_list = self.tmd.apply(lambda ph: hist_method(ph,
+                                                        bins = bins, 
+                                                        num_bins = num_bins)
+        )
+        # normalize the curve
+        norm_m = norm_methods[norm_method]
+        histograms = hist_list.apply(lambda hist: hist/norm_m(hist) if len(hist)>0 else np.nan)
+
+        return np.array(list(histograms))
     
 
     ## Public
@@ -182,7 +157,6 @@ class Vectorizer(object):
         weights for each barcode in the calculation of persistence images. If `barcode_weight` is provided,
         it will be used as weights for the corresponding barcode during the calculation. 
            The 'resolution' parameter is an integer that defines the number of pixels in a row and in a column of a persistence image.
-           The 'parallel' parameter is a boolean that determines if the vectorizations should be computed in parallel or not.
         
         Returns
         -------
@@ -205,7 +179,6 @@ class Vectorizer(object):
         norm_method=pi_params["norm_method"]
         resolution=pi_params["resolution"]
         flatten = True
-        parallel = pi_params["parallel"]
 
         print("Computing persistence images...")
         
@@ -219,33 +192,24 @@ class Vectorizer(object):
                 xlims = _xlims
             if ylims is None or ylims == "None":
                 ylims = _ylims
-
-        pi_list = self._get_persistence_image_list(norm_factor = 1.,
-                                                    xlim = xlims,
-                                                    ylim = ylims,
-                                                    bw_method = bw_method,
-                                                    weights = barcode_weight,
-                                                    resolution = resolution,
-                                                    parallel = parallel
-                                                )
-        if flatten:
-            flatten_method = lambda arr: arr.flatten()
-        else:
-            flatten_method = lambda arr: arr
         
-        images = []
-        for pi in pi_list:
-            if len(pi) > 0:
-                pi = flatten_method(pi)
-                norm = norm_methods[norm_method](pi)
-                images.append( pi / norm)
-            else:
-                images.append(np.nan)
+        pi_list = self.tmd.apply(lambda ph: vectorizations.persistence_image(ph,
+                                                                            xlim = xlims,
+                                                                            ylim = ylims,
+                                                                            bw_method = bw_method,
+                                                                            weights = barcode_weight,
+                                                                            resolution = resolution,
+                                                                            )
+        )
+        if flatten:
+            pi_list = pi_list.apply(lambda pi: pi.flatten())
 
-        print("pi done! \n")
-        print(np.array(images).shape)
-        return np.array(images)
+        norm_m = norm_methods[norm_method]
+        pis = pi_list.apply(lambda pi: pi/norm_m(pi) if len(pi)>0 else np.nan)
     
+        print("pi done! \n")
+        print(np.array(pis).shape)
+        return np.array(list(pis))
 
 
     def betti_curve(self):
@@ -259,7 +223,6 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
-                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------
@@ -273,9 +236,7 @@ class Vectorizer(object):
                                                 curve_method = vectorizations.betti_curve)
 
         print("bc done! \n")
-
         return betti_curves
-
 
 
     def life_entropy_curve(self):
@@ -289,7 +250,6 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
-                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------
@@ -303,9 +263,7 @@ class Vectorizer(object):
                                                         curve_method = vectorizations.life_entropy_curve)
 
         print("lec done! \n")
-
         return life_entropy_curves
-
 
 
     def lifespan_curve(self):
@@ -319,49 +277,28 @@ class Vectorizer(object):
                             -xlims (pair of double): the boundaries
                             -resolution (int): number of sub intervals between boudaries .aka. size of the output vector 
                             -norm_method (str): the method to normalize the vector
-                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
 
         Returns
         -------
         A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
         '''
         lifespan_params = self.vect_parameters["lifespan_curve"]
-
         print("Computing lifespan curves...")
-
-        lifespan_cuves = self._curve_vectorization(curve_params = lifespan_params,
+        lifespan_curves = self._curve_vectorization(curve_params = lifespan_params,
                                                     curve_method = vectorizations.lifespan_curve)
         print("lsc done! \n")
-
-        return lifespan_cuves
-
+        return lifespan_curves
 
 
     def stable_ranks(self):
 
         stable_ranks_params = self.vect_parameters["stable_ranks"]
-
+        type = stable_ranks_params['type']
         print("Computing stable ranks...")
-
-        bar_lengths = self.tmd.apply(lambda x: np.array(x)[:, 1] - np.array(x)[:, 0] if x is not None else None)
-        if stable_ranks_params["type"] == "standard":
-            bar_lengths_filtered = bar_lengths.apply(lambda x: -x if isinstance(x, np.ndarray) else None)
-        elif stable_ranks_params["type"] == "abs":
-            bar_lengths_filtered = bar_lengths.apply(lambda x: np.abs(x) if isinstance(x, np.ndarray) else None)
-        elif stable_ranks_params["type"] == "positiv":
-            bar_lengths_filtered = bar_lengths.apply(lambda x: np.abs(x[x < 0]) if isinstance(x, np.ndarray) else None)
-
-        num_bars = bar_lengths_filtered.apply(lambda x: len(x) if x is not None else 0)
-
-        bc_lengths = np.zeros((self.tmd.shape[0], num_bars.max()))
-        for i, barcode_lengths in enumerate(bar_lengths_filtered):
-            if barcode_lengths is not None:
-                barcode_lengths_sorted = np.sort(barcode_lengths)[::-1]
-                bc_lengths[i, :len(barcode_lengths_sorted)] = barcode_lengths_sorted
+        stable_r = self.tmd.apply(lambda ph: vectorizations.stable_ranks(ph, type = type))
 
         print("sr done! \n")
-        return bc_lengths
-
+        return np.array(list(stable_r))
 
 
     def betti_hist(self):
@@ -370,53 +307,40 @@ class Vectorizer(object):
         Parameters
         ----------
         betti_hist_params (dict): the parameters for the betti histogram vectorization:
-                            -bins (list, pair): the list of subintervals where betti number is computed.
-                            -norm_method (str): the method to normalize the vector
-                            -parallel (bool): determines if the vectorizations should be computed in parallel or not.
+                            -bins (list, pair): The list of subintervals where betti number is computed.
+                            -num_bins (int): The number of bins if bins is not defined.
+                            -norm_method (str): The method to normalize the vector
 
         Returns
         -------
         A numpy array of shape (nb barcodes, len(bins)) i.e. a vector for each barcode. 
         '''
         betti_hist_params = self.vect_parameters["betti_hist"]
-        bins = betti_hist_params['bins']
         print("Computing betti histograms...")
-        betti_hists = []
-        for barcode in self.tmd:
-            
-            masks = vectorizations._mask_bars(barcode, bins)
-            
-            betti_h = np.sum(masks, axis=-1)
-
-            betti_hists.append(betti_h)
-
+        betti_hists = self._histogram_vectorization(hist_params = betti_hist_params,
+                                                    hist_method = vectorizations.betti_hist)
         print("bh done! \n")
+        return np.array(list(betti_hists))
 
-        return betti_hists
-
-    
 
     def lifespan_hist(self):
+        ''' Computes the lifespan histogram of each barcode in self.tmd.
 
-        betti_hist_params = self.vect_parameters["betti_hist"]
-        bins = betti_hist_params['bins']
-        print("Computing betti histograms...")
-        lifespan_hists = []
-        for barcode in self.tmd:
-            lifespan_h = []
+        Parameters
+        ----------
+        lifespan_hist_params (dict): the parameters for the lifespan histogram vectorization:
+                            -bins (list, pair): The list of subintervals where lifespan is computed.
+                            -num_bins (int): The number of bins if bins is not defined.
+                            -norm_method (str): The method to normalize the vector
 
-            bar_differences = np.array(barcode)[:, 1] - np.array(barcode)[:, 0]
-            bar_differences = bar_differences.ravel().astype(float)
-
-            masks = vectorizations._mask_bars(barcode, bins)
-
-            lifespan_h = [np.sum([
-                                bar_diff if m else 0.
-                                for m, bar_diff in zip(mask, bar_differences)
-                                ])
-                            for mask in masks
-                        ]
-            lifespan_hists.append(lifespan_h)
-        return lifespan_hists
-    
+        Returns
+        -------
+        A numpy array of shape (nb barcodes, len(bins)) i.e. a vector for each barcode. 
+        '''
+        lifespan_hist_params = self.vect_parameters["lifespan_hist"]
+        print("Computing lifespan histograms...")
+        lifespan_hists = self._histogram_vectorization(hist_params = lifespan_hist_params,
+                                                        hist_method = vectorizations.lifespan_hist)
+        print("lh done! \n")
+        return np.array(list(lifespan_hists))
 

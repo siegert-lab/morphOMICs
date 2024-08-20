@@ -17,7 +17,7 @@ from morphomics.tmd import vectorizations
 
 from morphomics.utils import save_obj
 from morphomics.utils import norm_methods, scipy_metric
-from morphomics.default_parameters import defaults
+from morphomics.protocols.default_parameters import defaults
 
 
 def _get_pairwise_distance_from_persistence(

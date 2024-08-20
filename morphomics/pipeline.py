@@ -5,13 +5,13 @@ from morphomics.io import io
 
 from morphomics.cells.population.population import Population
 
+from morphomics.protocols.default_parameters import DefaultParams
 from morphomics.protocols import subsampler
 from morphomics.protocols.vectorizer import Vectorizer
 from morphomics.protocols.dim_reducer import DimReducer
 from morphomics.protocols import plotting
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
-
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
@@ -46,6 +46,8 @@ class Pipeline(object):
         self.file_prefix = f"Morphomics.PID_{Parameters_ID}"
         self.morphoframe = morphoframe
         self.metadata = metadata
+
+        self.default_params = DefaultParams()
         
         #print("Unless you have specified the file prefix in the succeeding executables, 
         print("This will be the file prefix: %s"%(self.file_prefix))
@@ -155,7 +157,8 @@ class Pipeline(object):
         Each row in the dataframe is data from one cell and each column is a feature of the cell.
         """
 
-        params = self.parameters["Input"]
+        defined_params = self.parameters["Input"]
+        params = self.default_params.complete_with_default_params(defined_params, "Input")
 
         data_location_filepath = params["data_location_filepath"]
         extension = params["extension"]
@@ -277,8 +280,9 @@ class Pipeline(object):
         -------
         Add a dataframe to morphoframe.
         """
-        params = self.parameters["Load_data"]
-        
+        defined_params = self.parameters["Load_data"]
+        params = self.default_params.complete_with_default_params(defined_params, "Load_data")
+
         filepath_to_data = params["filepath_to_data"]
         morphoframe_name = params["morphoframe_name"]
 
@@ -321,14 +325,14 @@ class Pipeline(object):
         -------
         Add the TMD (also called barcode or persistence homology) of each cell into morphoframe.
         '''
-        params = self.parameters["TMD"]
+        defined_params = self.parameters["TMD"]
+        params = self.default_params.complete_with_default_params(defined_params, "TMD")
 
         morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
 
         filtration_function = params["filtration_function"]
         exclude_sg_branches = params["exclude_sg_branches"]
-        
-        morphoframe_name = params["morphoframe_name"]
         
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -399,8 +403,9 @@ class Pipeline(object):
         -------
         Add a dataframe to morphoframe. the samples that don't respond to the conditions are removed.
         """
-        params = self.parameters["Clean_frame"]
-        
+        defined_params = self.parameters["Clean_frame"]
+        params = self.default_params.complete_with_default_params(defined_params, "Clean_frame")
+
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
@@ -490,7 +495,8 @@ class Pipeline(object):
             save_filename (str or 0): Name of the file containing the bootstrap frame.
 
         """
-        params = self.parameters["Subsample"]
+        defined_params = self.parameters["Subsample"]
+        params = self.default_params.complete_with_default_params(defined_params, "Subsample")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -573,7 +579,8 @@ class Pipeline(object):
         -------
         Add a dataframe containing bootstrapped data to morphoframe. The samples are bootstrapped points of microglia.
         """
-        params = self.parameters["Bootstrap"]
+        defined_params = self.parameters["Bootstrap"]
+        params = self.default_params.complete_with_default_params(defined_params, "Bootstrap")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -654,7 +661,8 @@ class Pipeline(object):
         Add a list of vectors to a morphoframe. A row per sample, the colums are the dimensions of the vector (result of the TMD vectorization).
         """
 
-        params = self.parameters["Vectorizations"]
+        defined_params = self.parameters["Vectorizations"]
+        params = self.default_params.complete_with_default_params(defined_params, "Vectorizations")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -736,10 +744,12 @@ class Pipeline(object):
         -------
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
-        params = self.parameters["Dim_reductions"]
+        defined_params = self.parameters["Dim_reductions"]
+        params = self.default_params.complete_with_default_params(defined_params, "Dim_reductions")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
+
         dimred_method_parameters = params["dimred_method_parameters"]
         vectors_to_reduce = params["vectors_to_reduce"]
         filter_pixels = params["filter_pixels"]
@@ -775,7 +785,7 @@ class Pipeline(object):
 
         # normalize data 
         if normalize:
-            print("Standardize the vectors")
+            print("Normalize the vectors")
             normalizer = Normalizer()
             X = normalizer.fit_transform(X)
         # standardize data 
@@ -883,7 +893,8 @@ class Pipeline(object):
         A saved .csv file containing a column for each wanted condition and a column for each dimension of the reduced vectors. 
         A row per sample.
         """
-        params = self.parameters["Save_reduced"]
+        defined_params = self.parameters["Save_reduced"]
+        params = self.default_params.complete_with_default_params(defined_params, "Save_reduced")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -952,7 +963,9 @@ class Pipeline(object):
         -------
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
-        params = self.parameters["Mapping"]
+        defined_params = self.parameters["Mapping"]
+        params = self.default_params.complete_with_default_params(defined_params, "Mapping")
+
 
         fitted_dimreducer_filepath = params["fitted_dimreducer_filepath"]
         dimred_method = params["dimred_method"]
@@ -1158,8 +1171,9 @@ class Pipeline(object):
             save_folderpath
             save_filename
         """
-        params = self.parameters["Plotting"]
-            
+        defined_params = self.parameters["Plotting"]
+        params = self.default_params.complete_with_default_params(defined_params, "Plotting")
+
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
         conditions = params['conditions']
@@ -1259,8 +1273,9 @@ class Pipeline(object):
             The .pkl file containg a dict of the parameters and their values.
         """
         # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility
-        params = self.parameters['Save_parameters']
-        
+        defined_params = self.parameters['Save_parameters']
+        params = self.default_params.complete_with_default_params(defined_params, "Save_parameters")
+
         parameters_to_save = params['parameters_to_save']
         stored_parameters = {}
         for protocol_name in parameters_to_save.keys():
