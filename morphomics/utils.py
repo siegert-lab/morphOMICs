@@ -20,8 +20,8 @@ array_operators = {
 }
 
 distances = {
-    "l1": lambda t1, t2: np.sum(np.abs(t1 - t2)),
-    "l2": lambda t1, t2: np.sqrt(np.dot(t1 - t2, t1 - t2)),
+    "l1": lambda t1, t2: np.linalg.norm(np.subtract(t1, t2), 1),
+    "l2": lambda t1, t2: np.linalg.norm(np.subtract(t1, t2), 2),
 }
 
 scipy_metric = {

@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix, find, issparse, coo_matrix
 from scipy.sparse.linalg import eigs
 import umap
 
-from tmd.Topology import vectorizations
+from morphomics.tmd import vectorizations
 
 from morphomics.utils import save_obj
 from morphomics.utils import norm_methods, scipy_metric

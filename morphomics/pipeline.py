@@ -1,21 +1,23 @@
-import morphomics
-import morphomics.io
-
 import os
 
+import morphomics
+from morphomics.io import io
+
+from morphomics.cells.population.population import Population
+
+from morphomics.protocols import subsampler
 from morphomics.protocols.vectorizer import Vectorizer
 from morphomics.protocols.dim_reducer import DimReducer
 from morphomics.protocols import plotting
-from morphomics.protocols import subsampler
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
+
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
 import pandas as pd
-import ipyvolume as ipv  # https://ipyvolume.readthedocs.io/en/latest/install.html
-from matplotlib import cm, colors
-import matplotlib.pyplot as plt
+
+
 
 class Pipeline(object):
     
@@ -25,14 +27,15 @@ class Pipeline(object):
 
         Parameters
         ----------
-        parameters (dict): contains the parameters for each protocol that would be run
+        parameters (dict): Contains the parameters for each protocol that would be run.
+                            example:
                             parameters = {'protocol_1 : { parameter_1_1: x_1_1, ..., parameter_1_n: x_1_n},
                                             ...
-                                            'protocol_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
+                                            'protocol_m : { parameter_m_1: x_m_1, ..., parameter_m_k: x_m_k}
                                         } 
-        Parameters_ID (str): a way to characterize the name of all saved files from the same Pipeline instance i.e. prefix
-        morphoframe (dict): contais the data from cells, each column is a feature and each row is a cell
-        metadata (dict): contains the tools that the pipeline use, contains the data that are not ordered by row/cell
+        Parameters_ID (str): A way to characterize the name of all saved files from the same Pipeline instance i.e. prefix.
+        morphoframe (dict): Contains the data from cells, each column is a feature and each row is a cell.
+        metadata (dict): Contains the tools that the pipeline use, contains the data that are not ordered by row/cell.
 
         Returns
         -------
@@ -45,7 +48,8 @@ class Pipeline(object):
         self.metadata = metadata
         
         #print("Unless you have specified the file prefix in the succeeding executables, 
-        print("this will be the file prefix: %s"%(self.file_prefix))
+        print("This will be the file prefix: %s"%(self.file_prefix))
+        print("")
 
     ## Private
     def _get_variable(self, variable_filepath, 
@@ -56,13 +60,13 @@ class Pipeline(object):
 
         Parameters
         ----------
-        variable_filepath (str): path to the file that contains the variable of interest
-        variable_name (str): name of the variable of interest in self.morphoframe
-        morphoframe (bool): choose betwenn self.morphoframe and self.metadata
+        variable_filepath (str): Path to the file that contains the variable of interest.
+        variable_name (str): Name of the variable of interest in self.morphoframe.
+        morphoframe (bool): Choose between self.morphoframe and self.metadata.
         
         Returns
         -------
-        _morphoframe (dict): the variable used by the protocol
+        _morphoframe (dict): The variable used by the protocol.
         """ 
 
         if variable_filepath:
@@ -81,15 +85,15 @@ class Pipeline(object):
 
         Parameters
         ----------
-        protocol_name (str): the name of the protocol
-        save_folderpath (str): the folder path containing the saved file 
-        save_filename (str): name of the file that will be saved
-        save_data (bool): data will be saved or not
+        protocol_name (str): The name of the protocol.
+        save_folderpath (str): The folder path containing the saved file .
+        save_filename (str): Name of the file that will be saved.
+        save_data (bool): Data will be saved or not.
 
         Returns
         -------
-        save_filepath (str): the path of the file containing the output of the protocol
-        update save_folderpath and save_filename of the protocol in self.parameters
+        save_filepath (str): The path of the file containing the output of the protocol.
+        Also, update save_folderpath and save_filename of the protocol in self.parameters.
         """
         if save_data:
             if save_filename == 0:
@@ -131,14 +135,15 @@ class Pipeline(object):
     ## Public
     def Input(self):
         """
-        Protocol: Load .swc files, transform them into TMD barcodes and store them as an element of self.morphoframe.
+        Protocol: Build panda DataFrame with cell info, load .swc files, 
+            transform them into Neuron instances and store them as an element of self.morphoframe.
         
         Essential parameters:
-            data_location_filepath (str): Tocation of the parent folder containinf the .swc files arranged hierarchically according to conditions.
+        ---------------------
+            data_location_filepath (str): Location of the parent folder containing the .swc files arranged hierarchically according to conditions.
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
             conditions (list, str): This must match the hierarchical structure of `data_location_filepath`.
-            separated_by (str): Taving chunks of the morphoframe via this condition, this must be an element of `conditions`.
-            filtration_function (str): This is the TMD filtration function, can either be radial_distances, or path_distances.
+            separated_by (str): Saving chunks of the morphoframe via this condition, this must be an element of `conditions`.
             morphoframe_name (str): This is how the variable in self.morphoframe will be called.
             save_data (bool): Trigger to save output of protocol.
             save_folderpath (str): Location where to save the variable.
@@ -147,7 +152,7 @@ class Pipeline(object):
         Returns
         -------
         Add a dataframe with key morphoframe_name to morphoframe.
-        Each row in the dataframe is data from one cell and each column is a fetaure of the cell.
+        Each row in the dataframe is data from one cell and each column is a feature of the cell.
         """
 
         params = self.parameters["Input"]
@@ -156,34 +161,103 @@ class Pipeline(object):
         extension = params["extension"]
         conditions = params["conditions"]
         separated_by = params["separated_by"]
-        filtration_function = params["filtration_function"]
+
         morphoframe_name = params["morphoframe_name"]
         
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
-        save_filename = params["save_filename"]
+        save_filename = params["save_filename"]        
         
         # define output filename
-        default_save_filename = "TMD-%s"%(filtration_function)
-        save_filepath = self._set_filename(protocol_name = "Input", 
-                                              save_folderpath = save_folderpath, 
-                                              save_filename = save_filename,
-                                              default_save_filename = default_save_filename, 
-                                              save_data = save_data)
+        default_save_filename = "Cell"
 
         print("Loading the data from %s"%(data_location_filepath))
+        
+        # Get DataFrame that contains context information (file_path, animal name ...) on each cell.
+        info_frame = io.get_info_frame(data_location_filepath,
+                                extension = extension,
+                                conditions = conditions)
+        # Load the data
+        if separated_by is not None:
+            assert (
+                len(conditions) > 1
+            ), "`conditions` must have more than one element. Otherwise, remove `separated_by` argument"
+            assert separated_by in conditions, "`separated_by` must be in `conditions`"
+            
+            cond_values = info_frame[separated_by].unique()
+            morphoframe = {}
 
-        # load the data
-        self.morphoframe[morphoframe_name] = morphomics.io.load_data(
-            folder_location = data_location_filepath,
-            extension = extension,
-            conditions = conditions,
-            filtration_function = filtration_function,
-            separated_by = separated_by,
-            save_filename = save_filepath,
-        )
+            print("Separating DataFrame into %s..." % separated_by)
+            print("There are %d values for the separating condition..." % len(cond_values))
+            print(" ")
+            for _v in cond_values:
+                print("...processing %s" % _v)
+                # Get the rows that respect the condition value.
+                _sub_info_frame = (info_frame.loc[info_frame[separated_by] == _v]
+                                    .copy()
+                                    .reset_index(drop=True)
+                )
+                # Set the columns of swc arrays and Neuron.
+                my_population = Population(info_frame = _sub_info_frame,
+                                            conditions = conditions,
+                                            folder_path = data_location_filepath)
+                morphoframe[_v] = my_population.cells
+                
+                # Save the file 
+                if save_data:
+                    suffix = "%s-%s" % (separated_by, _v)
+                    if save_filename != 0:
+                        _save_filename = "%s.%s" % (save_filename, suffix)
+                    else:
+                        _save_filename = 0
+                    _default_save_filename = "%s.%s" % (default_save_filename, suffix)
+                    _save_filepath = self._set_filename(protocol_name = "Input", 
+                                                            save_folderpath = save_folderpath, 
+                                                            save_filename = _save_filename,
+                                                            default_save_filename = _default_save_filename, 
+                                                            save_data = save_data)
+                    print("Saving sub dataset in %s"%(_save_filepath))
+                    morphomics.utils.save_obj(morphoframe[_v], _save_filepath)
+                    print("The sub dataset is saved in %s" %(_save_filepath))
+                    print(" ")
+            _morphoframe = pd.concat([morphoframe[_v] for _v in cond_values], ignore_index=True)
+                
+        else:
+            # Set the columns of swc arrays and Neuron.
+            my_population = Population(info_frame = info_frame,
+                                        conditions = conditions,
+                                        folder_path = data_location_filepath)
+            _morphoframe = my_population.cells
 
-        print("Saving dataset in %s"%(save_filepath))
+        main_save_filepath = self._set_filename(protocol_name = "Input", 
+                                            save_folderpath = save_folderpath, 
+                                            save_filename = save_filename,
+                                            default_save_filename = default_save_filename, 
+                                            save_data = save_data)
+        # Get the rows that failed to load swc array or with empty array.
+        _failed_mf = _morphoframe[pd.isna(_morphoframe['cells'])]
+        _failed_file_paths = list(_failed_mf['file_path'].values)
+
+        # Get the rows that load correctly.
+        _morphoframe = _morphoframe[~pd.isna(_morphoframe['cells'])]
+        self.morphoframe[morphoframe_name] = _morphoframe.reset_index(drop=True)
+
+        # save the file 
+        if save_data:
+            print("Saving dataset in %s"%(main_save_filepath))
+            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], main_save_filepath)
+            print("The morphoframe is saved in %s" %(main_save_filepath))
+
+            # Save name of failed files in .txt
+            _save_failed_filepath = "%s-FailedFiles.txt" % (main_save_filepath)
+            np.savetxt(_save_failed_filepath, _failed_file_paths, delimiter='\n', fmt="%s")
+        
+        print("...finished loading morphologies...")
+        print(" ")
+        nb_fails = len(_failed_file_paths)
+        if nb_fails > 0:
+            print(f"! Warning: You have {nb_fails} .swc files that did not load. Potentially, empty files. Please check *-FailedFiles")
+    
         print("Input done!")
         print("")
 
@@ -196,8 +270,8 @@ class Pipeline(object):
         Essential parameters:
             filepath_to_data (0 or str): Full path to file to be loaded.
             morphoframe_name (str): This is how the variable in self.morphoframe will be called.
-            folderpath_to_data (str): location to the pickle file outputs to Protocols.Input 
-            conditions_to_include (list of str): the different conditions that you want to load
+            folderpath_to_data (str): Location to the pickle file outputs to Protocols.Input.
+            conditions_to_include (list of str): The different conditions that you want to load
 
         Returns
         -------
@@ -225,6 +299,74 @@ class Pipeline(object):
             self.morphoframe[morphoframe_name] = pd.concat([_morphoframe[_c] for _c in conditions_to_include], ignore_index=True)
         
         print('Loading done!')
+        print("")
+
+
+
+    def TMD(self):
+        '''
+        Protocol: Compute and Add the Topological Morphology Descriptor to morphoframe for each cell in morphoframe.
+
+        Essential parameters:
+        ---------------------
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            filtration_function (str): This is the TMD filtration function, can either be radial_distance, or path_distance.
+            exclude_sg_branches (bool): if you want to remove the branches link to the soma that do not have ramifications i.e. simple trunks.
+            morphoframe_name (str): This is how the variable in self.morphoframe will be called.
+            save_data (bool): Trigger to save output of protocol.
+            save_folderpath (str): Location where to save the variable.
+            save_filename (str or 0): This will be used as the file name.
+        
+        Returns
+        -------
+        Add the TMD (also called barcode or persistence homology) of each cell into morphoframe.
+        '''
+        params = self.parameters["TMD"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+
+        filtration_function = params["filtration_function"]
+        exclude_sg_branches = params["exclude_sg_branches"]
+        
+        morphoframe_name = params["morphoframe_name"]
+        
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        # initialize morphoframe to bootstrap
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)   
+
+        cells = _morphoframe.copy()
+        my_population = Population(cells_frame = cells)
+        
+        if exclude_sg_branches:
+                my_population.exclude_sg_branches()
+
+        print("Computing the TMD on morphoframe %s"%(morphoframe_name))
+        my_population.set_barcodes(filtration_function = filtration_function)
+        _morphoframe = my_population.cells
+        _morphoframe = _morphoframe[~pd.isna(_morphoframe['barcodes'])]
+
+        # define output filename
+        default_save_filename = "TMD"
+        save_filepath = self._set_filename(protocol_name = "TMD", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe
+
+        # save the file 
+        if save_data:
+            print("Saving dataset in %s"%(save_filepath))
+            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            print("The TMD morphoframe is saved in %s" %(save_filepath))
+
+        print("...finished computing barcodes...")
+        print("TMD done!")
         print("")
 
 
@@ -402,8 +544,10 @@ class Pipeline(object):
         if params["save_data"]:
             morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extended')
-
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
+
+        print("Subsampling done!")
+        print("")
 
 
 

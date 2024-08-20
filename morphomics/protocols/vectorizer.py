@@ -2,27 +2,10 @@ import numpy as np
 import concurrent.futures
 from functools import partial
 
-from morphomics.tmd.Topology import vectorizations
+from morphomics.persistent_homology import vectorizations
 
 from morphomics.utils import norm_methods
 
-def lifespan_curve(barcode, bins = None, num_bins = 1000):
-    # The vectorization called lifespan curve.
-    # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
-    if bins is None:
-        bins = np.linspace(np.min(barcode), np.max(barcode), num_bins)
-    else:
-        bins = bins
-
-    bar_differences = np.array(barcode)[:, 1] - np.array(barcode)[:, 0]
-    bar_differences = bar_differences.ravel().astype(float)
-    lifespan_c = [np.sum([
-                        bar_diff if vectorizations._index_bar(bar, t) else 0.
-                        for bar, bar_diff in zip(barcode, bar_differences)
-                        ])
-                    for t in bins
-                ]
-    return lifespan_c, bins
 
 class Vectorizer(object):
     
@@ -58,7 +41,7 @@ class Vectorizer(object):
         
         # Get the persistence image of each barcode.
         if not parallel:
-            pi_list = [vectorizations.persistence_image_data(ph = barcode, 
+            pi_list = [vectorizations.persistence_image(ph = barcode, 
                                                             norm_factor = norm_factor,
                                                             xlim = xlim,
                                                             ylim = ylim,
@@ -68,7 +51,7 @@ class Vectorizer(object):
                         for barcode in self.tmd]
 
         else:
-            partial_compute = partial(vectorizations.persistence_image_data,
+            partial_compute = partial(vectorizations.persistence_image,
                                             norm_factor = norm_factor,
                                             xlim = xlim,
                                             ylim = ylim,
@@ -294,7 +277,7 @@ class Vectorizer(object):
         return betti_curves
 
 
-    
+
     def life_entropy_curve(self):
         ''' Computes the life entropy curve of each barcode in self.tmd.
 
@@ -347,7 +330,7 @@ class Vectorizer(object):
         print("Computing lifespan curves...")
 
         lifespan_cuves = self._curve_vectorization(curve_params = lifespan_params,
-                                                    curve_method = lifespan_curve)
+                                                    curve_method = vectorizations.lifespan_curve)
         print("lsc done! \n")
 
         return lifespan_cuves
@@ -360,7 +343,6 @@ class Vectorizer(object):
 
         print("Computing stable ranks...")
 
-            
         bar_lengths = self.tmd.apply(lambda x: np.array(x)[:, 1] - np.array(x)[:, 0] if x is not None else None)
         if stable_ranks_params["type"] == "standard":
             bar_lengths_filtered = bar_lengths.apply(lambda x: -x if isinstance(x, np.ndarray) else None)
@@ -379,7 +361,7 @@ class Vectorizer(object):
 
         print("sr done! \n")
         return bc_lengths
-    
+
 
 
     def betti_hist(self):
@@ -402,7 +384,7 @@ class Vectorizer(object):
         betti_hists = []
         for barcode in self.tmd:
             
-            masks = mask_bars(barcode, bins)
+            masks = vectorizations._mask_bars(barcode, bins)
             
             betti_h = np.sum(masks, axis=-1)
 
@@ -411,7 +393,9 @@ class Vectorizer(object):
         print("bh done! \n")
 
         return betti_hists
+
     
+
     def lifespan_hist(self):
 
         betti_hist_params = self.vect_parameters["betti_hist"]
@@ -424,7 +408,7 @@ class Vectorizer(object):
             bar_differences = np.array(barcode)[:, 1] - np.array(barcode)[:, 0]
             bar_differences = bar_differences.ravel().astype(float)
 
-            masks = mask_bars(barcode, bins)
+            masks = vectorizations._mask_bars(barcode, bins)
 
             lifespan_h = [np.sum([
                                 bar_diff if m else 0.
@@ -436,14 +420,3 @@ class Vectorizer(object):
         return lifespan_hists
     
 
-def mask_bars(barcode, bins):
-    barcode = np.sort(np.array(barcode))
-    starts = barcode[:,0]
-    ends = barcode[:,1]
-    masks = []
-    for bin in bins:
-        mask_a = starts < bin[1]
-        mask_b = bin[0] < ends
-        mask = np.logical_and(mask_a, mask_b)
-        masks.append(mask)
-    return masks

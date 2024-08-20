@@ -4,7 +4,6 @@
     Institute of Science and Technology (IST) Austria
 """
 from morphomics.protocols import bootstrapping
-#from morphomics.Analysis import old_reduction
 from morphomics.protocols import plotting
 from morphomics.protocols import morphometrics
 from morphomics.protocols import vectorizer
