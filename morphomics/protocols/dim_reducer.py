@@ -1,5 +1,5 @@
 import numpy as np
-
+from morphomics.protocols.default_parameters import DefaultParams
 from sklearn.decomposition import PCA, KernelPCA, TruncatedSVD, TruncatedSVD
 import umap
 from sklearn.manifold import TSNE
@@ -26,7 +26,8 @@ class DimReducer(object):
         """
         self.tmd_vectors = tmd_vectors
         self.dimred_parameters = dimred_parameters
-        
+        self.default_params = DefaultParams()
+
     ## Private
 
 
@@ -48,6 +49,7 @@ class DimReducer(object):
         reduced_vectors (np.array): The dim reduced vectors.
         '''
         pca_params = self.dimred_parameters["pca"]
+        pca_params = self.default_params.complete_with_default_params(self, pca_params, 'pca', type = 'dim_reduction')
 
         n_components = pca_params["n_components"]
         
@@ -79,7 +81,7 @@ class DimReducer(object):
 
         Parameters
         ----------
-        n_neighbors (float): The size of local neighborhood (in terms of number of neighboring
+        n_neighbors (int): The size of local neighborhood (in terms of number of neighboring
             sample points) used for manifold approximation. 
             Larger values result in more global views of the manifold, 
             while smaller values result in more local data being preserved. 
@@ -110,6 +112,7 @@ class DimReducer(object):
         reduced_vectors (np.array): The dim reduced vectors.
         '''
         umap_params = self.dimred_parameters["umap"]
+        umap_params = self.default_params.complete_with_default_params(self, umap_params, 'umap', type = 'dim_reduction')
 
         print("Running UMAP...")
         fit_umap = umap.UMAP(
@@ -150,6 +153,7 @@ class DimReducer(object):
         reduced_vectors (np.array): The dim reduced vectors.
         '''
         tsne_params = self.dimred_parameters["tsne"]
+        tsne_params = self.default_params.complete_with_default_params(self, tsne_params, 'tsne', type = 'dim_reduction')
 
         n_components = tsne_params["n_components"]
         n_neighbors = tsne_params["n_neighbors"]

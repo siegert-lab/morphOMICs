@@ -108,9 +108,9 @@ def get_bif_term(self):
 
 def get_nodes_path_distance(self):
     """Tree method to get path distances from the root."""
-    edge_len = get_edges_length(self)
+    edge_len = self.get_edges_length()
     path_lengths = np.append(0, copy.deepcopy(edge_len))
-    children = get_children(self)
+    children = self.get_children()
 
     for k, v in children.items():
         path_lengths[v] = path_lengths[v] + path_lengths[k]

@@ -110,7 +110,7 @@ def stable_ranks(ph, type = 'standard'):
         bars_length_filtered = -bars_length
     elif type == 'abs':
         bars_length_filtered = np.abs(bars_length)
-    else:
+    elif type == 'positiv':
         bars_length_filtered = np.abs(bars_length[bars_length < 0])
 
     bars_length_sorted = np.sort(bars_length_filtered)[::-1]

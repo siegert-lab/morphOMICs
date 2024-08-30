@@ -1,7 +1,6 @@
 import numpy as np
-import concurrent.futures
-from functools import partial
 
+from morphomics.protocols.default_parameters import DefaultParams
 from morphomics.persistent_homology import vectorizations
 from morphomics.persistent_homology.ph_analysis import get_limits
 
@@ -19,8 +18,8 @@ class Vectorizer(object):
         tmd (list of np.arrays of pairs): the barcodes of trees
         parameters (dict): contains the parameters for each protocol that would be run
                             vect_parameters = {'vect_method_1 : { parameter_1_1: x_1_1, ..., parameter_1_n: x_1_n},
-                                            ...
-                                            'vect_method_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
+                                                 ...
+                                                'vect_method_m : { parameter_m_1: x_m_1, ..., parameter_m_n: x_m_n}
                                         } 
 
         Returns
@@ -29,11 +28,12 @@ class Vectorizer(object):
         """
         self.tmd = tmd
         self.vect_parameters = vect_parameters
-        
+        self.default_params = DefaultParams()
+
     ## Private
     def _curve_vectorization(self, 
-                             curve_method,
-                             curve_params):
+                             curve_params,
+                             curve_method):
         '''General method to compute vectorization for curve methods.
 
         Parameters
@@ -51,7 +51,7 @@ class Vectorizer(object):
         -------
         A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
         '''
-        
+        curve_params = self.default_params.complete_with_default_params(curve_params, "curve", type = 'vectorization')
         rescale_lims = curve_params["rescale_lims"]
         xlims = curve_params["xlims"]
         resolution = curve_params["resolution"]
@@ -98,7 +98,7 @@ class Vectorizer(object):
         -------
         A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
         '''
-        
+        hist_params = self.default_params.complete_with_default_params(hist_params, "hist", type = 'vectorization')
         rescale_lims = hist_params["rescale_lims"]
         xlims = hist_params["xlims"]
         num_bins = hist_params["resolution"]
@@ -164,8 +164,8 @@ class Vectorizer(object):
         
 
         '''
-
         pi_params = self.vect_parameters["persistence_image"]
+        pi_params = self.default_params.complete_with_default_params(pi_params, "persistence_image", type = 'vectorization')
 
         rescale_lims = pi_params["rescale_lims"]
         xlims=pi_params["xlims"]
@@ -229,12 +229,9 @@ class Vectorizer(object):
         A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
         '''
         betti_params = self.vect_parameters["betti_curve"]
-
         print("Computing betti curves...")
-
         betti_curves = self._curve_vectorization(curve_params = betti_params,
                                                 curve_method = vectorizations.betti_curve)
-
         print("bc done! \n")
         return betti_curves
 
@@ -256,12 +253,9 @@ class Vectorizer(object):
         A numpy array of shape (nb barcodes, resolution) i.e. a vector for each barcode. 
         '''
         entropy_params = self.vect_parameters["life_entropy_curve"]
-
         print("Computing life entropy curves...")
-
         life_entropy_curves = self._curve_vectorization(curve_params = entropy_params,
                                                         curve_method = vectorizations.life_entropy_curve)
-
         print("lec done! \n")
         return life_entropy_curves
 
@@ -291,12 +285,12 @@ class Vectorizer(object):
 
 
     def stable_ranks(self):
-
         stable_ranks_params = self.vect_parameters["stable_ranks"]
+        # Type should be: 'standard', 'abs' or 'positiv'.
+        stable_ranks_params = self.default_params.complete_with_default_params(stable_ranks_params, "stable_ranks", type = 'vectorization')
         type = stable_ranks_params['type']
         print("Computing stable ranks...")
         stable_r = self.tmd.apply(lambda ph: vectorizations.stable_ranks(ph, type = type))
-
         print("sr done! \n")
         return np.array(list(stable_r))
 

@@ -40,7 +40,7 @@ norm_methods = {
     "std": lambda arr: np.std(arr),
     "l1": lambda arr: np.sum(np.abs(arr)),
     "l2": lambda arr: np.sqrt(np.dot(arr, arr)),
-    "one": lambda arr: np.ones_like(arr),
+    "id": lambda arr: np.ones_like(arr),
 }
 
 vectorization_codenames = {

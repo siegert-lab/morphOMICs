@@ -738,7 +738,7 @@ class Pipeline(object):
             standardize (bool): standardize data before reduction
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): location where to save the data
-            save_filename (str or 0): this will be used as the file name
+            save_filename (str or 0): This will be used as the file name.
 
         Returns
         -------
@@ -1160,29 +1160,30 @@ class Pipeline(object):
         Essential parameters:
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): 
-            conditions (list of str):
-            reduced_vectors_name
-            axis_labels
-            title
-            colors
-            size (float)
-            amount (float [0,1])
-            save_data (bool)
-            save_folderpath
-            save_filename
+            conditions (list (str)): Conditions that will be concatenated to represent labels in the plot.
+            reduced_vectors_name (str): The name of the column in morphoframe that contains the vectors (dim 2/3) you want to plot.
+            axis_labels (list (str)): The name of the axis you want to plot.
+            title (str): The title of the plot.
+            colors (dict or list): The dictionnary or the list for the colors for different lables. If empty list, the colors are choosen by default.
+            size (float): Size of the markers.
+            amount (float [0,1]): If using different shades of the same color, this is a factor for the shades.
+            save_data (bool): Trigger to save output of protocol.
+            save_folderpath (str): Location where to save the data.
+            save_filename (str): This will be used as the file name.
         """
         defined_params = self.parameters["Plotting"]
         params = self.default_params.complete_with_default_params(defined_params, "Plotting")
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
+        
         conditions = params['conditions']
         reduced_vectors_name = params["reduced_vectors_name"]
         axis_labels = params['axis_labels']
         title = params['title']
         colors = params['colors']
         circle_color = params['circle_colors']
-        size= params['size']
+        size = params['size']
         amount = params['amount']
 
         save_data = params["save_data"]
@@ -1194,7 +1195,7 @@ class Pipeline(object):
 
         if type(morphoframe_filepath) is str:
             if "csv" in morphoframe_filepath:
-                _morphoframe = pd.read_csv(morphoframe_filepath,index_col = 0)
+                _morphoframe = pd.read_csv(morphoframe_filepath, index_col = 0)
         else:
             _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                                 variable_name = morphoframe_name)

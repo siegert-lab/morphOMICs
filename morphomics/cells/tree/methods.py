@@ -32,29 +32,6 @@ def _rd_w(p1, p2, w=(1.0, 1.0, 1.0), normed=True):
 
 
 # Points features to be used for topological extraction
-def get_point_radial_distances(self, point=None, dim="xyz"):
-    """Tree method to get radial distances from a point.
-
-    If point is None, the soma surface -defined by
-    the initial point of the tree- will be used
-    as a reference point.
-    """
-    if point is None:
-        point = []
-        for d in dim:
-            point.append(getattr(self, d)[0])
-
-    radial_distances = np.zeros(self.size(), dtype=float)
-
-    for i in range(self.size()):
-        point_dest = []
-        for d in dim:
-            point_dest.append(getattr(self, d)[i])
-
-        radial_distances[i] = distances['l2'](point, point_dest)
-
-    return radial_distances
-
 def get_point_radial_distances_time(self, point=None, dim="xyz", zero_time=0, time=1):
     """Tree method to get radial distances from a point.
 
@@ -104,16 +81,6 @@ def get_point_weighted_radial_distances(self, point=None, dim="xyz", w=(1, 1, 1)
 
     return radial_distances
 
-def get_point_path_distances(self):
-    """Tree method to get path distances from the root."""
-    seg_len = self.get_segment_lengths()
-    path_lengths = np.append(0, copy.deepcopy(seg_len))
-    children = get_children(self)
-
-    for k, v in children.items():
-        path_lengths[v] = path_lengths[v] + path_lengths[k]
-
-    return path_lengths
 
 def get_trunk_length(self):
     """Tree method to get the trunk (first section length)."""
@@ -249,11 +216,6 @@ def get_way_to_root(tree, sec_id=0):
         tmp_id = tree.p[tmp_id]
 
     return way
-
-
-def get_children(tree):
-    """Return a dictionary of children for each node of the tree."""
-    return OrderedDict({i: np.where(tree.p == i)[0] for i in range(len(tree.p))})
 
 
 def get_pca(self, plane="xy", component=0):
