@@ -159,7 +159,8 @@ class Pipeline(object):
 
         defined_params = self.parameters["Input"]
         params = self.default_params.complete_with_default_params(defined_params, "Input")
-
+        self.parameters["Input"] = params
+        
         data_location_filepath = params["data_location_filepath"]
         extension = params["extension"]
         conditions = params["conditions"]
@@ -170,7 +171,6 @@ class Pipeline(object):
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]        
-        
         # define output filename
         default_save_filename = "Cell"
 
@@ -282,6 +282,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Load_data"]
         params = self.default_params.complete_with_default_params(defined_params, "Load_data")
+        self.parameters["Load_data"] = params
 
         filepath_to_data = params["filepath_to_data"]
         morphoframe_name = params["morphoframe_name"]
@@ -327,6 +328,7 @@ class Pipeline(object):
         '''
         defined_params = self.parameters["TMD"]
         params = self.default_params.complete_with_default_params(defined_params, "TMD")
+        self.parameters["TMD"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -405,6 +407,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Clean_frame"]
         params = self.default_params.complete_with_default_params(defined_params, "Clean_frame")
+        self.parameters["Clean_frame"] = params
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -483,7 +486,7 @@ class Pipeline(object):
         Essential parameters:
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be subsampled out.
-            feature_to_subsample (list, (str, str)): A column in morphoframe .i.e the type (either barcodes, or tree) to subsample.
+            feature_to_subsample (str): A column in morphoframe .i.e the type (either barcodes, or tree) to subsample.
             main_branches (str or None): If you want to force main branches to be kept = 'keep'. 
                                         If you want to remove them, and keep only subbranches = 'remove'.
             k_elements (int or ratio): The number of elements that will be subsampled to generate a subbarcode or subtree.
@@ -497,6 +500,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Subsample"]
         params = self.default_params.complete_with_default_params(defined_params, "Subsample")
+        self.parameters["Subsample"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -504,9 +508,7 @@ class Pipeline(object):
         extendedframe_name = params["extendedframe_name"]
 
         feature_to_subsample = params["feature_to_subsample"]
-        main_branches = params["main_branches"]
         #could be a ratio of the number of bars
-        k_elements = params["k_elements"]
         n_samples = params["n_samples"]
 
         rand_seed = params["rand_seed"]
@@ -521,17 +523,29 @@ class Pipeline(object):
         _morphoframe_copy = _morphoframe.copy()
 
         features = _morphoframe_copy[feature_to_subsample]
-        _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(#feature_to_subsample = feature_to_subsample,
-                                                                                    feature_list = features, 
-                                                                                    main_branches = main_branches)
-        probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-        _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
-                                                                                                    feature_list = features,
-                                                                                                      probas = probas, 
-                                                                                                      k_elements = k_elements, 
-                                                                                                      n_samples = n_samples, 
-                                                                                                      rand_seed = rand_seed,
-                                                                                                      main_branches = main_branches)
+        if feature_to_subsample == "barcodes":
+            main_branches = params["main_branches"]
+            k_elements = params["k_elements"]
+            _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(#feature_to_subsample = feature_to_subsample,
+                                                                                        feature_list = features, 
+                                                                                        main_branches = main_branches)
+            probas = _morphoframe_copy[feature_to_subsample + "_proba"]
+            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
+                                                                                                        feature_list = features,
+                                                                                                        probas = probas, 
+                                                                                                        k_elements = k_elements, 
+                                                                                                        n_samples = n_samples, 
+                                                                                                        rand_seed = rand_seed,
+                                                                                                        main_branches = main_branches)
+        else:
+            type = params['type']
+            number = params['nb_sections']
+            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_trees(feature_list = features,
+                                                                                                type = type,
+                                                                                                number = number,
+                                                                                                n_samples = n_samples, 
+                                                                                                rand_seed = rand_seed,)
+
         _morphoframe_copy[feature_to_subsample + '_id'] = _morphoframe_copy.index
         extendedframe = _morphoframe_copy.explode(feature_to_subsample + "_subsampled").reset_index(drop = True)
 
@@ -581,6 +595,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Bootstrap"]
         params = self.default_params.complete_with_default_params(defined_params, "Bootstrap")
+        self.parameters["Bootstrap"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -663,6 +678,7 @@ class Pipeline(object):
 
         defined_params = self.parameters["Vectorizations"]
         params = self.default_params.complete_with_default_params(defined_params, "Vectorizations")
+        self.parameters["Vectorizations"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -746,6 +762,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Dim_reductions"]
         params = self.default_params.complete_with_default_params(defined_params, "Dim_reductions")
+        self.parameters["Dim_reductions"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -759,6 +776,7 @@ class Pipeline(object):
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
+        save_dimreducer = params["save_dimreducer"]
 
         # define morphoframe containing vectors to compute dim reduction
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
@@ -815,10 +833,11 @@ class Pipeline(object):
 
         # save the reduced vectors
         if save_filepath is not None:
-            print("The reduced vectors and fitted dimreducers are saved in %s" %(save_filepath))
-
             save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath + '_reduced_data')
+            print("The reduced vectors are saved in %s" %(save_filepath))
+        if save_dimreducer:
             save_obj(obj = self.metadata, filepath = save_filepath + '_fitted_dimreducer')
+            print("The fitted dimreducers are saved in %s" %(save_filepath))
 
         print("Reducing done!")
         print("")
@@ -895,6 +914,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Save_reduced"]
         params = self.default_params.complete_with_default_params(defined_params, "Save_reduced")
+        self.parameters["Save_reduced"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -965,7 +985,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Mapping"]
         params = self.default_params.complete_with_default_params(defined_params, "Mapping")
-
+        self.parameters["Mapping"] = params
 
         fitted_dimreducer_filepath = params["fitted_dimreducer_filepath"]
         dimred_method = params["dimred_method"]
@@ -1150,9 +1170,9 @@ class Pipeline(object):
             #print("The Sholl curves are saved in %s" (save_filepath))
 
             morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
-            
-            
-            
+             
+
+
     def Plotting(self):
         """
         Protocol: Generates a 3D interactive plot from a morphoframe, or from the ReductionInfo files, or from coordinate and morphoinfo files
@@ -1173,6 +1193,7 @@ class Pipeline(object):
         """
         defined_params = self.parameters["Plotting"]
         params = self.default_params.complete_with_default_params(defined_params, "Plotting")
+        self.parameters["Plotting"] = params
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -1191,7 +1212,7 @@ class Pipeline(object):
         save_filename = params["save_filename"] 
 
         # define morphoframe that contains the data points to plot
-        print("Loading fitted dim reduction function...")   
+        print("Loading fitted dim reduced data...")   
 
         if type(morphoframe_filepath) is str:
             if "csv" in morphoframe_filepath:
@@ -1276,6 +1297,7 @@ class Pipeline(object):
         # Save a dictionary containing the name of the processed data and the parameters of the main steps for reproducibility
         defined_params = self.parameters['Save_parameters']
         params = self.default_params.complete_with_default_params(defined_params, "Save_parameters")
+        self.parameters["Save_parameters"] = params
 
         parameters_to_save = params['parameters_to_save']
         stored_parameters = {}

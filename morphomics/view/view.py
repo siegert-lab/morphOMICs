@@ -20,13 +20,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection as _LC
 
-from tmd.Topology.methods import _filtration_function
-from tmd.Topology.methods import tree_to_property_barcode as tp_barcode
-from tmd.utils import TREE_TYPE_DICT
-from tmd.utils import term_dict
-from tmd.view import common as cm
-from tmd.view import plot
-from tmd.view.common import blues_map
+from morphomics.persistent_homology.tmd import _filtration_function
+from morphomics.persistent_homology.tmd import tree_to_property_barcode as tp_barcode
+from morphomics.cells.neuron.neuron import TREE_TYPE_DICT
+from morphomics.cells.utils import term_dict
+from morphomics.view import common as cm
+from morphomics.view import plot
+from morphomics.view.common import blues_map
 
 
 def _get_default(variable, **kwargs):
@@ -139,7 +139,7 @@ def tree(tr, plane="xy", new_fig=True, subplot=False, hadd=0.0, vadd=0.0, **kwar
 
         return ((horz1, vert1), (horz2, vert2))
 
-    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_segments()]
+    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_edges_coords()]
 
     linewidth = _get_default("linewidth", **kwargs)
 

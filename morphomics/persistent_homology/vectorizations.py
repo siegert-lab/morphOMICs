@@ -96,11 +96,11 @@ def life_entropy_curve(ph, t_list=None, resolution=1000):
     entropy = [_bar_entropy(bar, lifetime) for bar in ph]
     if t_list is None:
         t_list = np.linspace(np.min(ph), np.max(ph), resolution)
-    t_entropy = [
+    entropy_c = [
         -np.sum([_index_bar(ph_bar, t) * e for (e, ph_bar) in zip(entropy, ph)])
         for t in t_list
     ]
-    return t_entropy, t_list
+    return entropy_c, t_list
 
 # 1D ordered vectorization
 

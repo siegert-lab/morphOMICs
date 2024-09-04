@@ -43,8 +43,7 @@ class DefaultParams:
         self.pipeline_params = {'Input': {"data_location_filepath": 'data',
                                             "extension": '.swc',
                                             "conditions": ['Region', 'Model', 'Sex', 'Animal'],
-                                            "separated_by": ['Region'],
-                                            "morphoframe_name": 'microglia',
+                                            "separated_by": 'Region',
                                             },
                                 'Load_data': {},
                                 'TMD': {"filtration_function": 'radial_distance',
@@ -73,6 +72,7 @@ class DefaultParams:
                                                     "filter_pixels": False,
                                                     "normalize": False,
                                                     "standardize": False,
+                                                    "save_dimreducer": False,
                                                 },
                                 'Save_reduced': {"conditions_to_save": ['Region', 'Model', 'Sex'],
                                                 "dimred_method": 'pca_umap',
@@ -96,7 +96,7 @@ class DefaultParams:
                                             "size": 5.,
                                             "amount": 0.3,
                                             },
-                                'Save_paramters': {"parameters_to_save": {'TMD': ['filtration_function'],
+                                'Save_parameters': {"parameters_to_save": {'TMD': ['filtration_function'],
                                                                             'Bootstrap': ['N_bags', 'n_samples', 'ratio'],
                                                                             'Vectorizations': [],
                                                                             'Dim_reductions': ['normalize', 'standardize'],
@@ -107,7 +107,7 @@ class DefaultParams:
     def _get_default_params(self, type, method):
         if type == 'protocol':
             completed_params = self.pipeline_params[method].copy()
-            completed_params.update(self.general_params.copy())
+            completed_params.update(self.general_io_params.copy())
         elif type == 'vectorization':
             completed_params = self.vectorizer_params[method].copy()
         elif type == 'dim_reduction':

@@ -34,7 +34,34 @@ def get_type(self):
     """Return type of tree."""
     return int(np.median(self.t))
 
-# Segment features
+# Connectivity features
+def get_children(self):
+    """Return a dictionary of children for each node of the tree."""
+    return OrderedDict({i: np.where(self.p == i)[0] for i in range(len(self.p))})
+
+def get_bif_term(self):
+    """Return number of children per point."""
+    return np.array(sp.csr_matrix.sum(self.dA, axis=0))[0]
+
+def get_bifurcations(self):
+    """Return bifurcations."""
+    bif_term = self.get_bif_term()
+    bif = np.where(bif_term == 2.0)[0]
+    return bif
+
+def get_multifurcations(self):
+    """Return bifurcations."""
+    bif_term = self.get_bif_term()
+    bif = np.where(bif_term >= 2.0)[0]
+    return bif
+
+def get_terminations(self):
+    """Return terminations."""
+    bif_term = self.get_bif_term()
+    term = np.where(bif_term == 0.0)[0]
+    return term
+
+# Edges features
 def get_edges_coords(self, seg_ids=None):
     """Return edges coordinates.
 
@@ -74,7 +101,22 @@ def get_edges_length(self, seg_ids=None):
 
     return seg_len
 
-# Points features to be used for topological extraction
+def get_lifetime(self, feature="nodes_radial_distance"):
+    """Returns the sequence of birth - death times for each section.
+
+    This can be used as the first step for the approximation of P.H.
+    of the radial distances of the neuronal branches.
+    """
+    begs, ends = self.sections
+    rd = getattr(self, "get_" + feature)()
+    lifetime = np.array(len(begs) * [np.zeros(2)])
+
+    for i, (beg, end) in enumerate(zip(begs, ends)):
+        lifetime[i] = np.array([rd[beg], rd[end]])
+
+    return lifetime
+
+# Nodes features to be used for topological extraction
 def get_nodes_radial_distance(self, point=None, dim="xyz"):
     """Tree method to get radial distances from nodes in a Tree.
 
@@ -98,14 +140,6 @@ def get_nodes_radial_distance(self, point=None, dim="xyz"):
 
     return radial_distances
 
-def get_children(self):
-    """Return a dictionary of children for each node of the tree."""
-    return OrderedDict({i: np.where(self.p == i)[0] for i in range(len(self.p))})
-
-def get_bif_term(self):
-    """Return number of children per point."""
-    return np.array(sp.csr_matrix.sum(self.dA, axis=0))[0]
-
 def get_nodes_path_distance(self):
     """Tree method to get path distances from the root."""
     edge_len = self.get_edges_length()
@@ -117,17 +151,4 @@ def get_nodes_path_distance(self):
 
     return path_lengths
 
-def get_lifetime(self, feature="nodes_radial_distance"):
-    """Returns the sequence of birth - death times for each section.
 
-    This can be used as the first step for the approximation of P.H.
-    of the radial distances of the neuronal branches.
-    """
-    begs, ends = self.sections
-    rd = getattr(self, "get_" + feature)()
-    lifetime = np.array(len(begs) * [np.zeros(2)])
-
-    for i, (beg, end) in enumerate(zip(begs, ends)):
-        lifetime[i] = np.array([rd[beg], rd[end]])
-
-    return lifetime

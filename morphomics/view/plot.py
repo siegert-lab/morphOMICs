@@ -18,12 +18,10 @@
 import numpy as np
 from matplotlib import pylab as plt
 
-from morphomics.tmd import analysis
-from morphomics.tmd.Topology import distances
-from morphomics.tmd.Topology import vectorizations
-from morphomics.tmd.Topology.statistics import transform_ph_to_length
-from morphomics.tmd.view import common as cm
-from morphomics.tmd.view.common import jet_map
+from morphomics.persistent_homology import ph_transformations, pi_transformations
+from morphomics.persistent_homology import vectorizations
+from morphomics.view import common as cm
+from morphomics.view.common import jet_map
 
 
 def barcode(ph, new_fig=True, subplot=False, color="b", linewidth=1.2, **kwargs):
@@ -33,7 +31,7 @@ def barcode(ph, new_fig=True, subplot=False, color="b", linewidth=1.2, **kwargs)
     """
     # Initialization of matplotlib figure and axes.
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
-    ph_sort = analysis.sort_ph(ph)
+    ph_sort = ph_transformations.sort_ph(ph)
 
     for ibar, pbar in enumerate(ph_sort):
         bar_color = color[ibar] if isinstance(color, list) else color
@@ -255,7 +253,7 @@ def persistence_image_diff(
     if xlim is None or xlim is None:
         xlim, ylim = ((0, 100), (0, 100))
 
-    difference = distances.image_diff_data(Z1, Z2, normalized=norm)
+    difference = pi_transformations.image_diff_data(Z1, Z2, normalized=norm)
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
     ax.imshow(
         np.rot90(difference),
@@ -288,7 +286,7 @@ def persistence_image_add(
     if xlim is None or xlim is None:
         xlim, ylim = ((0, 100), (0, 100))
 
-    addition = analysis.get_image_add_data(Z1, Z2, normalized=norm)
+    addition = pi_transformations.get_image_add_data(Z1, Z2, normalized=norm)
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
     ax.imshow(
         np.rot90(addition),
@@ -319,7 +317,7 @@ def persistence_image_average(
 ):
     """Merge a list of ph diagrams and plot their respective average image."""
     # pylint: disable=unexpected-keyword-arg
-    av_imgs = analysis.get_average_persistence_image(
+    av_imgs = pi_transformations.get_average_persistence_image(
         ph_list, xlim=xlim, ylim=ylim, norm_factor=norm_factor, weighted=weighted
     )
     if xlim is None or xlim is None:
@@ -355,7 +353,7 @@ def persistence_image_average(
 
 def start_length_diagram(ph, new_fig=True, subplot=False, color="b", alpha=1.0, **kwargs):
     """Plot a transformed ph diagram that represents lengths and starting points of a component."""
-    ph_transformed = transform_ph_to_length(ph)
+    ph_transformed = ph_transformations.transform_ph_to_length(ph)
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
 
     for p in ph_transformed:
@@ -373,7 +371,7 @@ def start_length_diagram(ph, new_fig=True, subplot=False, color="b", alpha=1.0, 
 def histogram_stepped(ph, new_fig=True, subplot=False, color="b", alpha=0.7, **kwargs):
     """Extract and plot the stepped histogram of a persistent homology array."""
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
-    hist_data = analysis.histogram_stepped(ph)
+    hist_data = vectorizations.histogram_stepped(ph)
     ax.fill_between(hist_data[0][:-1], 0, hist_data[1], color=color, alpha=alpha)
     return cm.plot_style(fig=fig, ax=ax, **kwargs)
 
@@ -386,7 +384,7 @@ def histogram_stepped_population(
     The histogram is normalized according to the number of persistence diagrams.
     """
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
-    hist_data = analysis.histogram_stepped(analysis.collapse(ph_list))
+    hist_data = vectorizations.histogram_stepped(np.vstack(ph_list))
     ax.fill_between(hist_data[0][:-1], 0, hist_data[1] / len(ph_list), color=color, alpha=alpha)
     return cm.plot_style(fig=fig, ax=ax, **kwargs)
 
@@ -394,7 +392,7 @@ def histogram_stepped_population(
 def histogram_horizontal(ph, new_fig=True, subplot=False, bins=100, color="b", alpha=0.7, **kwargs):
     """Extract and plot the binned histogram of a persistent homology array."""
     fig, ax = cm.get_figure(new_fig=new_fig, subplot=subplot)
-    hist_data = analysis.histogram_horizontal(ph, num_bins=bins)
+    hist_data = vectorizations.histogram_horizontal(ph, num_bins=bins)
     ax.fill_between(hist_data[0][:-1], 0, hist_data[1], color=color, alpha=alpha)
 
     return cm.plot_style(fig=fig, ax=ax, **kwargs)

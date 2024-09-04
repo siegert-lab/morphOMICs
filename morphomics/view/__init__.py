@@ -25,5 +25,5 @@ except ImportError as exc:
         "tmd[viewer] is not installed. " + "Please install it by doing: pip install tmd[viewer]"
     ) from exc
 
-from morphomics.tmd.view import plot  # noqa
-from morphomics.tmd.view import view  # noqa
+from morphomics.view import plot  # noqa
+from morphomics.view import view  # noqa

@@ -144,29 +144,6 @@ def get_sections_only_points(self):
 
     return beg, end
 
-
-
-def get_bifurcations(self):
-    """Return bifurcations."""
-    bif_term = self.get_bif_term()
-    bif = np.where(bif_term == 2.0)[0]
-    return bif
-
-
-def get_multifurcations(self):
-    """Return bifurcations."""
-    bif_term = self.get_bif_term()
-    bif = np.where(bif_term >= 2.0)[0]
-    return bif
-
-
-def get_terminations(self):
-    """Return terminations."""
-    bif_term = self.get_bif_term()
-    term = np.where(bif_term == 0.0)[0]
-    return term
-
-
 def get_direction_between(self, start_id=0, end_id=1):
     """Return direction of a branch.
 

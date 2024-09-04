@@ -77,7 +77,7 @@ class Vectorizer(object):
 
         return np.array(list(curves))
     
-        ## Private
+
     def _histogram_vectorization(self, 
                              hist_params,
                              hist_method):

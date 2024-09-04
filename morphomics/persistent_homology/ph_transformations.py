@@ -6,8 +6,7 @@ def concatenate(ph_list):
 
 def sort_ph(ph):
     """Sorts barcode according to decreasing length of bars."""
-    return np.array(ph)[np.argsort([p[0] - p[1] for p in ph])].tolist()
-
+    return ph[np.argsort([bar[0] - bar[1] for bar in ph])].tolist()
 
 def tmd_scale(barcode, thickness):
     """Scale the first two components according to the thickness parameter.
@@ -77,3 +76,5 @@ def nosify(var, noise=0.1):
     for i, v in enumerate(var):
         var_new[i] = stats.norm.rvs(v, noise)
     return var_new
+
+

@@ -1,16 +1,19 @@
 import numpy as np
+from morphomics.cells.tree.tree import Tree
+
+## Barcodes
 
 def set_proba(feature_list, main_branches = None):
     # Define probas of picking for each element of a feature.
     if main_branches == 'keep' or main_branches == 'remove':
-        feature_list = feature_list.apply(lambda x: np.array(x)[np.all(np.array(x) >= 0.001, axis=-1)])    
-
-    bar_lengths = feature_list.apply(lambda x: np.abs(np.array(x)[:, 1] - np.array(x)[:, 0]) if x is not None else None)
-    probas = bar_lengths.apply(lambda x: x/sum(np.sort(x, axis=-1)))
+        feature_list = feature_list.apply(lambda ph: np.array([bar if np.all(bar >= 0.001) else [0, 0] for bar in ph]))
+    
+    bar_lengths = feature_list.apply(lambda ph: np.abs(ph[:, 1] - ph[:, 0]) if ph is not np.nan else np.nan)
+    probas = bar_lengths.apply(lambda ph: ph/sum(np.sort(ph, axis=-1)))
     return probas
 
 def subsample_w_replacement(feature_list, probas, k_elements, n_samples, 
-                            rand_seed = 0, main_branches = None):
+                            rand_seed = 51, main_branches = None):
     # Subsample each feature n_samples time, following probas, to create a list of subfeatures with k_elements.
     np.random.seed(rand_seed)
 
@@ -35,4 +38,13 @@ def subsample_w_replacement(feature_list, probas, k_elements, n_samples,
         for indices in indices_list:
             subsamples.append(feature[indices])
         subsampled_features.append(subsamples)
+    return subsampled_features
+
+## Trees
+
+def subsample_trees(feature_list, type, number, n_samples, rand_seed = 51):
+    np.random.seed(rand_seed)
+    if type[0] == 'cut':
+        n_samples = 1
+    subsampled_features = feature_list.apply(lambda cell : [cell.neurites[0].subsample(type, number) for _ in range(n_samples)])
     return subsampled_features

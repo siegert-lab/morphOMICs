@@ -8,6 +8,13 @@ def get_image_add_data(Z1, Z2, normalized=True):
         Z2 = Z2 / Z2.max()
     return Z1 + Z2
 
+def image_diff_data(Z1, Z2, normalized=True):
+    """Get the diff of two images from the gaussian kernel plotting function."""
+    if normalized:
+        Z1 = Z1 / Z1.max()
+        Z2 = Z2 / Z2.max()
+    return Z1 + Z2
+
 def get_average_persistence_image(ph_list, xlim=None, ylim=None, 
                                   bw_method=None, 
                                   weighted=False, 

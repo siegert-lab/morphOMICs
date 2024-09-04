@@ -38,14 +38,22 @@ class Tree:
     from morphomics.cells.tree.extract_feature import size
     from morphomics.cells.tree.extract_feature import get_bounding_box
     from morphomics.cells.tree.extract_feature import get_type
-    from morphomics.cells.tree.extract_feature import get_edges_coords
-    from morphomics.cells.tree.extract_feature import get_edges_length
-    from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
+
     from morphomics.cells.tree.extract_feature import get_children
     from morphomics.cells.tree.extract_feature import get_bif_term
-    from morphomics.cells.tree.extract_feature import get_nodes_path_distance
-    from morphomics.cells.tree.extract_feature import get_lifetime
+    from morphomics.cells.tree.extract_feature import get_bifurcations
+    from morphomics.cells.tree.extract_feature import get_multifurcations
+    from morphomics.cells.tree.extract_feature import get_terminations
 
+    from morphomics.cells.tree.extract_feature import get_edges_coords
+    from morphomics.cells.tree.extract_feature import get_edges_length
+    from morphomics.cells.tree.extract_feature import get_lifetime
+    
+    from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
+    from morphomics.cells.tree.extract_feature import get_nodes_path_distance
+
+    from morphomics.cells.tree.subsample import prune_branch
+    from morphomics.cells.tree.subsample import cut_branch
 
     def __init__(self, x, y, z, d, t, p):
         """Constructor of tmd Tree Object."""
@@ -194,3 +202,32 @@ class Tree:
             p[i + 1] = np.where(beg0 == s[0])[0][0]
 
         return Tree(x, y, z, d, t, p)
+    
+    def subsample_tree(self, type, number):
+        tip_starts = self.get_terminations()
+        subsampled_nodes = set()
+        for leaf in tip_starts:
+            if type == 'cut':
+                way = self.cut_branch(leaf, degree = number)
+            elif type == 'prune':
+                way = self.prune_branch(leaf, nb_nodes = number)
+
+            subsampled_nodes.update(way)
+            subsampled_nodes.discard(-1)
+            subsampled_nodes = list(subsampled_nodes)
+
+        new_x = self.x[subsampled_nodes]
+        new_y = self.y[subsampled_nodes]
+        new_z = self.z[subsampled_nodes]
+        new_d = self.d[subsampled_nodes]
+        new_t = self.t[subsampled_nodes]
+        new_p = self.p[subsampled_nodes]
+
+        # Step 1: Create a mapping of numbers to their indices in subsampled_nodes
+        index_map = {value: index for index, value in enumerate(subsampled_nodes)}
+        index_map[-1] = -1
+        # Step 2: Replace each number in list p with its index from subsampled_nodes
+        new_p = [index_map[number] for number in new_p]
+
+        new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
+        return new_tree

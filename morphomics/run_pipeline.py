@@ -2,6 +2,7 @@ from morphomics import pipeline, utils
 
 def run_pipeline(path_to_data,
              pid, mf_name,
+             ext_name,
              bf_name,
              fmf_name ,
              clean_mf,
@@ -11,23 +12,27 @@ def run_pipeline(path_to_data,
              protocol_list,
              save_list,
              # Input
-             conditions,
+             conditions = ['Region', 'Model', 'Sex', 'Animal'],
              extension = "_corrected.swc",
-          #vect
-        vect_method_parameters = {'persistence_image' : {"rescale_lims" : False,
+             # TMD
+             filtration = "radial_distance",
+             # Subsample
+                feature_sample = 'tree',
+                # Vect
+                vect_method_parameters = {'persistence_image' : {"rescale_lims" : True,
                         "xlims" : [-10, 160],
                         "ylims" : [-10, 160],
                         "bw_method" : None,
                         "barcode_weight" : None,
-                        "norm_method" : "one",
+                        "norm_method" : "id",
                         "resolution" : 80,
-                        "parallel" : False}},
-                #bt
+                        }},
+                # BT
                 bt_cond = ['Model'],
                 ratio = 0,
                 N_bags = 100,
                 n_samples = 30,
-                #umap
+                # UMAP
                 dimred_method_parameters = {"pca" : {"n_components" : 50,
                                                                         "svd_solver" : False,
                                                                         "pca_version" : 'normal'
@@ -52,15 +57,14 @@ def run_pipeline(path_to_data,
         parameters["Parameters_ID"] = pid
         parameters["Protocols"] = protocol_list
 
-        protocol = pipeline.Protocols(parameters = parameters, 
+        my_pipeline = pipeline.Pipeline(parameters = parameters, 
                                         Parameters_ID = parameters["Parameters_ID"])
         
         # Input parameters
-        protocol.parameters["Input"] = {"data_location_filepath" : path_to_data,
+        my_pipeline.parameters["Input"] = {"data_location_filepath" : path_to_data,
                         "extension" : extension,
                         "conditions" : conditions,  
                         "separated_by" : conditions[0],
-                        "filtration_function" : "radial_distance",
                         "morphoframe_name" : mf_name,
                         "save_data" : False,
                         "save_folderpath" : save_folderpath + "/tmd",
@@ -68,7 +72,7 @@ def run_pipeline(path_to_data,
                         }
 
         # Clean_frame parameters
-        protocol.parameters["Clean_frame"] = {"morphoframe_filepath" : 0,
+        my_pipeline.parameters["Clean_frame"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : mf_name,
                                 "barcode_size_cutoff" : 5,
                                 "barlength_cutoff" : [],
@@ -80,22 +84,41 @@ def run_pipeline(path_to_data,
                                 }
 
 
-        protocol.parameters['Load_data'] = {"filepath_to_data" : path_to_data,
+        my_pipeline.parameters['Load_data'] = {"filepath_to_data" : path_to_data,
                                                 "morphoframe_name" : mf_name}
         
-
-        # Vectorization parameters
-        protocol.parameters["Vectorizations"] = {"morphoframe_filepath" : 0,
-                                        "morphoframe_name" : mf_name,
+        my_pipeline.parameters['TMD'] = {"morphoframe_filepath" : 0,
+                                         "morphoframe_name" : mf_name,
+                                         "filtration_function" : filtration,
+                                         "exclude_sg_branches" : True,
                                         "save_data" : False,
-                                        "save_folderpath" : save_folderpath + "/vectorized" + param_id,
-                                        "save_filename" : mf_name,
-                                        "vect_method_parameters" :
-                                             vect_method_parameters
+                                        "save_folderpath" : save_folderpath + "/tmd",
+                                        "save_filename" : mf_name
                                         }
         
+        my_pipeline.parameters['Subsample'] = {"morphoframe_filepath" : 0,
+                                               "morphoframe_name" : mf_name,
+                                               "extendedframe_name" : ext_name,
+                                                "feature_to_subsample": feature_sample,
+                                                "n_samples" : n_samples,
+                                                "rand_seed" : 51,
+                                                "save_data" : False,
+                                                "save_folderpath" : save_folderpath + "/sample",
+                                                "save_filename" : mf_name + "_cleaned",
+                                                }
+
+        # Vectorization parameters
+        my_pipeline.parameters["Vectorizations"] = {"morphoframe_filepath" : 0,
+                                                "morphoframe_name" : mf_name,
+                                                "save_data" : False,
+                                                "save_folderpath" : save_folderpath + "/vectorized" + param_id,
+                                                "save_filename" : mf_name,
+                                                "vect_method_parameters" :
+                                                vect_method_parameters
+                                                }
+        
         # Bootstrap parameters
-        protocol.parameters["Bootstrap"] = {"morphoframe_filepath" : 0,
+        my_pipeline.parameters["Bootstrap"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : mf_name,
                                 "feature_to_bootstrap" : ["pi", "array"],         
                                 "bootstrap_conditions" : bt_cond,
@@ -110,7 +133,7 @@ def run_pipeline(path_to_data,
                                 }
         
         # Dim reductions parameters
-        protocol.parameters["Dim_reductions"] = {"morphoframe_filepath" : 0,
+        my_pipeline.parameters["Dim_reductions"] = {"morphoframe_filepath" : 0,
                                         "morphoframe_name" : fmf_name,
                                         "vectors_to_reduce" : 'pi',
                                         "filter_pixels" : False,
@@ -118,12 +141,12 @@ def run_pipeline(path_to_data,
                                         "standardize" : stand,
                                         "save_data" : False,
                                         "save_folderpath" : save_folderpath + "/dim_reduced" + param_id,
-                                        "save_filename" : bf_name,
+                                        "save_filename" : fmf_name,
                                         "dimred_method_parameters" : dimred_method_parameters
                                         }
         
         # Saved reduced parameters
-        protocol.parameters["Save_reduced"] = {"morphoframe_filepath" : 0,
+        my_pipeline.parameters["Save_reduced"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : fmf_name,
                                 "conditions_to_save" : bt_cond,
                                 "dimred_method" : "pca_umap",
@@ -133,7 +156,7 @@ def run_pipeline(path_to_data,
                                 }
         
         # Plotting parameters
-        protocol.parameters["Plotting"] = {"morphoframe_filepath" : 0,
+        my_pipeline.parameters["Plotting"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : fmf_name,
                                 "conditions" : bt_cond,
                                 "reduced_vectors_name" : "pca_umap",
@@ -148,12 +171,12 @@ def run_pipeline(path_to_data,
                                 "save_filename" : fmf_name,
                                 }
         
-        for prot, save_data in zip(protocol.parameters['Protocols'], save_list):
-                protocol.parameters[prot]['save_data'] = save_data
-                perform_this = getattr(protocol, prot)
+        for prot, save_data in zip(my_pipeline.parameters['Protocols'], save_list):
+                my_pipeline.parameters[prot]['save_data'] = save_data
+                perform_this = getattr(my_pipeline, prot)
                 perform_this()
                 if prot == prot_to_clean and clean_mf:
-                        original_mf = protocol.morphoframe[mf_name]
-                        protocol.morphoframe[mf_name] = clean_mf(original_mf)
+                        original_mf = my_pipeline.morphoframe[mf_name]
+                        my_pipeline.morphoframe[mf_name] = clean_mf(original_mf)
 
-        return protocol
+        return my_pipeline
