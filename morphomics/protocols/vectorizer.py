@@ -291,6 +291,12 @@ class Vectorizer(object):
         type = stable_ranks_params['type']
         print("Computing stable ranks...")
         stable_r = self.tmd.apply(lambda ph: vectorizations.stable_ranks(ph, type = type))
+        # Determine the maximum length of vectors
+        max_len = stable_r.apply(len).max()
+
+        # Pad each vector with zeros
+        stable_r = stable_r.apply(lambda x: np.pad(x, (0, max_len - len(x)), mode='constant'))
+
         print("sr done! \n")
         return np.array(list(stable_r))
 

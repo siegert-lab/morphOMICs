@@ -19,7 +19,7 @@ class DefaultParams:
         }
         self.vectorizer_params['persistence_image'].update(self.general_vect_params)
         self.dimreducer_params = {'pca': {"n_components": 20,
-                                          "svd_solver": 'full',
+                                          "svd_solver": False,
                                           "pca_version": 'standard',
                                             },
                                     'umap': {"n_neighbors": 50,

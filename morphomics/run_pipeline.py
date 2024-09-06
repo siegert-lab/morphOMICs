@@ -33,6 +33,8 @@ def run_pipeline(path_to_data,
                 N_bags = 100,
                 n_samples = 30,
                 # UMAP
+                filter_pixels = False,
+                pixel_std_cutoff = 0.0001,
                 dimred_method_parameters = {"pca" : {"n_components" : 50,
                                                                         "svd_solver" : False,
                                                                         "pca_version" : 'normal'
@@ -117,10 +119,11 @@ def run_pipeline(path_to_data,
                                                 vect_method_parameters
                                                 }
         
+        vect_method_name = utils.vectorization_codenames[list(vect_method_parameters.keys())[0]]
         # Bootstrap parameters
         my_pipeline.parameters["Bootstrap"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : mf_name,
-                                "feature_to_bootstrap" : ["pi", "array"],         
+                                "feature_to_bootstrap" : [vect_method_name, "array"],         
                                 "bootstrap_conditions" : bt_cond,
                                 "rand_seed" : 34151,
                                 "ratio" : ratio,
@@ -131,12 +134,14 @@ def run_pipeline(path_to_data,
                                 "save_folderpath" : save_folderpath + "/bootstrap" + param_id,
                                 "save_filename" : bf_name,
                                 }
-        
+
         # Dim reductions parameters
         my_pipeline.parameters["Dim_reductions"] = {"morphoframe_filepath" : 0,
                                         "morphoframe_name" : fmf_name,
-                                        "vectors_to_reduce" : 'pi',
-                                        "filter_pixels" : False,
+                                        "vectors_to_reduce" : vect_method_name,
+                                        "filter_pixels" : filter_pixels,
+                                        "FilteredPixelIndex_filepath": False,
+                                        "pixel_std_cutoff": pixel_std_cutoff,
                                         "normalize" : norm,
                                         "standardize" : stand,
                                         "save_data" : False,
@@ -144,12 +149,14 @@ def run_pipeline(path_to_data,
                                         "save_filename" : fmf_name,
                                         "dimred_method_parameters" : dimred_method_parameters
                                         }
-        
+        dimred_method_names = list(dimred_method_parameters.keys())
+        dimred_method_name = '_'.join(dimred_method_names)
+
         # Saved reduced parameters
         my_pipeline.parameters["Save_reduced"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : fmf_name,
                                 "conditions_to_save" : bt_cond,
-                                "dimred_method" : "pca_umap",
+                                "dimred_method" : dimred_method_name,
                                 "coordinate_axisnames" : "umap_dim_",
                                 "save_folderpath" : save_folderpath + "/dim_reduced" + param_id,
                                 "save_filename" : fmf_name,
@@ -159,7 +166,7 @@ def run_pipeline(path_to_data,
         my_pipeline.parameters["Plotting"] = {"morphoframe_filepath" : 0,
                                 "morphoframe_name" : fmf_name,
                                 "conditions" : bt_cond,
-                                "reduced_vectors_name" : "pca_umap",
+                                "reduced_vectors_name" : dimred_method_name,
                                 "axis_labels" : ['umap_dim_1', 'umap_dim_2', 'umap_dim_3'],
                                 "title" : plot_title,
                                 "size" : 5,

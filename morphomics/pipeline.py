@@ -117,13 +117,20 @@ class Pipeline(object):
             print("Loading indices used for filtering persistence images...")
             _tokeep = morphomics.utils.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
         else:
-            print("Keeping pixels in persistence image with standard deviation higher than %.3f..."%float(params["pixel_std_cutoff"]))
+            std = str(params["pixel_std_cutoff"])
+            print("Keeping pixels in persistence image with standard deviation higher than " + std + " ...")
             _tokeep = np.where(
                 np.std(persistence_images, axis=0) >= params["pixel_std_cutoff"]
             )[0]
-            print(len(_tokeep), 'pppp', persistence_images.shape)
-            
-        filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
+            print(len(_tokeep), 'pixels to keep over', persistence_images.shape[1])
+        
+        # Create a boolean mask for the rest of the elements
+        mask = np.ones(len(persistence_images[0]), dtype=bool)
+        mask[_tokeep] = False
+        # Array with the rest of the elements
+        filtered_image = np.array([np.array(pi[mask]) for pi in persistence_images])
+        #filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
+        print(filtered_image.shape)
         self.metadata["pixes_tokeep"] = _tokeep
 
         if params["save_data"]:
@@ -1268,8 +1275,7 @@ class Pipeline(object):
                 fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
                 self.metadata['fig2d'] = fig2d
             
-            save_obj(obj = self.metadata, filepath = save_filepath + '_figures')
-
+            #save_obj(obj = self.metadata, filepath = save_filepath + '_figures')
             print(f"Plot saved as {save_filepath}")
         print("Plotting done!")
         print("")
