@@ -48,8 +48,8 @@ path_to_new_instance = "examples/saved_instances"
 # This must be an element of `conditions`.
 "separated_by" = "Model"
 
-# This is the TMD filtration function, can either be radial_distances, or path_distances.
-"filtration_function" = "radial_distances"
+# This is the TMD filtration function, can either be radial_distance, or path_distance.
+"filtration_function" = "radial_distance"
 
 # This is how the variable will be called.
 # The variable is a PandaDataframe stored in Protocols.morphoframe.
