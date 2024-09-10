@@ -69,7 +69,7 @@ class Vectorizer(object):
         # Get the curve
         curve_list = self.tmd.apply(lambda ph: curve_method(ph,
                                                             t_list = t_list, 
-                                                            resolution = resolution)
+                                                            resolution = resolution)[0]
         )
         # normalize the curve
         norm_m = norm_methods[norm_method]
@@ -116,7 +116,7 @@ class Vectorizer(object):
         # Get the curve
         hist_list = self.tmd.apply(lambda ph: hist_method(ph,
                                                         bins = bins, 
-                                                        num_bins = num_bins)
+                                                        num_bins = num_bins)[0]
         )
         # normalize the curve
         norm_m = norm_methods[norm_method]

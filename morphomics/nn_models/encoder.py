@@ -34,5 +34,5 @@ class Encoder(torch.nn.Module):
         z_dist = self.model(x)
         #z_mean = self.embedding(z_dist)
         #z_log_var = self.log_var(z_dist)
-        z_mean, z_log_var = z_dist[:, :self.z_dist_dim], z_dist[:, self.z_dist_dim:]         
+        z_mean, z_log_var = z_dist[:, :self.latent_dim], z_dist[:, self.latent_dim:]         
         return  z_mean, z_log_var

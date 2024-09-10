@@ -20,7 +20,6 @@ class Decoder(torch.nn.Module):
             # Add a ReLU layer, except after the last Linear layer
             if i < len(self.layer_dimensions) - 2:
                 layers.append(nn.ReLU())
-        print(layers)
         # Create the Sequential model with the layers
         self.model = nn.Sequential(*layers)
         
