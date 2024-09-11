@@ -5,6 +5,7 @@ build
 dist
 *.egg*
 .ipynb_checkpoints
+.DS_Store
 saved_instances
 Morphomics.Parameters.0.toml
 examples/trial_folder
