@@ -8,6 +8,7 @@
 # This is an example of a standard morphOMICs pipeline to obtain the morphological spectrum.
 Protocols = [
         "Input",
+        "TMD",
         "Clean_frame",
         "Vectorizations",
         "Bootstrap",
@@ -66,6 +67,12 @@ path_to_new_instance = "examples/saved_instances"
 # Otherwise, this will be used as the file prefix.
 "save_filename" = 0
 
+
+[TMD]
+# If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+# Otherwise, `morphoframe_name` is the morphoframe that will be cleaned up.
+"morphoframe_filepath" = 0
+"morphoframe_name" = "morphoframe"
 
 
 [Clean_frame]
@@ -175,7 +182,7 @@ path_to_new_instance = "examples/saved_instances"
 [Vectorizations]
 # if not 0, must contain the filepath to the morphoframe
 "morphoframe_filepath" = 0
-"morphoframe_name" = "bootstrap_frame"
+"morphoframe_name" = "morphoframe"
 
 # I would advise saving the data; value is either `true` or `false` (warning: take note that all the letters are in lower case)
 "save_data" = true
@@ -237,7 +244,7 @@ path_to_new_instance = "examples/saved_instances"
 # if not 0, must contain the filepath to the bootstrapframe
 "morphoframe_filepath" = 0
 # Name of the mrophoframe that contains the vectors to dim reduce
-"morphoframe_name" = "bootstrap_frame"
+"morphoframe_name" = "morphoframe"
 
 # the name of the column in morphoframe that contains the vectors to dim reduce
 "vectors_to_reduce" = 'pi'
@@ -280,7 +287,7 @@ path_to_new_instance = "examples/saved_instances"
 # if not 0, must contain the filepath to the reduced vectors
 "morphoframe_filepath" = 0
 # basically the TMD or the bootstrap_data
-"morphoframe_name" = 'bootstrap_frame'
+"morphoframe_name" = 'morphoframe'
 # name of other features that you want to save from morphoframe to csv file
 "conditions_to_save" = ["Region",
                         "Model",
@@ -307,7 +314,7 @@ path_to_new_instance = "examples/saved_instances"
 
 # if not 0, must contain the filepath to the vectors to map
 "morphoframe_filepath" = 0
-"morphoframe_name" = 'bootstrap_frame'
+"morphoframe_name" = 'morphoframe'
 "vectors_to_reduce_name" = 'pi'
 "filter_pixels" = false
 "FilteredPixelIndex_filepath" = 'None'
@@ -327,7 +334,7 @@ path_to_new_instance = "examples/saved_instances"
 # Otherwise, it is the self.morphoframe that will be used.
 "morphoframe_filepath" = 0
 # The name of the dataframe containing the reduced vectors (dim should be 3).
-"morphoframe_name" = "bootstrap_frame"
+"morphoframe_name" = "morphoframe"
 # Conditions that make a category.
 "conditions" = ["Region", "Model", "Sex"]
 # Name of the column containing reduced vectors (dim 3).
