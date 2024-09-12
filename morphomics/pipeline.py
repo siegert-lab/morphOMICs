@@ -147,8 +147,8 @@ class Pipeline(object):
         Protocol: Build panda DataFrame with cell info, load .swc files, 
             transform them into Neuron instances and store them as an element of self.morphoframe.
         
-        Essential parameters:
-        ---------------------
+        Parameters:
+        -----------
             data_location_filepath (str): Location of the parent folder containing the .swc files arranged hierarchically according to conditions.
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
             conditions (list, str): This must match the hierarchical structure of `data_location_filepath`.
@@ -319,8 +319,8 @@ class Pipeline(object):
         '''
         Protocol: Compute and Add the Topological Morphology Descriptor to morphoframe for each cell in morphoframe.
 
-        Essential parameters:
-        ---------------------
+        Parameters:
+        -----------
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             filtration_function (str): This is the TMD filtration function, can either be radial_distance, or path_distance.
             exclude_sg_branches (bool): if you want to remove the branches link to the soma that do not have ramifications i.e. simple trunks.
@@ -545,10 +545,10 @@ class Pipeline(object):
                                                                                                         rand_seed = rand_seed,
                                                                                                         main_branches = main_branches)
         else:
-            type = params['type']
+            _type = params['type']
             number = params['nb_sections']
             _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_trees(feature_list = features,
-                                                                                                type = type,
+                                                                                                type = _type,
                                                                                                 number = number,
                                                                                                 n_samples = n_samples, 
                                                                                                 rand_seed = rand_seed,)
@@ -904,7 +904,8 @@ class Pipeline(object):
         """
         Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
         
-        Essential parameters:
+        Parameters:
+        -----------
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be processed out
             conditions_to_save (list of str): the list of the keys in morphoframe you want to save with reduced vectors
