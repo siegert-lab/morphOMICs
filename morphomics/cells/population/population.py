@@ -79,3 +79,10 @@ class Population:
         self.cells['barcodes'] = self.cells['cells'].apply(lambda cell: get_ph_neuron(neuron = cell, feature=filtration_function
                                                                                                 ) if cell is not np.nan else np.nan
                                                                 )
+
+    def get_section_length(self):
+        """
+        Get the length of all the section of branches for each cell.
+        """
+        self.cells['section_length'] = self.cell['cells'].apply(lambda cell: np.vstack([tree.get_point_section_lengths() for tree in cell.neurites]
+                                                                                        ) if cell is not np.nan else np.nan)

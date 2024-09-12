@@ -48,7 +48,9 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_edges_coords
     from morphomics.cells.tree.extract_feature import get_edges_length
     from morphomics.cells.tree.extract_feature import get_lifetime
-    
+    from morphomics.cells.tree.extract_feature import get_sections_only_points
+    from morphomics.cells.tree.extract_feature import get_point_section_lengths
+
     from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
     from morphomics.cells.tree.extract_feature import get_nodes_path_distance
 

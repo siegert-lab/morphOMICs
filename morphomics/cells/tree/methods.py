@@ -94,17 +94,6 @@ def get_trunk_length(self):
     return seg_lengths.sum()
 
 
-def get_point_section_lengths(self):
-    """Tree method to get section lengths."""
-    lengths = np.zeros(self.size(), dtype=float)
-    ways, end = self.get_sections_only_points()
-    seg_len = self.get_edges_length()
-
-    for start_id, end_id in zip(ways, end):
-        lengths[end_id] = np.sum(seg_len[max(0, start_id - 1) : end_id])
-
-    return lengths
-
 
 def get_branch_order(tree, seg_id):
     """Return branch order of segment."""
@@ -132,17 +121,7 @@ def get_point_projection(self, vect=(0, 1, 0), point=None):
     return np.dot(xyz, vect)
 
 
-# Section features
-def get_sections_only_points(self):
-    """Tree method to get the sections' beginning and ending indices."""
-    end = np.array(sp.csr_matrix.sum(self.dA, 0) != 1)[0].nonzero()[0]
 
-    if 0 in end:  # If first segment is a bifurcation
-        end = end[1:]
-
-    beg = np.delete(np.hstack([0, 1 + end]), len(end))
-
-    return beg, end
 
 def get_direction_between(self, start_id=0, end_id=1):
     """Return direction of a branch.
@@ -182,17 +161,6 @@ def get_angle_between(tree, sec_id1, sec_id2):  # noqa: D417
 
     return _vec_angle(u, v)
 
-
-def get_way_to_root(tree, sec_id=0):
-    """Return way to root."""
-    way = []
-    tmp_id = sec_id
-
-    while tmp_id != -1:
-        way.append(tree.p[tmp_id])
-        tmp_id = tree.p[tmp_id]
-
-    return way
 
 
 def get_pca(self, plane="xy", component=0):

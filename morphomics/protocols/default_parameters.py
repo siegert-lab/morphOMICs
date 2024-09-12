@@ -120,5 +120,16 @@ class DefaultParams:
             completed_params[key] = value       
         return completed_params
     
+    def check_params(self, defined_params, method, type = 'protocol'):
+        param_names = self._get_default_params(type=type, method=method).keys()
+        not_params_list = []
+        for key in defined_params.keys():
+            if key is not in param_names:
+                not_params_list.append(key)
+        return not_params_list
+        
+
+
+
 
 
