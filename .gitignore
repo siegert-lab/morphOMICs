@@ -19,6 +19,7 @@ bt_pi_experiments
 reproduce_experiments
 retina_experiments
 test_everything
+test_subsampler
 v1_experiments
 v1_sg_l_experiments
 vae_experiments
