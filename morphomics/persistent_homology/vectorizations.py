@@ -61,7 +61,7 @@ def _index_bar(bar, t):
         return 0
 
 def betti_curve(ph, t_list=None, resolution=1000):
-    """Computes the betti curves of a persistence diagram.
+    """Computes the betti curve of a persistence diagram.
     Corresponding to the number of bars at each distance t.
     """
     if t_list is None:
@@ -151,7 +151,8 @@ def _subintervals(xlims, num_bins = 1000):
 
 def betti_hist(ph, bins = None, num_bins = 1000):
     if bins is None:
-        bins = _subintervals(ph, num_bins=num_bins)
+        xlims = [np.min(ph), np.max(ph)]
+        bins = _subintervals(xlims=xlims, num_bins=num_bins)
     masks = _mask_bars(ph, bins)
     betti_h = np.sum(masks, axis=-1)
     return betti_h, bins

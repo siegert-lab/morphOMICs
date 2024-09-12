@@ -26,8 +26,8 @@ class Encoder(torch.nn.Module):
         self.model = nn.Sequential(*layers)
         
         last_layer_dim = 2*latent_dim
-        self.embedding = nn.Linear(last_layer_dim, self.latent_dim)
-        self.log_var = nn.Linear(last_layer_dim, self.latent_dim)
+        # self.embedding = nn.Linear(last_layer_dim, self.latent_dim)
+        # self.log_var = nn.Linear(last_layer_dim, self.latent_dim)
 
     def forward(self, x):
         # Pass the input through the model

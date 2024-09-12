@@ -49,7 +49,10 @@ vectorization_codenames = {
     "betti_curve" : "bc",
     "life_entropy_curve" : "lec",
     "lifespan_curve" : "lsc",
-    "stable_ranks" : "sr"
+    "stable_ranks" : "sr",
+    "betti_hist" : "bh",
+    "lifespan_hist": "lh"
+
 }
 
 
