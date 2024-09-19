@@ -20,9 +20,8 @@ class VAELoss(nn.Module):
     
 
 class NLLLoss(nn.Module):
-    def __init__(self, kl_factor = 1.):
+    def __init__(self):
         super(NLLLoss, self).__init__()
-        self.kl_factor = kl_factor
 
     def forward(self, data, out):
         """Run the forward pass and compute the loss and accuracy.

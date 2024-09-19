@@ -6,8 +6,8 @@ class DefaultParams:
     def __init__(self):
         self.general_vect_params = {'rescale_lims': True,
                                     'xlims': None,
-                                    'norm_method': 'id',
                                     'resolution': 100,
+                                    'norm_method': 'id',
         }
         self.vectorizer_params = {'persistence_image': {'ylims': None,
                                                         'bw_method':None,
@@ -51,11 +51,14 @@ class DefaultParams:
                                         },
                                 'Clean_frame': {},
                                 'Subsample': {"extendedframe_name": 'subsampled_microglia',
-                                                "feature_to_subsample": 'pi',
-                                                "main_branches": 'keep',
-                                                "k_elements": 0.9,
+                                                "feature_to_subsample": 'barcodes',
                                                 "n_samples": 20,
                                                 "rand_seed": 51,
+                                                
+                                                "main_branches": 'keep',
+                                                "k_elements": 0.9,
+                                                "type": "keep",
+                                                "nb_sections": 1,
                                                 },
                                 'Bootstrap': {"feature_to_bootstrap": ['pi', 'array'],
                                                 "bootstrap_conditions": ['Region', 'Model', 'Sex'],
@@ -82,7 +85,8 @@ class DefaultParams:
                                             "dimred_method": False,
                                             "vectors_to_reduce_name": 'pi',
                                             "filter_pixels": False,
-                                            "FilteredPixelIndex_filepath": 0,
+                                            "FilteredPixelIndex_filepath": False,
+                                            "pixel_std_cutoff": 1e-4,
                                             },
                                 'Palantir': {},
                                 'Sholl_curves': {},
@@ -120,5 +124,16 @@ class DefaultParams:
             completed_params[key] = value       
         return completed_params
     
+    def check_params(self, defined_params, method, type = 'protocol'):
+        param_names = self._get_default_params(type=type, method=method).keys()
+        not_params_list = []
+        for key in defined_params.keys():
+            if key not in param_names:
+                not_params_list.append(key)
+        return not_params_list
+        
+
+
+
 
 
