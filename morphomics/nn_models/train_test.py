@@ -1,14 +1,7 @@
 import torch 
 import torch_geometric 
 
-def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
-          feature_scaler = None, sample_scaler = None):
-    
-    if sample_scaler:
-        data = sample_scaler.fit_transform(data)
-
-    if feature_scaler:
-        data = feature_scaler.fit_transform(data)
+def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
     
     # Create a DataLoader
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
@@ -45,14 +38,7 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size,
     return model
 
 
-def vae_test(data, model, sample_size, loss_fn = None,
-         sample_scaler = None, feature_scaler = None):
-
-    if sample_scaler:
-        data = sample_scaler.transform(data)
-
-    if feature_scaler:
-        data = feature_scaler.transform(data)
+def vae_test(data, model, sample_size, loss_fn = None):
     
     model.eval()
     with torch.no_grad():
@@ -67,14 +53,7 @@ def vae_test(data, model, sample_size, loss_fn = None,
     return out, z_mean, z_log_var, mse
 
 
-def gnn_train(data, model, optimizer, loss_fn, epochs, batch_size,
-          feature_scaler = None, sample_scaler = None):
-    
-    if sample_scaler:
-        data = sample_scaler.fit_transform(data)
-
-    if feature_scaler:
-        data = feature_scaler.fit_transform(data)
+def gnn_train(data, model, optimizer, loss_fn, epochs, batch_size):
     
     # Create a DataLoader
     loader = torch_geometric.loader.DataLoader(data, batch_size=batch_size, shuffle=True)
@@ -111,14 +90,7 @@ def gnn_train(data, model, optimizer, loss_fn, epochs, batch_size,
     return model
 
 
-def gnn_test(data, model, loss_fn = None,
-         sample_scaler = None, feature_scaler = None):
-
-    if sample_scaler:
-        data = sample_scaler.transform(data)
-
-    if feature_scaler:
-        data = feature_scaler.transform(data)
+def gnn_test(data, model, loss_fn = None):
     
     model.eval()
     with torch.no_grad():

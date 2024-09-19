@@ -132,6 +132,7 @@ class Tree:
             end = end[1:]
 
         beg = np.append([0], self.p[np.delete(np.hstack([0, 1 + end]), len(end))][1:])
+        # beg = np.delete(np.hstack([0, 1 + end]), len(end))
 
         return beg, end
     

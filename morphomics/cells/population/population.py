@@ -53,7 +53,8 @@ class Population:
         # Add cells already                                            
         if cells_frame is not None:
             self.cells = pd.concat((self.cells, cells_frame))
-    
+
+        self.set_empty_cells_to_nan()
     
     def exclude_sg_branches(self):
         """
@@ -63,10 +64,8 @@ class Population:
         self.cells['cells'].apply(lambda cell: cell.exclude_small_branches(nb_sections=1)
                                                                    if cell is not np.nan else np.nan
                                                                 )
-        # Convert Neuron with empty list of Trees into np.nan.
-        self.cells['cells'] = self.cells['cells'].apply(lambda cell: np.nan if cell is not np.nan and isinstance(cell.neurites, list) and len(cell.neurites) == 0 else cell)
-
-    
+        self.set_empty_cells_to_nan()
+        
     def set_barcodes(self, filtration_function = 'radial_distance'):
         """
         Calculates persistence diagram of each cell graph.
@@ -84,5 +83,10 @@ class Population:
         """
         Get the length of all the section of branches for each cell.
         """
-        self.cells['section_length'] = self.cell['cells'].apply(lambda cell: np.vstack([tree.get_point_section_lengths() for tree in cell.neurites]
-                                                                                        ) if cell is not np.nan else np.nan)
+        self.cells['section_lengths'] = self.cells['cells'].apply(lambda cell: np.concatenate([tree.get_point_section_lengths() for tree in cell.neurites]
+                                                                                            ) if cell is not np.nan else np.nan)
+
+    def set_empty_cells_to_nan(self):
+        # Convert Neuron with empty list of Trees into np.nan.
+        self.cells['cells'] = self.cells['cells'].apply(lambda cell: np.nan if cell is not np.nan and isinstance(cell.neurites, list) and len(cell.neurites) == 0 else cell)
+    

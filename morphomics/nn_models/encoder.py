@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class Encoder(torch.nn.Module):
+class Encoder(nn.Module):
     def __init__(self, input_dim, latent_dim, hidden_dimensions=[16, 8]):
         super(Encoder, self).__init__()
         
@@ -25,14 +25,12 @@ class Encoder(torch.nn.Module):
         # Create the Sequential model with the layers
         self.model = nn.Sequential(*layers)
         
-        last_layer_dim = 2*latent_dim
-        # self.embedding = nn.Linear(last_layer_dim, self.latent_dim)
-        # self.log_var = nn.Linear(last_layer_dim, self.latent_dim)
-
+        self.mean = nn.Linear(self.layer_dimensions[-1], self.latent_dim)
+        self.log_var = nn.Linear(self.layer_dimensions[-1], self.latent_dim)
+        
     def forward(self, x):
         # Pass the input through the model
         z_dist = self.model(x)
-        #z_mean = self.embedding(z_dist)
-        #z_log_var = self.log_var(z_dist)
-        z_mean, z_log_var = z_dist[:, :self.latent_dim], z_dist[:, self.latent_dim:]         
+        z_mean = self.mean(z_dist)
+        z_log_var = self.log_var(z_dist)
         return  z_mean, z_log_var

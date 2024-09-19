@@ -127,22 +127,10 @@ def get_lifetime(self, feature="nodes_radial_distance"):
 
     return lifetime
 
-# Section features
-def get_sections_only_points(self):
-    """Tree method to get the sections' beginning and ending indices."""
-    end = np.array(sp.csr_matrix.sum(self.dA, 0) != 1)[0].nonzero()[0]
-
-    if 0 in end:  # If first segment is a bifurcation
-        end = end[1:]
-
-    beg = np.delete(np.hstack([0, 1 + end]), len(end))
-
-    return beg, end
-
 def get_point_section_lengths(self):
     """Tree method to get section lengths."""
     lengths = np.zeros(self.size(), dtype=float)
-    ways, end = self.get_sections_only_points()
+    ways, end = self.sections
     edge_len = self.get_edges_length()
 
     for start_id, end_id in zip(ways, end):
