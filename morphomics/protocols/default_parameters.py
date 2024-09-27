@@ -15,7 +15,7 @@ class DefaultParams:
                                                         },
                                   'curve': self.general_vect_params,
                                   'hist': self.general_vect_params,
-                                  'stable_ranks': {'type': 'standard'},
+                                  'stable_ranks': {'type': 'neg', 'density': False, 'bars_prob': False, 'resolution':1000},
         }
         self.vectorizer_params['persistence_image'].update(self.general_vect_params)
         self.dimreducer_params = {'pca': {"n_components": 20,

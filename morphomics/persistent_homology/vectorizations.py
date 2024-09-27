@@ -106,17 +106,24 @@ def life_entropy_curve(ph, t_list=None, resolution=1000):
 
 # 1D ordered vectorization
 
-def stable_ranks(ph, type = 'standard'):
-    bars_length = get_lengths(ph, abs = False)
-    if type == 'standard':
-        bars_length_filtered = -bars_length
-    elif type == 'abs':
-        bars_length_filtered = np.abs(bars_length)
-    elif type == 'positiv':
-        bars_length_filtered = np.abs(bars_length[bars_length < 0])
+def stable_ranks(bar_lengths, prob, maxL, disc_steps):
+    """Compute the stable ranks of a barcode."""
+    if len(bar_lengths) == 0:
+        return np.zeros(disc_steps)
+    
+    if prob=="long":
+        prob_bars = bar_lengths / bar_lengths.sum()
+    elif prob=="short":
+        prob_bars = (bar_lengths.max() - bar_lengths) / (bar_lengths.max() - bar_lengths).sum()
+        
+    x_values = np.linspace(0, maxL, num=disc_steps)
 
-    bars_length_sorted = np.sort(bars_length_filtered)[::-1]
-    return bars_length_sorted
+    if prob=="long" or prob=="short":
+        sr = np.array( [bar_lengths.shape[0]*prob_bars[bar_lengths >= x].sum() for x in x_values] )
+    else:
+        sr = np.array( [np.count_nonzero(bar_lengths >= x) for x in x_values] )
+
+    return np.vstack((x_values, sr))
 
 def histogram_stepped(ph):
     """Calculate step distance of ph data."""
