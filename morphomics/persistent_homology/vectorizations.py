@@ -66,7 +66,6 @@ def betti_curve(ph, t_list=None, resolution=1000):
     """
     if t_list is None:
         t_list = np.linspace(np.min(ph), np.max(ph), resolution)
-    #betti_c = [np.sum([_index_bar(bar, t) for bar in ph]) for t in t_list]
     ph = np.array(ph)
     ph[:, [0, 1]] = np.sort(ph[:, [0, 1]], axis=1)
     betti_c = np.array( [np.count_nonzero((ph[:, 0] <= x) & (ph[:, 1] >= x)) for x in t_list] )
