@@ -135,6 +135,8 @@ class DefaultParams:
         if not_params_list:
             # Create a warning if the list is not empty
             warnings.warn(f"The following parameter names are not correct: {not_params_list}", UserWarning)
+            raise ValueError(f"Error: Invalid elements found in the list: {not_params_list}")
+
         else:
             print("All parameter names are correct.")        
 

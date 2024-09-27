@@ -45,6 +45,8 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_multifurcations
     from morphomics.cells.tree.extract_feature import get_terminations
 
+    from morphomics.cells.tree.extract_feature import get_way_to_root
+
     from morphomics.cells.tree.extract_feature import get_edges_coords
     from morphomics.cells.tree.extract_feature import get_edges_length
     from morphomics.cells.tree.extract_feature import get_lifetime
@@ -207,18 +209,18 @@ class Tree:
 
         return Tree(x, y, z, d, t, p)
     
-    def subsample_tree(self, type, number):
+    def subsample_tree(self, _type, number):
         tip_starts = self.get_terminations()
         subsampled_nodes = set()
-        for leaf in tip_starts:
-            if type == 'cut':
-                way = self.cut_branch(leaf, degree = number)
-            elif type == 'prune':
-                way = self.prune_branch(leaf, nb_nodes = number)
 
+        for leaf in tip_starts:
+            if _type == 'cut':
+                way = self.cut_branch(leaf, degree = number)
+            elif _type == 'prune':
+                way = self.prune_branch(leaf, nb_nodes = number)
             subsampled_nodes.update(way)
             subsampled_nodes.discard(-1)
-            subsampled_nodes = list(subsampled_nodes)
+        subsampled_nodes = list(subsampled_nodes)
 
         new_x = self.x[subsampled_nodes]
         new_y = self.y[subsampled_nodes]

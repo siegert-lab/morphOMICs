@@ -13,9 +13,9 @@ from morphomics.cells.utils import TYPE_DCT, LoadNeuronError
 # Definition of swc data container
 SWC_DCT = {"index": 0, "type": 1, "x": 2, "y": 3, "z": 4, "radius": 5, "parent": 6}
 
-def make_tree(data):
+def make_tree(swc_arr):
     """Make tree structure from loaded data."""
-    tr_data = np.transpose(data)
+    tr_data = np.transpose(swc_arr)
 
     parents = [
         np.where(tr_data[SWC_DCT["index"]] == i)[0][0] if len(np.where(tr_data[0] == i)[0]) > 0 else -1
