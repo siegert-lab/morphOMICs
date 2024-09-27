@@ -25,9 +25,9 @@ def read_description():
     return MINIMAL_DESCRIPTION
 
 setup(
-    name="Morphomics",
+    name="morphomics",
     version="2.0.6",
-    author='Amin Alam, Ryan Cubero, Thomas Negrello',
+    author='Amin Alam, Ryan Cubero, Thomas Negrello, Jens Agerberg',
     description=MINIMAL_DESCRIPTION,
     long_description=read_description(),
     long_description_content_type='text/markdown',
