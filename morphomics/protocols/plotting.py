@@ -89,7 +89,7 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
-    
+
     color_map = _set_colormap(colors, condition_list, amount)
 
     if circle_color is None:
@@ -219,8 +219,8 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
         ),
         # Enforce square aspect ratio
     autosize=False,
-    width=800,  # Adjust as needed
-    height=500,  # Adjust as needed
+    width=1200,  # Adjust as needed
+    height=800,  # Adjust as needed
     )
 
     if show:

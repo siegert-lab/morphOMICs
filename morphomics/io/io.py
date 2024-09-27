@@ -32,7 +32,6 @@ def read_swc(file_path, line_delimiter="\n"):
 
     # Split data per lines
     split_data = read_data.split(line_delimiter)
-
     # Clean data from comments and empty lines
     split_data = [a for a in split_data if "#" not in a]
     split_data = [a for a in split_data if a != ""]
@@ -52,13 +51,11 @@ def read_swc(file_path, line_delimiter="\n"):
     )
 
     data = []
-
     for dpoint in split_data:
         if expected_data.match(dpoint.replace("\r", "")):
             segment_point = np.array(
                 expected_data.match(dpoint.replace("\r", "")).groups(), dtype=float
             )
-
             # make the radius diameter
             segment_point[SWC_DCT["radius"]] = 2.0 * segment_point[SWC_DCT["radius"]]
 

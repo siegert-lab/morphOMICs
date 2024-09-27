@@ -1,3 +1,5 @@
+import warnings
+
 """
 Contains all the default parameters for mehtods in Pipeline, Vectorizer and Dim_reducer. 
 """
@@ -130,8 +132,11 @@ class DefaultParams:
         for key in defined_params.keys():
             if key not in param_names:
                 not_params_list.append(key)
-        return not_params_list
-        
+        if not_params_list:
+            # Create a warning if the list is not empty
+            warnings.warn(f"The following parameter names are not correct: {not_params_list}", UserWarning)
+        else:
+            print("All parameter names are correct.")        
 
 
 

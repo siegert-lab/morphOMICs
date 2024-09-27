@@ -103,6 +103,8 @@ def get_bootstrap_frame(
 
         if ratio > 0:
             n_samples = int(ratio * pop_length)
+            if n_samples == 0:
+                n_samples = 1
         
         # Get the list of the bags. A bag is composed of randomly chose sampled indxs.    
         # But if the nb of samples is higher than the size of the pop, n_samples is reajusted.

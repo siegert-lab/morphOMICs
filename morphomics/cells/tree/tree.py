@@ -132,6 +132,8 @@ class Tree:
             end = end[1:]
 
         beg = np.append([0], self.p[np.delete(np.hstack([0, 1 + end]), len(end))][1:])
+        ## TODO
+        #CHECK THIS LINE
         # beg = np.delete(np.hstack([0, 1 + end]), len(end))
 
         return beg, end
@@ -149,7 +151,6 @@ class Tree:
         Notes:
             If 0 exists in starting nodes, the parent from tree is assigned
         """
-
         if edges:
             begs, ends = self.edges
         else:

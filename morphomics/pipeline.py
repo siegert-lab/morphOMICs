@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 
 
-
 class Pipeline(object):
     
     def __init__(self, parameters, Parameters_ID, morphoframe = {}, metadata = {}) :
@@ -165,7 +164,9 @@ class Pipeline(object):
         """
 
         defined_params = self.parameters["Input"]
+        self.default_params.check_params(defined_params, "Input")
         params = self.default_params.complete_with_default_params(defined_params, "Input")
+
         self.parameters["Input"] = params
         
         data_location_filepath = params["data_location_filepath"]
@@ -288,6 +289,7 @@ class Pipeline(object):
         Add a dataframe to morphoframe.
         """
         defined_params = self.parameters["Load_data"]
+        self.default_params.check_params(defined_params, "Load_data")
         params = self.default_params.complete_with_default_params(defined_params, "Load_data")
         self.parameters["Load_data"] = params
 
@@ -334,6 +336,7 @@ class Pipeline(object):
         Add the TMD (also called barcode or persistence homology) of each cell into morphoframe.
         '''
         defined_params = self.parameters["TMD"]
+        self.default_params.check_params(defined_params, "TMD")
         params = self.default_params.complete_with_default_params(defined_params, "TMD")
         self.parameters["TMD"] = params
 
@@ -413,6 +416,7 @@ class Pipeline(object):
         Add a dataframe to morphoframe. the samples that don't respond to the conditions are removed.
         """
         defined_params = self.parameters["Clean_frame"]
+        self.default_params.check_params(defined_params, "Clean_frame")
         params = self.default_params.complete_with_default_params(defined_params, "Clean_frame")
         self.parameters["Clean_frame"] = params
 
@@ -506,6 +510,7 @@ class Pipeline(object):
 
         """
         defined_params = self.parameters["Subsample"]
+        self.default_params.check_params(defined_params, "Subsample")
         params = self.default_params.complete_with_default_params(defined_params, "Subsample")
         self.parameters["Subsample"] = params
 
@@ -601,6 +606,7 @@ class Pipeline(object):
         Add a dataframe containing bootstrapped data to morphoframe. The samples are bootstrapped points of microglia.
         """
         defined_params = self.parameters["Bootstrap"]
+        self.default_params.check_params(defined_params, "Bootstrap")
         params = self.default_params.complete_with_default_params(defined_params, "Bootstrap")
         self.parameters["Bootstrap"] = params
 
@@ -684,6 +690,7 @@ class Pipeline(object):
         """
 
         defined_params = self.parameters["Vectorizations"]
+        self.default_params.check_params(defined_params, "Vectorizations")
         params = self.default_params.complete_with_default_params(defined_params, "Vectorizations")
         self.parameters["Vectorizations"] = params
 
@@ -768,6 +775,7 @@ class Pipeline(object):
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
         defined_params = self.parameters["Dim_reductions"]
+        self.default_params.check_params(defined_params, "Dim_reductions")
         params = self.default_params.complete_with_default_params(defined_params, "Dim_reductions")
         self.parameters["Dim_reductions"] = params
 
@@ -921,6 +929,7 @@ class Pipeline(object):
         A row per sample.
         """
         defined_params = self.parameters["Save_reduced"]
+        self.default_params.check_params(defined_params, "Save_reduced")
         params = self.default_params.complete_with_default_params(defined_params, "Save_reduced")
         self.parameters["Save_reduced"] = params
 
@@ -992,6 +1001,7 @@ class Pipeline(object):
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
         defined_params = self.parameters["Mapping"]
+        self.default_params.check_params(defined_params, "Mapping")
         params = self.default_params.complete_with_default_params(defined_params, "Mapping")
         self.parameters["Mapping"] = params
 
@@ -1200,6 +1210,8 @@ class Pipeline(object):
             save_filename (str): This will be used as the file name.
         """
         defined_params = self.parameters["Plotting"]
+        self.default_params.check_params(defined_params, "Plotting")
+
         params = self.default_params.complete_with_default_params(defined_params, "Plotting")
         self.parameters["Plotting"] = params
 
