@@ -82,18 +82,20 @@ class Neuron:
                 neurite_type = "undefined"
             getattr(self, neurite_type).append(new_tree)
 
-    def remove_tree(self, tree_type, idx):
-        del getattr(self, tree_type, None)[idx]
+    def remove_tree(self, tree_type, tree):
+        cell_type = getattr(self, tree_type, None)
+        try:
+            cell_type.remove(tree)
+        except ValueError:
+            print(f"value not found in the list")
 
     def exclude_small_branches(self, nb_sections = 1):
-        nb_removed = 0
         for i, tree in enumerate(self.neurites):
             beg, _ = tree.sections
             if len(beg) <= nb_sections:
                 t = tree.get_type()
                 t = TREE_TYPE_DICT[t]
-                self.remove_tree(tree_type = t, idx = i-nb_removed)
-                nb_removed += 1
+                self.remove_tree(tree_type = t, tree = tree)
 
     def copy_neuron(self):
         """Returns a deep copy of the Neuron."""

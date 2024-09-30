@@ -2,7 +2,7 @@ import numpy as np
 
 from morphomics.protocols.default_parameters import DefaultParams
 from morphomics.persistent_homology import vectorizations
-from morphomics.persistent_homology.ph_analysis import get_limits
+from morphomics.persistent_homology.ph_analysis import get_limits, get_lengths
 
 from morphomics.utils import norm_methods
 
@@ -286,16 +286,17 @@ class Vectorizer(object):
 
     def stable_ranks(self):
         stable_ranks_params = self.vect_parameters["stable_ranks"]
-        # Type should be: 'standard', 'abs' or 'positiv'.
+        # Type should be: 'neg', 'pos' or 'abs'.
         stable_ranks_params = self.default_params.complete_with_default_params(stable_ranks_params, "stable_ranks", type = 'vectorization')
         type = stable_ranks_params['type']
+        density = stable_ranks_params['density']
+        bars_prob = stable_ranks_params['bars_prob']
+        resolution = stable_ranks_params['resolution']
         print("Computing stable ranks...")
-        stable_r = self.tmd.apply(lambda ph: vectorizations.stable_ranks(ph, type = type))
-        # Determine the maximum length of vectors
-        max_len = stable_r.apply(len).max()
 
-        # Pad each vector with zeros
-        stable_r = stable_r.apply(lambda x: np.pad(x, (0, max_len - len(x)), mode='constant'))
+        scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
+        maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
+        stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
 
         print("sr done! \n")
         return np.array(list(stable_r))
