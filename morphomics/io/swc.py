@@ -13,7 +13,7 @@ from morphomics.cells.utils import TYPE_DCT, LoadNeuronError
 # Definition of swc data container
 SWC_DCT = {"index": 0, "type": 1, "x": 2, "y": 3, "z": 4, "radius": 5, "parent": 6}
 
-def make_tree(swc_arr):
+def swc_to_tree(swc_arr):
     """Make tree structure from loaded data."""
     tr_data = np.transpose(swc_arr)
 
@@ -84,7 +84,7 @@ def swc_to_neuron(swc_arr, name = 'Microglia'):
     # Extract trees
     for i in range(comp[0]):
         tree_ids = np.where(comp[1] == i)[0] + len(soma_ids)
-        tree = make_tree(swc_arr[tree_ids])
+        tree = swc_to_tree(swc_arr[tree_ids])
         neuron.append_tree(tree, TREE_TYPE_DICT)
 
     return neuron

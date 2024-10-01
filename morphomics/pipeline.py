@@ -416,7 +416,7 @@ class Pipeline(object):
         Add a dataframe to morphoframe. the samples that don't respond to the conditions are removed.
         """
         defined_params = self.parameters["Clean_frame"]
-        self.default_params.check_params(defined_params, "Clean_frame")
+        #self.default_params.check_params(defined_params, "Clean_frame")
         params = self.default_params.complete_with_default_params(defined_params, "Clean_frame")
         self.parameters["Clean_frame"] = params
 
