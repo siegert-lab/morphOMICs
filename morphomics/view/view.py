@@ -76,9 +76,9 @@ def trunk(tr, plane="xy", new_fig=True, subplot=False, hadd=0.0, vadd=0.0, N=10,
 
         return ((horz1, vert1), (horz2, vert2))
 
-    N = min(N, len(tr.get_segments()))
+    N = min(N, len(tr.get_edges_coords()))
 
-    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_segments()[:N]]
+    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_edges_coords()[:N]]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -594,7 +594,8 @@ def tree3d(tr, new_fig=True, new_axes=True, subplot=False, **kwargs):
 
         return ((horz1, vert1, depth1), (horz2, vert2, depth2))
 
-    segs = [_seg_3d(seg) for seg in tr.get_segments()]
+    segs = [_seg_3d(seg) for seg in tr.get_edges_coords()]
+    #segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_edges_coords()]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -693,9 +694,9 @@ def trunk3d(tr, new_fig=True, new_axes=True, subplot=False, N=10, **kwargs):
 
         return ((horz1, vert1, depth1), (horz2, vert2, depth2))
 
-    N = min(N, len(tr.get_segments()))
+    N = min(N, len(tr.get_edges_coords()))
 
-    segs = [_seg_3d(seg) for seg in tr.get_segments()[:N]]
+    segs = [_seg_3d(seg) for seg in tr.get_edges_coords()[:N]]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -1086,7 +1087,7 @@ def _get_polar_data(pop, neurite_type="neurites", bins=20):
 
     segs = []
     for tr in getattr(pop, neurite_type):
-        segs = segs + tr.get_segments()
+        segs = segs + tr.get_edges_coords()
 
     angles = np.array([seg_angle(s) for s in segs])
     lens = np.array([seg_length(s) for s in segs])
@@ -1210,7 +1211,7 @@ def _tree_colors(
 
         return ((horz1, vert1), (horz2, vert2))
 
-    segs = [_seg_2d(seg) for seg in tr.get_segments()]
+    segs = [_seg_2d(seg) for seg in tr.get_edges_coords()]
 
     # Definition of the linewidth according to diameter, if diameter is True.
 
