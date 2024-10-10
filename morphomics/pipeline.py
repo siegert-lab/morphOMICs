@@ -1261,6 +1261,8 @@ class Pipeline(object):
                                     amount= amount,
                                     size = size,
                                     title = title)
+            self.metadata['fig3d'] = fig3d
+
         if nb_dims >= 2:
             fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
                                     axis_labels = axis_labels,
@@ -1270,6 +1272,7 @@ class Pipeline(object):
                                     amount= amount,
                                     size = size,
                                     title = title)
+            self.metadata['fig2d'] = fig2d
         
         # define output filename
         default_save_filename = "Plotting"
@@ -1284,13 +1287,11 @@ class Pipeline(object):
             # Save the plot as an HTML file
             if nb_dims >= 3:
                 fig3d.write_html(save_filepath + '3d.html')
-                self.metadata['fig3d'] = fig3d
 
             #fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
             #fig2d.write_html(save_filepath + '2d.html')
             if nb_dims >= 2:
                 fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
-                self.metadata['fig2d'] = fig2d
             
             #save_obj(obj = self.metadata, filepath = save_filepath + '_figures')
             print(f"Plot saved as {save_filepath}")
