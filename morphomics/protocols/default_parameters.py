@@ -45,7 +45,7 @@ class DefaultParams:
         self.pipeline_params = {'Input': {"data_location_filepath": 'data',
                                             "extension": '.swc',
                                             "conditions": ['Region', 'Model', 'Sex', 'Animal'],
-                                            "separated_by": 'Region',
+                                            "separated_by": None,
                                             },
                                 'Load_data': {},
                                 'TMD': {"filtration_function": 'radial_distance',

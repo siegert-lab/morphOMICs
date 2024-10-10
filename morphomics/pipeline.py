@@ -741,6 +741,7 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
+        self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
 
         print("Vectorization done!")
@@ -821,11 +822,15 @@ class Pipeline(object):
             print("Normalize the vectors")
             normalizer = Normalizer()
             X = normalizer.fit_transform(X)
+            self.metadata['normalizer'] = normalizer
+
         # standardize data 
         if standardize:
             print("Standardize the vectors")
             standardize = StandardScaler()
             X = standardize.fit_transform(X)
+            self.metadata['standardizer'] = standardize
+
 
         print("Reduces the vectors with the following techniques %s " %(dimred_method_names))
         # initialize an instance of DimReducer
@@ -843,7 +848,7 @@ class Pipeline(object):
             dimreducer.tmd_vectors = reduced_vectors
 
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
-
+        self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
 
         # save the reduced vectors
@@ -1234,8 +1239,7 @@ class Pipeline(object):
         # define morphoframe that contains the data points to plot
         print("Loading fitted dim reduced data...")   
 
-        if type(morphoframe_filepath) is str:
-            if "csv" in morphoframe_filepath:
+        if type(morphoframe_filepath) is str and "csv" in morphoframe_filepath:
                 _morphoframe = pd.read_csv(morphoframe_filepath, index_col = 0)
         else:
             _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
