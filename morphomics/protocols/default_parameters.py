@@ -101,6 +101,7 @@ class DefaultParams:
                                             "circle_colors": [],
                                             "size": 5.,
                                             "amount": 0.3,
+                                            "show": True,
                                             },
                                 'Save_parameters': {"parameters_to_save": {'TMD': ['filtration_function'],
                                                                             'Bootstrap': ['N_bags', 'n_samples', 'ratio'],

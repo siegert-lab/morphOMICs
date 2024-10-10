@@ -1231,6 +1231,7 @@ class Pipeline(object):
         circle_color = params['circle_colors']
         size = params['size']
         amount = params['amount']
+        show = params['show']
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -1260,7 +1261,8 @@ class Pipeline(object):
                                     circle_color = circle_color,
                                     amount= amount,
                                     size = size,
-                                    title = title)
+                                    title = title,
+                                    show = show)
             self.metadata['fig3d'] = fig3d
 
         if nb_dims >= 2:
@@ -1271,7 +1273,8 @@ class Pipeline(object):
                                     circle_color = circle_color,
                                     amount= amount,
                                     size = size,
-                                    title = title)
+                                    title = title,
+                                    show = show)
             self.metadata['fig2d'] = fig2d
         
         # define output filename
