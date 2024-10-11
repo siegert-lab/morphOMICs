@@ -712,8 +712,8 @@ class Pipeline(object):
 
         # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
-        vect_methods_names = [vectorization_codenames[vect_method] for vect_method in vect_methods]
-        vect_methods_codename = '_'.join(vect_methods_names)
+        vect_methods_codenames_list = [vectorization_codenames[vect_method] for vect_method in vect_methods]
+        vect_methods_codename = '_'.join(vect_methods_codenames_list)
 
         if '_' not in vect_methods_codename:
             print("Computes %s." %(vect_methods_codename))
@@ -731,7 +731,7 @@ class Pipeline(object):
             perform_vect_method = getattr(vectorizer, vect_method)
             output_vector = perform_vect_method()
 
-            self.morphoframe[morphoframe_name][vect_methods_names[i]] = list(output_vector)
+            self.morphoframe[morphoframe_name][vect_methods_codenames_list[i]] = list(output_vector)
 
         # define output filename
         default_save_filename = "Vectorizations-%s"%(vect_methods_codename)
