@@ -724,14 +724,14 @@ class Pipeline(object):
         vectorizer = Vectorizer(tmd = _morphoframe_copy["barcodes"], 
                                 vect_parameters = vect_method_parameters)
         
+        self.morphoframe[morphoframe_name] = _morphoframe
+        
         # compute vectors
-        output_vectors = []
-        for vect_method in vect_methods:
+        for i, vect_method in enumerate(vect_methods):
             perform_vect_method = getattr(vectorizer, vect_method)
             output_vector = perform_vect_method()
-            
-            output_vectors.append(output_vector)
-        output_vectors = np.concatenate(output_vectors, axis=1)
+
+            self.morphoframe[morphoframe_name][vect_methods_names[i]] = list(output_vector)
 
         # define output filename
         default_save_filename = "Vectorizations-%s"%(vect_methods_codename)
@@ -741,9 +741,7 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
-        self.morphoframe[morphoframe_name] = _morphoframe
-        self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
-
+        
         print("Vectorization done!")
 
         # save the output vectors
@@ -798,6 +796,9 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
         _morphoframe_copy = _morphoframe.copy()
+
+        vectorization_list = vectors_to_reduce.split('_')
+        _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy.apply(lambda row: np.concatenate([row[col] for col in vectorization_list]), axis=1)
 
         X = np.vstack(_morphoframe_copy[vectors_to_reduce])
         
