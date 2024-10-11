@@ -1154,45 +1154,66 @@ class Pipeline(object):
         """
         params = self.parameters["Morphometrics"]
 
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
         # define output filename
-        file_prefix = "%s.Morphometrics"%(self.file_prefix)
-        save_filename = self._set_filename(protocol_name = "Morphometrics", 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])   
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                           variable_name = morphoframe_name)
+        _morphoframe_copy = _morphoframe.copy()
             
-        assert params["morphoframe_name"] in self.morphoframe.keys(), "There is no `morphoframe_name`. Check this or make sure that you ran either `Input` or `Load_data` first."
-        assert "Filenames" in self.morphoframe[params["morphoframe_name"]].columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
-        assert params["Empty_indicator"] in self.morphoframe[params["morphoframe_name"]].columns, "There is no column with the assigned `Empty_indicator` in the `morphoframe`. Check the morphoframe structre."
+        assert "file_path" in _morphoframe_copy.columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
         
         print("Calculating classical morphometric quantities...")
         
         Lm_functions, Lm_quantities = morphomics.morphometrics.create_Lm_functions(params["Lmeasure_functions"])
         
-        files = self.morphoframe[params["morphoframe_name"]].Filenames
-        empty_morphologies = self.morphoframe[params["morphoframe_name"]][params["Empty_indicator"]].isna()
+        files = _morphoframe_copy.file_path
         
-        non_empty_files = files[~empty_morphologies]
-        non_empty_files, morphometric_quantities = morphomics.morphometrics.calculate_morphometrics(
-            non_empty_files, params["temp_folder"], Lm_functions, Lm_quantities)
+        files, morphometric_quantities = morphomics.morphometrics.calculate_morphometrics(
+            files, params["temp_folder"], Lm_functions, Lm_quantities)
         
-        morphometrics = pd.DataFrame(
-            morphometric_quantities,
-            columns=[
+        #morphometrics = pd.DataFrame(
+        #    morphometric_quantities,
+        #    columns=[
+        #        "%s_%s" % (func_i[0], func_i[1]) for func_i in params["Lmeasure_functions"]
+        #    ],
+        #)
+        #morphometrics["file_path"] = files
+        #morphometrics = morphometrics[np.hstack(["file_path", morphometrics.columns[:-1]])]
+
+        #_morphoframe_copy = pd.concat([_morphoframe_copy, morphometrics], axis=1)
+
+        columns=[
                 "%s_%s" % (func_i[0], func_i[1]) for func_i in params["Lmeasure_functions"]
-            ],
-        )
-        morphometrics["Files"] = non_empty_files
-        morphometrics = morphometrics[np.hstack(["Files", morphometrics.columns[:-1]])]
-        self.metadata[params["Morphometric_colname"]] = morphometrics
+            ]
+        
+        for i, col in enumerate(columns):
+            _morphoframe_copy[col] = morphometric_quantities[:, i]
+
+        # define output filename
+        default_save_filename = "Morphometrics"
+        save_filepath = self._set_filename(protocol_name = "Morphometrics", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
+
+        # save the file 
+        if save_data:
+            print("Saving dataset in %s"%(save_filepath))
+            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            print("The TMD morphoframe is saved in %s" %(save_filepath))
         
         print("Morphometrics done!")
         print("")
 
-        if params["save_data"]:
-            #print("The Sholl curves are saved in %s" (save_filepath))
-
-            morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
              
 
 

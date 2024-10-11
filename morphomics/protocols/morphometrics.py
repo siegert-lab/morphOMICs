@@ -202,6 +202,6 @@ def calculate_morphometrics(filenames, tmp_folder, Lm_functions, Lm_quantities):
         
     if tmp_ind > 0:
         print("Removing temporary files...")
-        os.system("rm '%s/tmp*.swc'" % (filename, tmp_folder))
+        os.system("rm '%s/tmp*.swc'" % tmp_folder)
     
     return files_to_process, np.array(morphometric_quantities)
