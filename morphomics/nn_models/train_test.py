@@ -1,12 +1,15 @@
 import torch 
 import torch_geometric 
 from tqdm import tqdm
+import numpy as np
 
-def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
+def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, scheduler=None):
     
-    # Create a DataLoader
+    # Create a DataLoader with shuffling enabled (it's already shuffled each epoch)
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
-    
+    x_values = np.linspace(2, 5, epochs)  # Generate 100 points between 0 and 5
+    kl_factor_list = 1 - np.exp(-x_values)  # Calculate y = 1 - exp(-x)
+
     # Loop through the epochs
     for epoch in range(epochs):
         # Initialize the loss
@@ -18,10 +21,10 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
             optimizer.zero_grad()
 
             # Pass the input through the model
-            out, z_mean, z_log_var = model(x, sample_size = sample_size)
+            out, z_mean, z_log_var = model(x, sample_size=sample_size)
             
             # Calculate the loss
-            loss, mse = loss_fn(x, out, z_mean, z_log_var)
+            loss, mse = loss_fn(x, out, z_mean, z_log_var, kl_factor_list[i])
             
             # Backpropagate
             loss.backward()
@@ -32,12 +35,18 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size):
             # Add the loss to the total loss
             tot_loss += loss.item()
             tot_mse += mse
+
         # Print the loss every 10 epochs
         if epoch % 10 == 0:
             print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}')
-    
-    return model
+            current_lr = optimizer.param_groups[0]['lr']
+            print(f'Epoch {epoch}, Current Learning Rate: {current_lr}')
+        
+        # Step the learning rate scheduler if provided
+        if scheduler:
+            scheduler.step(tot_loss / (i+1))  # Optional: you can use the loss or any metric for stepping
 
+    return model
 
 def vae_test(data, model, sample_size, loss_fn = None):
     

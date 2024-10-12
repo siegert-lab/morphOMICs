@@ -1,19 +1,27 @@
 import torch
+import torch.nn as nn
 from .encoder import Encoder
 from .decoder import Decoder
 
 class VAE(torch.nn.Module):
-    def __init__(self, input_dim, latent_dim = 2, encoder_hidden_dimensions = [16, 8, 2], decoder_hidden_dimensions = [2, 8, 16]):
+    def __init__(self, input_dim, latent_dim = 2, 
+                 encoder_hidden_dimensions = [16, 8, 2], decoder_hidden_dimensions = [2, 8, 16], 
+                 batch_layer_norm = False,
+                 activation = nn.ReLU):
         super(VAE, self).__init__()
         
         # Initialize the encoder and decoder
         self.encoder = Encoder(input_dim = input_dim, 
                                latent_dim = latent_dim,
-                                hidden_dimensions = encoder_hidden_dimensions)
+                                hidden_dimensions = encoder_hidden_dimensions,
+                                batch_layer_norm=batch_layer_norm,
+                                activation=activation)
         
         self.decoder = Decoder(latent_dim = latent_dim,
                                output_dim = input_dim,
-                               hidden_dimensions = decoder_hidden_dimensions)
+                               hidden_dimensions = decoder_hidden_dimensions,
+                               batch_layer_norm=batch_layer_norm,
+                               activation=activation)
         
     def sample(self, z_mean, z_log_var, sample_size):
         # Generate a random sample

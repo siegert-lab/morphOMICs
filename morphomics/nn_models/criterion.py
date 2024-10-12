@@ -4,11 +4,10 @@ from torch.nn import functional as nnf
 
 
 class VAELoss(nn.Module):
-    def __init__(self, kl_factor = 1.):
+    def __init__(self):
         super(VAELoss, self).__init__()
-        self.kl_factor = kl_factor
         
-    def forward(self, x, out, z_mean, z_log_var):
+    def forward(self, x, out, z_mean, z_log_var, kl_factor):
         # Compute the reconstruction loss (mse)
         x_expanded = x.unsqueeze(0).expand(*out.shape)
         l2 = torch.norm(out - x_expanded, dim = -1, p=2)
@@ -16,7 +15,7 @@ class VAELoss(nn.Module):
         # Compute the KL divergence loss
         kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp(), dim = -1)
         kl_loss = torch.mean(kl_loss)
-        return mse + self.kl_factor*kl_loss, mse
+        return mse + kl_factor*kl_loss, mse
     
 
 class NLLLoss(nn.Module):

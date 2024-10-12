@@ -3,7 +3,8 @@ import torch.nn as nn
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim, latent_dim, hidden_dimensions=[16, 8]):
+    def __init__(self, input_dim, latent_dim, hidden_dimensions=[16, 8], batch_layer_norm = False,
+                 activation = nn.ReLU):
         super(Encoder, self).__init__()
         
         # Define the layer dimensions
@@ -18,13 +19,15 @@ class Encoder(nn.Module):
         for i in range(self.num_layers):
             # Add a Linear layer
             layers.append(nn.Linear(self.layer_dimensions[i], self.layer_dimensions[i + 1]))
-            
+            if batch_layer_norm and i < 2 and 2<self.num_layers:
+                 layers.append(nn.BatchNorm1d(self.layer_dimensions[i + 1])),  # Batch Normalization
+            if batch_layer_norm and i == self.num_layers - 2:
+                layers.append(nn.LayerNorm(self.layer_dimensions[i + 1])),  # Layer Normalization
             # Add a ReLU layer, except after the last Linear layer
-            if i < len(self.layer_dimensions) - 2:
-                layers.append(nn.ReLU())
+            if i < self.num_layers - 1:
+                layers.append(activation())
         # Create the Sequential model with the layers
         self.model = nn.Sequential(*layers)
-        
         self.mean = nn.Linear(self.layer_dimensions[-1], self.latent_dim)
         self.log_var = nn.Linear(self.layer_dimensions[-1], self.latent_dim)
         
