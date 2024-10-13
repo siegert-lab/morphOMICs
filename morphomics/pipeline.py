@@ -124,8 +124,8 @@ class Pipeline(object):
             print(len(_tokeep), 'pixels to keep over', persistence_images.shape[1])
         
         # Create a boolean mask for the rest of the elements
-        mask = np.ones(len(persistence_images[0]), dtype=bool)
-        mask[_tokeep] = False
+        mask = np.zeros(len(persistence_images[0]), dtype=bool)
+        mask[_tokeep] = True
         # Array with the rest of the elements
         filtered_image = np.array([np.array(pi[mask]) for pi in persistence_images])
         #filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
