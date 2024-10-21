@@ -24,7 +24,7 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
             out, z_mean, z_log_var = model(x, sample_size=sample_size)
             
             # Calculate the loss
-            loss, mse = loss_fn(x, out, z_mean, z_log_var, kl_factor_list[i])
+            loss, mse = loss_fn(x, out, z_mean, z_log_var, kl_factor_list[epoch])
             
             # Backpropagate
             loss.backward()
