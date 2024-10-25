@@ -78,6 +78,8 @@ class DefaultParams:
                                                     "normalize": False,
                                                     "standardize": False,
                                                     "save_dimreducer": False,
+                                                    "FilteredPixelIndex_filepath": False,
+                                                    "pixel_std_cutoff": 1e-5
                                                 },
                                 'Save_reduced': {"conditions_to_save": ['Region', 'Model', 'Sex'],
                                                 "dimred_method": 'pca_umap',
