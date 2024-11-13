@@ -85,6 +85,7 @@ class DefaultParams:
                                                 "dimred_method": 'pca_umap',
                                                 "coordinate_axisnames": ['umap_1', 'umap_2', 'umap_3'],
                                                 },
+                                'Log_results': {"checks":[]},
                                 'Mapping': {"fitted_dimreducer_filepath": 0,
                                             "dimred_method": False,
                                             "vectors_to_reduce_name": 'pi',

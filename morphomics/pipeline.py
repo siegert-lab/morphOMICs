@@ -10,12 +10,20 @@ from morphomics.protocols import subsampler
 from morphomics.protocols.vectorizer import Vectorizer
 from morphomics.protocols.dim_reducer import DimReducer
 from morphomics.protocols import plotting
+from morphomics.persistent_homology.ph_analysis import filter_ph
 
 from morphomics.utils import save_obj, load_obj, vectorization_codenames
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
 import pandas as pd
+
+from scipy.spatial.distance import cdist
+from sklearn.metrics import silhouette_score
+from skbio.stats.distance import DistanceMatrix
+from skbio.stats.distance import anosim
+
+import wandb
 
 
 class Pipeline(object):
@@ -433,6 +441,11 @@ class Pipeline(object):
             drop=True
         )
 
+        # bar length filtering
+        for _operation, barlength_cutoff in params["barlength_cutoff"]:
+            print("Removing bars from all barcodes with the following criteria: bar length %s %.2f"%(_operation, float(barlength_cutoff)))
+            _morphoframe.barcodes = _morphoframe.barcodes.apply(lambda x: filter_ph(np.array(x), float(barlength_cutoff), method=_operation))
+
         # barcode size filtering
         barcode_size_cutoff = float(params["barcode_size_cutoff"])
         print("Removing morphologies with barcode size less than %.2f..."%barcode_size_cutoff)
@@ -440,11 +453,6 @@ class Pipeline(object):
         _morphoframe = _morphoframe.query(
             "Barcode_length >= @barcode_size_cutoff"
             ).reset_index(drop=True)
-
-        # bar length filtering
-        for _operation, barlength_cutoff in params["barlength_cutoff"]:
-            print("Removing bars from all barcodes with the following criteria: bar length %s %.2f"%(_operation, float(barlength_cutoff)))
-            _morphoframe.barcodes = _morphoframe.barcodes.apply(lambda x: morphomics.Topology.analysis.filter_ph(x, float(barlength_cutoff), method=_operation))
             
         # replace/rename/combine conditions
         if len(params["combine_conditions"]) > 0:
@@ -980,6 +988,79 @@ class Pipeline(object):
         print("Reduced coordinates splitted and saved!")
         print("")
 
+
+    def Log_results(self):
+        """
+        Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
+        
+        Parameters:
+        -----------
+            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            morphoframe_name (str): morphoframe key which will be processed out
+            save_data (bool): trigger to save output of protocol
+            save_folderpath (str): location where to save the data
+            save_filename (str or 0): this will be used as the file name
+
+        Returns
+        -------
+        
+        """
+        defined_params = self.parameters["Log_results"]
+        self.default_params.check_params(defined_params, "Log_results")
+        params = self.default_params.complete_with_default_params(defined_params, "Log_results")
+        self.parameters["Log_results"] = params
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        checks = params["checks"]
+
+        print("Computing evaluation metrics and logging to W&B...")
+
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath, 
+                                           variable_name = morphoframe_name)
+        
+        artifact = wandb.Artifact("reduced_info", type="reduced_info")
+        csv_filepath = self._set_filename(protocol_name = "Save_reduced", 
+                                              save_folderpath = self.parameters["Save_reduced"]["save_folderpath"], 
+                                              save_filename = self.parameters["Save_reduced"]["save_filename"],
+                                              default_save_filename = "ReductionInfo")
+        csv_filepath = "%s.csv" % (csv_filepath)
+        artifact.add_file(csv_filepath)
+        wandb.log_artifact(artifact)
+
+
+        avg_test_statistic = 0
+        for check in checks:
+            df = _morphoframe
+            filtered_df = df[eval(check["filter"])].copy()
+            #X = np.array( filtered_df["pca_umap"].to_list() )
+            X = np.array( filtered_df[ self.parameters["Save_reduced"]["dimred_method"] ].to_list() )
+            distMat = cdist(X, X, metric='euclidean')
+            dm = DistanceMatrix(distMat)
+
+            # Perform ANOSIM
+            result = anosim(dm, np.array( filtered_df[check["crit"]] ), permutations=999)
+
+            labels = filtered_df[check["crit"]].values
+            sil_score = silhouette_score(X, labels)
+            
+            result['test statistic']
+
+            avg_test_statistic += result['test statistic']
+
+            wandb.log({check["name"]+"_sil": sil_score})
+            wandb.log({check["name"]+"_anosim": result['test statistic']})
+
+
+        wandb.log({"avg_test_statistic": avg_test_statistic/len(checks)})
+            
+
+        print("Logging of results done!")
+        print("")
 
 
     def Mapping(self):
