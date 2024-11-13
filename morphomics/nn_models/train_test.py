@@ -7,7 +7,7 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
     
     # Create a DataLoader with shuffling enabled (it's already shuffled each epoch)
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
-    x_values = np.linspace(2, 5, epochs)  # Generate 100 points between 0 and 5
+    x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
     kl_factor_list = 1 - np.exp(-x_values)  # Calculate y = 1 - exp(-x)
 
     # Loop through the epochs

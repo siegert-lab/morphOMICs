@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from distutils.core import Extension
 from pathlib import Path
 
-MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical analysis of microglia morphology (appliable to any cell structure)'''
+MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical analysis of microglia morphology (appliable to any tree structure)'''
 
 def get_requires():
     """Read requirements.txt."""

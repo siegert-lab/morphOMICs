@@ -296,7 +296,7 @@ class Vectorizer(object):
 
         scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
         maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
-        stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
+        stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution)[1])
 
         print("sr done! \n")
         return np.array(list(stable_r))

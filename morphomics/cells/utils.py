@@ -17,15 +17,16 @@
 
 term_dict = {"x": 0, "y": 1, "z": 2}
 
-# Definition of tree types
-TYPE_DCT = {"soma": 1, "basal": 3, "apical": 4, "axon": 2, "glia": 7}
-
-SOMA_TYPE = 1
+class LoadSWCError(Exception):
+    """
+    Captures the exception of failing to load a .swc file
+    """
 
 class LoadNeuronError(Exception):
     """
     Captures the exception of failing to load a single neuron
     """
+
 
 class TmdError(Exception):
     """Specific exception raised by TMD."""

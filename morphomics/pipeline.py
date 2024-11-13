@@ -143,7 +143,7 @@ class Pipeline(object):
     ## Public
     def Input(self):
         """
-        Protocol: Build panda DataFrame with cell info, load .swc files, 
+        Protocol: Build panda DataFrame with cell info, load .swc files in data_location_filepath, 
             transform them into Neuron instances and store them as an element of self.morphoframe.
         
         Parameters:
@@ -1214,7 +1214,6 @@ class Pipeline(object):
         
         print("Morphometrics done!")
         print("")
-
              
 
 

@@ -11,7 +11,7 @@ import pandas as pd
 
 from operator import itemgetter
 from morphomics.io.swc import SWC_DCT
-from morphomics.cells.utils import LoadNeuronError
+from morphomics.cells.utils import LoadSWCError
 
 # The following codes were adapted from TMD:
 # https://github.com/BlueBrain/TMD
@@ -24,7 +24,7 @@ def read_swc(file_path, line_delimiter="\n"):
         assert file_path.endswith((".swc"))
     except AssertionError:
         raise Warning("{} is not a valid swc file".format(file_path))
-    except LoadNeuronError:
+    except LoadSWCError:
         return np.nan
     
     with open(file_path, "r", encoding="utf-8") as f:
@@ -63,11 +63,13 @@ def read_swc(file_path, line_delimiter="\n"):
     swc_arr = np.array(data)
     return swc_arr
 
+
 def load_ph(filename, delimiter=" "):
     """Load PH file in a `np.array`."""
     with open(filename, "r", encoding="utf-8") as f:
         ph = np.array([np.array(line.split(delimiter), dtype=float) for line in f])
     return ph
+
 
 def get_info_frame(
     folder_location,
@@ -85,6 +87,7 @@ def get_info_frame(
     Returns:
         DataFrame: dataframe containing conditions, 'file_name', 'file_path' and 'neuron'
     """
+    print(os.getcwd())
 
     print("You are now collecting the 3D reconstructions (.swc files) from this folder: \n%s\n"%folder_location)
     

@@ -95,15 +95,6 @@ def get_trunk_length(self):
 
 
 
-def get_branch_order(tree, seg_id):
-    """Return branch order of segment."""
-    B = tree.get_multifurcations()
-    return sum(1 if i in B else 0 for i in get_way_to_root(tree, seg_id))
-
-
-def get_point_section_branch_orders(self):
-    """Tree method to get section lengths."""
-    return np.array([get_branch_order(self, i) for i in range(size(self))])
 
 
 def get_point_projection(self, vect=(0, 1, 0), point=None):
@@ -122,44 +113,6 @@ def get_point_projection(self, vect=(0, 1, 0), point=None):
 
 
 
-
-def get_direction_between(self, start_id=0, end_id=1):
-    """Return direction of a branch.
-
-    The direction is defined as end point - start point normalized as a unit vector.
-    """
-    # pylint: disable=assignment-from-no-return
-    vect = np.subtract(
-        [self.x[end_id], self.y[end_id], self.z[end_id]],
-        [self.x[start_id], self.y[start_id], self.z[start_id]],
-    )
-
-    if np.linalg.norm(vect) != 0.0:
-        return vect / np.linalg.norm(vect)
-    return vect
-
-
-def _vec_angle(u, v):
-    """Return the angle between v and u in 3D."""
-    c = np.dot(u, v) / np.linalg.norm(u) / np.linalg.norm(v)
-    return np.arccos(c)
-
-
-def get_angle_between(tree, sec_id1, sec_id2):  # noqa: D417
-    """Return local bifurcations angle between two sections, defined by their ids.
-
-    Args:
-        sec_id1: the start point of the section #1
-        sec_id2: the start point of the section #2
-    """
-    beg, end = tree.get_sections_only_points()
-    b1 = np.where(beg == sec_id1)[0][0]
-    b2 = np.where(beg == sec_id2)[0][0]
-
-    u = tree.get_direction_between(beg[b1], end[b1])
-    v = tree.get_direction_between(beg[b2], end[b2])
-
-    return _vec_angle(u, v)
 
 
 

@@ -40,18 +40,20 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_type
 
     from morphomics.cells.tree.extract_feature import get_children
-    from morphomics.cells.tree.extract_feature import get_bif_term
+    from morphomics.cells.tree.extract_feature import get_node_children_number
     from morphomics.cells.tree.extract_feature import get_bifurcations
     from morphomics.cells.tree.extract_feature import get_multifurcations
     from morphomics.cells.tree.extract_feature import get_terminations
 
     from morphomics.cells.tree.extract_feature import get_way_to_root
-
+    from morphomics.cells.tree.extract_feature import get_way_order
+    from morphomics.cells.tree.extract_feature import get_nodes_way_order
+    
     from morphomics.cells.tree.extract_feature import get_edges_coords
     from morphomics.cells.tree.extract_feature import get_edges_length
     from morphomics.cells.tree.extract_feature import get_lifetime
     # from morphomics.cells.tree.extract_feature import get_sections_only_points
-    from morphomics.cells.tree.extract_feature import get_point_section_lengths
+    from morphomics.cells.tree.extract_feature import get_sections_length
 
     from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
     from morphomics.cells.tree.extract_feature import get_nodes_path_distance
@@ -134,10 +136,6 @@ class Tree:
             end = end[1:]
 
         beg = np.append([0], self.p[np.delete(np.hstack([0, 1 + end]), len(end))][1:])
-        ## TODO
-        #CHECK THIS LINE
-        # beg = np.delete(np.hstack([0, 1 + end]), len(end))
-
         return beg, end
     
     @lru_cache(maxsize=None)  # This decorator caches the results
@@ -153,6 +151,8 @@ class Tree:
         Notes:
             If 0 exists in starting nodes, the parent from tree is assigned
         """
+        if len(self.p) == 1:
+            return {}, {}
         if edges:
             begs, ends = self.edges
         else:

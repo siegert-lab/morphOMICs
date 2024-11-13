@@ -34,12 +34,11 @@ class Population:
 
         # Read infoframe and add a column for cells graph from swc files.
         self.cells = pd.DataFrame()
-        morphoframe = {}
         if info_frame is not None:
             assert (
                 "file_path" in info_frame.keys()
             ), "`file_path` must be a column in the info_frame DataFrame"
-
+            morphoframe = {}
             info_frame_parts = np.array_split(info_frame, 4)
             for i, sub_info_frame in enumerate(info_frame_parts):
                 # Read the swc files and add them in the column swc_array.
@@ -50,18 +49,20 @@ class Population:
    
             self.cells = pd.concat([sub_frame for sub_frame in morphoframe.values()], ignore_index=True)
             print(" ")
-        # Add cells already                                            
+            self.set_empty_cells_to_nan()
+
+        # Add cells already in a Panda DataFrame                                            
         if cells_frame is not None:
             self.cells = pd.concat((self.cells, cells_frame))
 
-        self.set_empty_cells_to_nan()
+            self.set_empty_cells_to_nan()
     
     def exclude_sg_branches(self):
         """
         Remove from each cell the branches that do not have ramification.
         I.e. the single trunks. 
         """
-        self.cells['cells'].apply(lambda cell: cell.exclude_small_branches(nb_sections=1)
+        self.cells['cells'].apply(lambda cell: cell.exclude_small_trees(nb_sections=1)
                                                                    if cell is not np.nan else np.nan
                                                                 )
         self.set_empty_cells_to_nan()
@@ -83,7 +84,7 @@ class Population:
         """
         Get the length of all the section of branches for each cell.
         """
-        self.cells['section_lengths'] = self.cells['cells'].apply(lambda cell: np.concatenate([tree.get_point_section_lengths() for tree in cell.neurites]
+        self.cells['section_lengths'] = self.cells['cells'].apply(lambda cell: np.concatenate([tree.get_sections_length() for tree in cell.neurites]
                                                                                             ) if cell is not np.nan else np.nan)
 
     def set_empty_cells_to_nan(self):

@@ -23,7 +23,8 @@ import numpy as np
 from morphomics.cells.soma.soma import Soma
 from morphomics.cells.tree.tree import Tree
 
-TREE_TYPE_DICT = {1: "soma", 2: "axon", 3: "basal_dendrite", 4: "apical_dendrite", 5: "process"}
+DIGIT_TO_TREE_TYPE = {1: "soma", 2: "axon", 3: "basal_dendrite", 4: "apical_dendrite", 5: "glia_process"}
+TREE_TYPE_TO_DIGIT = {"soma": 1, "axon": 2, "basal_dendrite": 3, "apical_dendrite": 4, "glia_process": 5}
 
 
 class Neuron:
@@ -37,22 +38,24 @@ class Neuron:
 
     # pylint: disable=import-outside-toplevel
     from morphomics.cells.neuron.methods import get_bounding_box
-    from morphomics.cells.neuron.methods import size
+    from morphomics.cells.neuron.methods import get_nb_trees
+    from morphomics.cells.neuron.methods import get_neurites_type
 
-    def __init__(self, name="Neuron"):
+    def __init__(self, name="Neuron", tree_type_dict = DIGIT_TO_TREE_TYPE):
         """Creates an empty Neuron object."""
         self.soma = Soma()
         self.axon = []
         self.apical_dendrite = []
         self.basal_dendrite = []
-        self.process = []
+        self.glia_process = []
         self.undefined = []
         self.name = name
+        self.tree_type_dict = tree_type_dict
 
     @property
     def neurites(self):
         """Get neurites."""
-        return self.apical_dendrite + self.axon + self.basal_dendrite + self.process
+        return self.apical_dendrite + self.axon + self.basal_dendrite + self.glia_process
 
     @property
     def dendrites(self):
@@ -68,34 +71,35 @@ class Neuron:
         if isinstance(new_soma, Soma):
             self.soma = new_soma
 
-    def append_tree(self, new_tree, tree_types):
+    def append_tree(self, new_tree):
         """Append a Tree object to the Neuron.
 
         If type of object is tree this function finds the type of tree and adds the new_tree to the
         correct list of trees in neuron.
         """
         if isinstance(new_tree, Tree):
-            t_type = new_tree.get_type()
-            if t_type in tree_types.keys():
-                neurite_type = tree_types[t_type]
+            t_type_digit = new_tree.get_type()
+            if t_type_digit in self.tree_type_dict.keys():
+                t_type = self.tree_type_dict[t_type_digit]
             else:
-                neurite_type = "undefined"
-            getattr(self, neurite_type).append(new_tree)
+                t_type = "undefined"
+            getattr(self, t_type).append(new_tree)
 
     def remove_tree(self, tree_type, tree):
-        cell_type = getattr(self, tree_type, None)
+        t_type = getattr(self, tree_type, None)
+        print(t_type)
         try:
-            cell_type.remove(tree)
+            t_type.remove(tree)
         except ValueError:
             print(f"value not found in the list")
 
-    def exclude_small_branches(self, nb_sections = 1):
-        for i, tree in enumerate(self.neurites):
+    def exclude_small_trees(self, nb_sections = 1):
+        for _, tree in enumerate(self.neurites):
             beg, _ = tree.sections
             if len(beg) <= nb_sections:
                 t = tree.get_type()
-                t = TREE_TYPE_DICT[t]
-                self.remove_tree(tree_type = t, tree = tree)
+                type = self.tree_type_dict[t]
+                self.remove_tree(tree_type = type, tree = tree)
 
     def copy_neuron(self):
         """Returns a deep copy of the Neuron."""
@@ -103,32 +107,34 @@ class Neuron:
 
     def simplify(self):
         """Creates a copy of itself and simplifies all trees to create a skeleton of the neuron."""
-        neu = Neuron()
-        neu.soma = self.soma.copy_soma()
+        simplified_neuron = Neuron()
+        simplified_neuron.soma = self.soma.copy_soma()
 
-        for tr in self.neurites:
-            t = tr.simplify()
-            neu.append_tree(t, TREE_TYPE_DICT)
+        for tree in self.neurites:
+            simplified_tree = tree.simplify()
+            simplified_neuron.append_tree(simplified_tree, DIGIT_TO_TREE_TYPE)
 
-        return neu
+        return simplified_neuron
     
     def combine_neurites(self):
         # Set soma as the root
-        x_list, y_list, z_list, d_list, t_list, p_list = [self.soma.x], [self.soma.y], [self.soma.z], [self.soma.d], [1], [-1]
+        com_soma = self.soma.get_center()
+        d_soma = self.soma.get_diameter()
+        t_list, x_list, y_list, z_list, d_list, p_list = [1], [com_soma[0]], [com_soma[1]], [com_soma[2]], [d_soma], [-1]
 
         nb_nodes = 1
-        for tr in self.neurites:
-            x_list.append(tr.x)
-            y_list.append(tr.y)
-            z_list.append(tr.z)
-            d_list.append(tr.d)
-            t_list.append(tr.t)
+        for tree in self.neurites:
+            t_list.append(tree.t)
+            x_list.append(tree.x)
+            y_list.append(tree.y)
+            z_list.append(tree.z)
+            d_list.append(tree.d)
             
             # Adjust the parent indices for all but the first tree
-            adjusted_p = np.hstack([tr.p[0] + 1, tr.p[1:] + nb_nodes])
+            adjusted_p = np.hstack([tree.p[0] + 1, tree.p[1:] + nb_nodes])
             p_list.append(adjusted_p)
             
-            nb_nodes += len(tr.p)
+            nb_nodes += len(tree.p)
 
         # Horizontally stack each list into a single NumPy array
         x_array = np.hstack(x_list)
@@ -141,7 +147,7 @@ class Neuron:
         new_tree = Tree(x_array, y_array, z_array, d_array, t_array, p_array)
         
         neu = Neuron()
-        neu.append_tree(new_tree, TREE_TYPE_DICT)
+        neu.append_tree(new_tree)
 
         return neu
     
