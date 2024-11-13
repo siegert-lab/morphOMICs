@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import norm
+from morphomics.utils import array_operators as ops
 
 def get_limits(phs_list):
     """Returns the x-y coordinates limits (min, max) for a list of persistence diagrams."""
@@ -11,6 +12,24 @@ def get_limits(phs_list):
     xlim = [min(np.transpose(phs)[0]), max(np.transpose(phs)[0])]
     ylim = [min(np.transpose(phs)[1]), max(np.transpose(phs)[1])]
     return xlim, ylim
+
+def filter_ph(ph, cutoff, method="<="):
+    """
+    Cuts off bars depending on their length
+    ph:
+    cutoff:
+    methods: "<", "<=", "==", ">=", ">"
+    """
+    barcode_length = []
+    if len(ph) >= 1:
+        lengths = np.abs(ph[:,1] - ph[:,0])
+        cut_offs = np.where(ops[method](lengths, cutoff))[0]
+
+        if len(cut_offs) >= 1:
+            barcode_length = [ph[i] for i in cut_offs]
+            return barcode_length
+    
+    return []
 
 def get_bifurcations(ph):
     """Return the bifurcations from the diagram."""
