@@ -12,6 +12,8 @@ class DefaultParams:
                                     'norm_method': 'id',
         }
         self.vectorizer_params = {'persistence_image': {'ylims': None,
+                                                        'method': 'kde',
+                                                        'std_isotropic': 0.1,
                                                         'bw_method':None,
                                                         'barcode_weight': None,
                                                         },
@@ -71,6 +73,7 @@ class DefaultParams:
                                                 "bootstrapframe_name": 'bootstraped_microglia',
                                             },
                                 'Vectorizations': {"vect_method_parameters": self.vectorizer_params,
+                                                   "barcode_column": 'barcodes'
                                                    },
                                 'Dim_reductions': {"dimred_method_parameters": self.dimreducer_params,
                                                     "vectors_to_reduce": 'pi',
@@ -123,11 +126,13 @@ class DefaultParams:
         elif type == 'dim_reduction':
             completed_params = self.dimreducer_params[method].copy()
         return completed_params
+    
 
     def complete_with_default_params(self, defined_params, method, type = 'protocol'):
         completed_params = self._get_default_params(type=type, method=method)
         for key, value in defined_params.items():
-            completed_params[key] = value       
+            completed_params[key] = value
+        
         return completed_params
     
     def check_params(self, defined_params, method, type = 'protocol'):
