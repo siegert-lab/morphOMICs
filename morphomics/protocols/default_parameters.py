@@ -52,6 +52,7 @@ class DefaultParams:
                                 'Load_data': {},
                                 'TMD': {"filtration_function": 'radial_distance',
                                         "exclude_sg_branches": True,
+                                        "use_subsampled": False
                                         },
                                 'Clean_frame': {},
                                 'Subsample': {"extendedframe_name": 'subsampled_microglia',

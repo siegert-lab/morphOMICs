@@ -1,5 +1,6 @@
 import numpy as np
 from morphomics.cells.tree.tree import Tree
+from morphomics.cells.neuron import Neuron
 
 ## Barcodes
 
@@ -46,5 +47,18 @@ def subsample_trees(feature_list, type, number, n_samples, rand_seed = 51):
     np.random.seed(rand_seed)
     if type[0] == 'cut':
         n_samples = 1
-    subsampled_features = feature_list.apply(lambda cell : [cell.neurites[0].subsample(type, number) for _ in range(n_samples)])
+
+    def subs(cell):
+        neuron_list = []
+        for _ in range(n_samples):
+            cell = cell.combine_neurites()
+            tree = cell.neurites[0].subsample_tree(type, number)
+            neu = Neuron()
+            neu.append_tree(tree, 3)
+            neuron_list.append(neu)
+        return neuron_list
+
+
+    subsampled_features = feature_list.apply(subs)
+
     return subsampled_features

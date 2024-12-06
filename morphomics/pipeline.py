@@ -358,19 +358,34 @@ class Pipeline(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
+        use_subsampled = params["use_subsampled"]
+
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                            variable_name = morphoframe_name)   
-
+                                            variable_name = morphoframe_name)
+        
+        if all(isinstance(item, list) for item in _morphoframe["cells"]):
+            is_list = True
+        elif all(isinstance(item, morphomics.cells.neuron.Neuron) for item in _morphoframe["cells"]):
+            is_list = False
+        else:
+            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all Neuron instances.")
+        
+        if is_list:
+            _morphoframe = _morphoframe.explode("cells")
+            
         cells = _morphoframe.copy()
         my_population = Population(cells_frame = cells)
         
-        if exclude_sg_branches:
-                my_population.exclude_sg_branches()
 
         print("Computing the TMD on morphoframe %s"%(morphoframe_name))
         my_population.set_barcodes(filtration_function = filtration_function)
         _morphoframe = my_population.cells
+
+        # Merge back
+        if is_list:
+            _morphoframe = _morphoframe.groupby(_morphoframe.index).agg(list)
+
         _morphoframe = _morphoframe[~pd.isna(_morphoframe['barcodes'])]
 
         # define output filename
@@ -541,8 +556,8 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)   
         _morphoframe_copy = _morphoframe.copy()
-
         features = _morphoframe_copy[feature_to_subsample]
+        _morphoframe_copy[feature_to_subsample + "_not_subsampled"] = _morphoframe_copy[feature_to_subsample]
         if feature_to_subsample == "barcodes":
             main_branches = params["main_branches"]
             k_elements = params["k_elements"]
@@ -550,7 +565,7 @@ class Pipeline(object):
                                                                                         feature_list = features, 
                                                                                         main_branches = main_branches)
             probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
                                                                                                         feature_list = features,
                                                                                                         probas = probas, 
                                                                                                         k_elements = k_elements, 
@@ -560,14 +575,12 @@ class Pipeline(object):
         else:
             _type = params['type']
             number = params['nb_sections']
-            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_trees(feature_list = features,
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_trees(feature_list = features,
                                                                                                 type = _type,
                                                                                                 number = number,
                                                                                                 n_samples = n_samples, 
                                                                                                 rand_seed = rand_seed,)
 
-        _morphoframe_copy[feature_to_subsample + '_id'] = _morphoframe_copy.index
-        extendedframe = _morphoframe_copy.explode(feature_to_subsample + "_subsampled").reset_index(drop = True)
 
         # initialize output filename
         default_save_filename = "Subsampled"
@@ -578,12 +591,10 @@ class Pipeline(object):
                                               save_data = save_data)
         
         self.morphoframe[morphoframe_name] = _morphoframe_copy
-        self.morphoframe[extendedframe_name] = extendedframe[[feature_to_subsample + "_subsampled", feature_to_subsample + '_id']]
 
         # save the file 
         if params["save_data"]:
             morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
-            morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extended')
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
 
         print("Subsampling done!")
@@ -715,14 +726,22 @@ class Pipeline(object):
         # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
-        _morphoframe_copy = _morphoframe.copy()
+        
         assert (
-            barcode_column in _morphoframe_copy.keys()
+            barcode_column in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
 
-        subsampled = False
-        if type(_morphoframe[barcode_column][0])==list:
-            subsampled = True
+        if all(isinstance(item, list) for item in _morphoframe[barcode_column]):
+            is_list = True
+        elif all(isinstance(item, morphomics.cells.neuron.Neuron) for item in _morphoframe[barcode_column]):
+            is_list = False
+        else:
+            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all Neuron instances.")
+
+        if is_list:
+            _morphoframe = _morphoframe.explode(barcode_column)
+
+        _morphoframe_copy = _morphoframe.copy()
 
         # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
@@ -736,8 +755,7 @@ class Pipeline(object):
         
         # initalize an instance of Vectorizer
         vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
-                                vect_parameters = vect_method_parameters,
-                                subsampled = subsampled)
+                                vect_parameters = vect_method_parameters)
         
         self.morphoframe[morphoframe_name] = _morphoframe
         
@@ -747,6 +765,14 @@ class Pipeline(object):
             output_vector = perform_vect_method()
 
             self.morphoframe[morphoframe_name][vect_methods_codenames_list[i]] = list(output_vector)
+
+
+        # Merge back
+        if is_list:
+            _morphoframe = _morphoframe.groupby(_morphoframe.index).agg({
+                    k: "mean" if k in vect_methods_codenames_list else "first" 
+                    for k in _morphoframe.columns
+        })
 
         # define output filename
         default_save_filename = "Vectorizations-%s"%(vect_methods_codename)

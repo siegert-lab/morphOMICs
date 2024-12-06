@@ -71,14 +71,14 @@ class Neuron:
         if isinstance(new_soma, Soma):
             self.soma = new_soma
 
-    def append_tree(self, new_tree):
+    def append_tree(self, new_tree, tree_type=None):
         """Append a Tree object to the Neuron.
 
         If type of object is tree this function finds the type of tree and adds the new_tree to the
         correct list of trees in neuron.
         """
         if isinstance(new_tree, Tree):
-            t_type_digit = new_tree.get_type()
+            t_type_digit = tree_type if tree_type else new_tree.get_type()
             if t_type_digit in self.tree_type_dict.keys():
                 t_type = self.tree_type_dict[t_type_digit]
             else:
@@ -87,7 +87,6 @@ class Neuron:
 
     def remove_tree(self, tree_type, tree):
         t_type = getattr(self, tree_type, None)
-        print(t_type)
         try:
             t_type.remove(tree)
         except ValueError:

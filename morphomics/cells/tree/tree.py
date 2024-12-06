@@ -235,5 +235,8 @@ class Tree:
         # Step 2: Replace each number in list p with its index from subsampled_nodes
         new_p = [index_map[number] for number in new_p]
 
-        new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
-        return new_tree
+        if len(subsampled_nodes) > 1:
+            new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
+            return new_tree
+        else:
+            return None
