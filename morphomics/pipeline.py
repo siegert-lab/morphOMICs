@@ -743,18 +743,24 @@ class Pipeline(object):
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
         vect_method_parameters = params["vect_method_parameters"]
+        barcode_column = params["barcode_column"]
         
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
+        
 
         # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
         _morphoframe_copy = _morphoframe.copy()
         assert (
-            "barcodes" in _morphoframe_copy.keys()
+            barcode_column in _morphoframe_copy.keys()
         ), "Missing `barcodes` column in info_frame..."
+
+        subsampled = False
+        if type(_morphoframe[barcode_column][0])==list:
+            subsampled = True
 
         # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
@@ -767,8 +773,9 @@ class Pipeline(object):
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
         # initalize an instance of Vectorizer
-        vectorizer = Vectorizer(tmd = _morphoframe_copy["barcodes"], 
-                                vect_parameters = vect_method_parameters)
+        vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
+                                vect_parameters = vect_method_parameters,
+                                subsampled = subsampled)
         
         self.morphoframe[morphoframe_name] = _morphoframe
         

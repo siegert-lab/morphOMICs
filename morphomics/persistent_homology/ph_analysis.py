@@ -3,11 +3,17 @@ from scipy.stats import norm
 
 def get_limits(phs_list):
     """Returns the x-y coordinates limits (min, max) for a list of persistence diagrams."""
-    # if any((isinstance(ph[0], list) for ph in phs_list)):
-    #     phs = [list(ph_bar) for ph in phs_list for ph_bar in ph]
-    # else:
-    #     phs = phs_list
-    phs = np.vstack(phs_list)
+
+    def recursive_vstack(lst):
+
+        # If the input is already a numpy array, return it as is
+        if isinstance(lst, np.ndarray):
+            return lst
+    
+        # If the input is a list, recursively stack its elements
+        return np.vstack([recursive_vstack(sublist) for sublist in lst])
+
+    phs = recursive_vstack(phs_list)
     xlim = [min(np.transpose(phs)[0]), max(np.transpose(phs)[0])]
     ylim = [min(np.transpose(phs)[1]), max(np.transpose(phs)[1])]
     return xlim, ylim

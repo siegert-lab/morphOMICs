@@ -25,12 +25,14 @@ from morphomics.persistent_homology.ph_analysis import get_limits, get_lengths, 
 ### 2D vectorizations
 
 def persistence_image(
-    ph, xlim=None, ylim=None, bw_method=None, weights=None, resolution=100
+    ph, method="kde", std_isotropic=0.1, xlim=None, ylim=None, bw_method=None, weights=None, resolution=100
 ):
     """Create array of the persistence image.
 
     Args:
         ph: persistence diagram.
+        method: whether to aggregate the diagram using Gaussian with covariance estimated from data (in kde fashion) or with isotropic gaussian
+        std_isotropic: standard deviation of the isotropic gaussian.
         xlim: The image limits on x axis.
         ylim: The image limits on y axis.
         bw_method: The method used to calculate the estimator bandwidth for the gaussian_kde.
@@ -43,13 +45,53 @@ def persistence_image(
         xlim, ylim = get_limits(ph)
     res = complex(0, resolution)
     X, Y = np.mgrid[xlim[0] : xlim[1] : res, ylim[0] : ylim[1] : res]
-
-    values = np.transpose(ph)
-    kernel = stats.gaussian_kde(values, bw_method=bw_method, weights=weights)
     positions = np.vstack([X.ravel(), Y.ravel()])
-    Z = np.reshape(kernel(positions).T, X.shape)
+    values = np.transpose(ph)
+
+    if method == "kde":
+        kernel = stats.gaussian_kde(values, bw_method=bw_method, weights=weights)
+        Z = np.reshape(kernel(positions).T, X.shape)
+    elif method == "isotropic":
+        Z = _pi_isotropic(ph, positions.T, std_isotropic)
+        Z = np.reshape(Z, X.shape)
 
     return Z
+
+def _pi_isotropic(ph, eval_points, std):
+    """
+    Compute KDE for a dataset of 2D points using an isotropic Gaussian kernel.
+
+    Parameters:
+    - ph: np.ndarray, shape (N, 2)
+        Array of 2D points from the dataset.
+    - eval_points: np.ndarray, shape (M, 2)
+        Array of 2D points where the KDE should be evaluated.
+    - std: float
+        Standard deviation of the isotropic Gaussian kernel.
+
+    Returns:
+    - kde_values: np.ndarray, shape (M,)
+        The KDE values at each of the evaluation points.
+    """
+    # Ensure input is numpy arrays
+    data_points = np.asarray(ph)
+    eval_points = np.asarray(eval_points)
+
+    # Gaussian kernel normalization constant in 2D
+    normalization = 1 / (2 * np.pi * std**2)
+
+    # Compute pairwise squared distances using broadcasting
+    diff = eval_points[:, np.newaxis, :] - data_points[np.newaxis, :, :]  # Shape: (M, N, 2)
+    squared_distances = np.sum(diff**2, axis=2)  # Shape: (M, N)
+
+    # Apply Gaussian kernel
+    weights = np.exp(-squared_distances / (2 * std**2))  # Shape: (M, N)
+
+    # Sum over the data points (axis=1) and normalize
+    kde_values = normalization * np.sum(weights, axis=1)  # Shape: (M,)
+
+    return kde_values
+
 
 ### 1D curve vectorizations
 
