@@ -50,22 +50,22 @@ def get_bifurcations(self):
     return bif
 
 def get_multifurcations(self):
-    """Return bifurcations."""
+    """Return nodes index that has exactly two children or more."""
     bif_term = self.get_node_children_number()
     bif = np.where(bif_term >= 2.0)[0]
     return bif
 
 def get_terminations(self):
-    """Return terminations."""
+    """Return nodes index that has exactly 0 child."""
     bif_term = self.get_node_children_number()
     term = np.where(bif_term == 0.0)[0]
     return term
 
-def get_way_to_root(self, sec_id=0):
+def get_way_to_root(self, node_idx=0):
     """Return way to root. 
     It returns a list of parented nodes from the input node to the root."""
-    way = [sec_id]
-    tmp_id = sec_id
+    way = [node_idx]
+    tmp_id = node_idx
 
     while tmp_id != -1:
         way.append(self.p[tmp_id])
@@ -74,10 +74,21 @@ def get_way_to_root(self, sec_id=0):
     way.pop()
     return way
 
-def get_way_order(self, seg_id):
-    """Return the number of multibifurcation nodes on the way."""
+def get_way_length(self, node_idx=0):
+    way = self.get_way_to_root(node_idx)
+    edges_len = self.get_edges_length()
+    way_length = 0
+    for way_idx in way:
+        if way_idx == 0:
+            break
+        # way_idx-1 is the index of the edge length
+        way_length +=  edges_len[way_idx-1]
+    return way_length
+
+def get_way_order(self, node_idx):
+    """Return the number of multifurcation nodes on the way."""
     multibif_ids = self.get_multifurcations()
-    way_to_root = self.get_way_to_root(seg_id)
+    way_to_root = self.get_way_to_root(node_idx)
     intersection = set(multibif_ids).intersection(way_to_root)
     return len(intersection)
 
@@ -128,8 +139,9 @@ def get_edges_length(self, seg_ids=None):
     return seg_len
 
 def get_lifetime(self, feature="nodes_radial_distance"):
+    ## get_sections_coords ##
     """Returns the sequence of birth - death times for each section.
-
+    
     This can be used as the first step for the approximation of P.H.
     of the radial distances of the neuronal branches.
     """
@@ -144,25 +156,25 @@ def get_lifetime(self, feature="nodes_radial_distance"):
 
 def get_sections_length(self):
     """Tree method to get section lengths."""
-    lengths = np.zeros(self.size(), dtype=float)
-    ways, end = self.sections
-    edge_len = self.get_edges_length()
-
-    for start_id, end_id in zip(ways, end):
-        lengths[end_id] = np.sum(edge_len[max(0, start_id - 1) : end_id])
-
-    return lengths
+    begs, ends = self.sections
+    sections_len = []
+    for start_idx, end_idx in zip(begs, ends):
+        len_beg_root = self.get_way_length(node_idx = start_idx)
+        len_end_root = self.get_way_length(node_idx = end_idx)
+        section_len = len_end_root - len_beg_root
+        sections_len.append(section_len)
+    return sections_len
 
 # Angles
-def get_direction_between(self, start_id=0, end_id=1):
+def get_direction_between(self, start_node_idx=0, end_node_idx=1):
     """Return direction of a branch.
 
     The direction is defined as end point - start point normalized as a unit vector.
     """
     # pylint: disable=assignment-from-no-return
     vect = np.subtract(
-        [self.x[end_id], self.y[end_id], self.z[end_id]],
-        [self.x[start_id], self.y[start_id], self.z[start_id]],
+        [self.x[end_node_idx], self.y[end_node_idx], self.z[end_node_idx]],
+        [self.x[start_node_idx], self.y[start_node_idx], self.z[start_node_idx]],
     )
 
     if np.linalg.norm(vect) != 0.0:
@@ -174,19 +186,19 @@ def _vec_angle(u, v):
     c = np.dot(u, v) / np.linalg.norm(u) / np.linalg.norm(v)
     return np.arccos(c)
 
-def get_angle_between(self, sec_id1, sec_id2):  # noqa: D417
+def get_angle_between_sections(self, sec1_ids, sec2_ids):  # noqa: D417
     """Return local bifurcations angle between two sections, defined by their ids.
 
     Args:
-        sec_id1: the start point of the section #1
-        sec_id2: the start point of the section #2
+        sec1_ids: the start and end point of the section #1
+        sec2_ids: the start and end point of the section #2
     """
     beg, end = self.sections
-    b1 = np.where(beg == sec_id1)[0][0]
-    b2 = np.where(beg == sec_id2)[0][0]
+    sec1 = np.where(end == sec1_ids[1])[0][0]
+    sec2 = np.where(end == sec2_ids[1])[0][0]
 
-    u = self.get_direction_between(beg[b1], end[b1])
-    v = self.get_direction_between(beg[b2], end[b2])
+    u = self.get_direction_between(beg[sec1], end[sec1])
+    v = self.get_direction_between(beg[sec2], end[sec2])
 
     return _vec_angle(u, v)
 
@@ -219,10 +231,7 @@ def get_nodes_path_distance(self):
     edge_len = self.get_edges_length()
     path_lengths = np.append(0, copy.deepcopy(edge_len))
     children = self.get_children()
-
     for k, v in children.items():
         path_lengths[v] = path_lengths[v] + path_lengths[k]
 
     return path_lengths
-
-

@@ -117,7 +117,7 @@ path_to_last_instance = "test/saved_instances"
 
 # must be an array with two elements [feature (one of the headers in morphoframe), "bars", "scalar" or "array"]
 "feature_to_bootstrap" = ["Barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
-# "feature_to_bootstrap" = ["Barcode_length", "scalar"] # bootstraps by taking the average of an array
+# "feature_to_bootstrap" = ["nb_bars", "scalar"] # bootstraps by taking the average of an array
 # "feature_to_bootstrap" = ["Sholl", "array"]           # # bootstraps by taking the element-wise average of a high-dimensional NumPy array
 
 # use this if you want to constraint your bootstrapping to a subset of conditions that you did not drop using `Clean_frame`

@@ -2,9 +2,9 @@ import warnings
 import numpy as np
 import pandas as pd
 import os
-from morphomics.io.io import read_swc
+from morphomics.io.io import read_swc, get_info_frame
 from morphomics.io.swc import swc_to_neuron
-from morphomics.persistent_homology.tmd import get_ph_neuron
+from morphomics.persistent_homology.tmd import get_ph_neuron, get_persistence_diagram
 
 class Population:
     """A Population object is a container for Neurons.
@@ -32,6 +32,16 @@ class Population:
         self.folder_path = folder_path
         self.conditions = conditions
 
+        if isinstance(self.conditions, dict):
+            conds = list(self.conditions.keys())
+        else:
+            conds = list(self.conditions)
+
+        if self.folder_path is not None:
+            info_frame = get_info_frame(self.folder_path,
+                        extension = ".swc",
+                        conditions = conds)
+
         # Read infoframe and add a column for cells graph from swc files.
         self.cells = pd.DataFrame()
         if info_frame is not None:
@@ -49,13 +59,12 @@ class Population:
    
             self.cells = pd.concat([sub_frame for sub_frame in morphoframe.values()], ignore_index=True)
             print(" ")
-            self.set_empty_cells_to_nan()
 
         # Add cells already in a Panda DataFrame                                            
         if cells_frame is not None:
             self.cells = pd.concat((self.cells, cells_frame))
 
-            self.set_empty_cells_to_nan()
+        self.set_empty_cells_to_nan()
     
     def exclude_sg_branches(self):
         """
@@ -67,25 +76,49 @@ class Population:
                                                                 )
         self.set_empty_cells_to_nan()
         
-    def set_barcodes(self, filtration_function = 'radial_distance'):
+    def set_barcodes(self, filtration_function = 'radial_distance', from_trees = True):
         """
         Calculates persistence diagram of each cell graph.
         """
         assert filtration_function in ["radial_distance",
                             "path_distance",
                             ], "Currently, TMD is only implemented with either radial_distance or path_distance"
-
-        # Get a column composed of Neuron instances.
-        self.cells['barcodes'] = self.cells['cells'].apply(lambda cell: get_ph_neuron(neuron = cell, feature=filtration_function
+        
+        if from_trees:
+            if 'trees' not in self.cells.keys():
+                self.combine_neurites()
+            self.cells['barcodes'] = self.cells['trees'].apply(lambda tree: get_persistence_diagram(tree = tree, feature=filtration_function
+                                                                                                ) if tree is not np.nan else np.nan
+                                                                )
+        else:
+            self.cells['barcodes'] = self.cells['cells'].apply(lambda cell: get_ph_neuron(neuron = cell, feature=filtration_function
                                                                                                 ) if cell is not np.nan else np.nan
                                                                 )
-
-    def get_section_length(self):
-        """
-        Get the length of all the section of branches for each cell.
-        """
-        self.cells['section_lengths'] = self.cells['cells'].apply(lambda cell: np.concatenate([tree.get_sections_length() for tree in cell.neurites]
-                                                                                            ) if cell is not np.nan else np.nan)
+    
+    def simplify(self):
+        self.cells['simplified_cells'] = self.cells['cells'].apply(lambda cell: cell.simplify()
+                                                                   if cell is not np.nan else np.nan
+                                                                   )
+        
+    def combine_neurites(self):
+        self.cells['trees'] = self.cells['cells'].apply(lambda cell: cell.combine_neurites().neurites[0]
+                                                                   if cell is not np.nan else np.nan
+                                                                   )
+        
+    def apply_tree_method(self, method, col_name=None, **kwargs):
+        if 'trees' not in self.cells.keys():
+            self.combine_neurites()
+        if col_name is None:
+            col_name = method
+       
+        if method == 'move_to_point':  # This is the only method of the class Tree that is inplace
+            self.cells['trees'].apply(lambda tree: tree.move_to_point( **kwargs)
+                                                        if tree is not np.nan else np.nan
+                                                        )
+        else:
+            self.cells[col_name] = self.cells['trees'].apply(lambda tree: getattr(tree, method)( **kwargs)
+                                                            if tree is not np.nan else np.nan
+                                                            )
 
     def set_empty_cells_to_nan(self):
         # Convert Neuron with empty list of Trees into np.nan.

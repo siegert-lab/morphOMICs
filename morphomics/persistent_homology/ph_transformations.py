@@ -1,5 +1,7 @@
 import numpy as np
 from scipy import stats
+from morphomics.persistent_homology.ph_analysis import get_lengths
+from morphomics.utils import array_operators as ops
 
 def concatenate(ph_list):
     return np.vstack(ph_list)
@@ -7,6 +9,24 @@ def concatenate(ph_list):
 def sort_ph(ph):
     """Sorts barcode according to decreasing length of bars."""
     return ph[np.argsort([bar[0] - bar[1] for bar in ph])].tolist()
+
+def filter_ph(ph, cutoff, method="<="):
+    """
+    Cuts off bars depending on their length
+    ph:
+    cutoff:
+    methods: "<", "<=", "==", ">=", ">"
+    """
+    barcode_length = []
+    if len(ph) >= 1:
+        lengths = get_lengths(ph)
+        cut_offs = np.where(ops[method](lengths, cutoff))[0]
+
+        if len(cut_offs) >= 1:
+            barcode_length = [ph[i] for i in cut_offs]
+            return barcode_length
+    
+    return []
 
 def tmd_scale(barcode, thickness):
     """Scale the first two components according to the thickness parameter.

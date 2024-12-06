@@ -57,7 +57,6 @@ def get_point_radial_distances_time(self, point=None, dim="xyz", zero_time=0, ti
 
     return radial_distances
 
-
 def get_point_weighted_radial_distances(self, point=None, dim="xyz", w=(1, 1, 1), normed=False):
     """Tree method to get radial distances from a point.
 
@@ -81,7 +80,6 @@ def get_point_weighted_radial_distances(self, point=None, dim="xyz", w=(1, 1, 1)
 
     return radial_distances
 
-
 def get_trunk_length(self):
     """Tree method to get the trunk (first section length)."""
     ways, end = self.get_sections_only_points()
@@ -92,10 +90,6 @@ def get_trunk_length(self):
 
     seg_lengths = get_segment_lengths(self, seg_ids)
     return seg_lengths.sum()
-
-
-
-
 
 def get_point_projection(self, vect=(0, 1, 0), point=None):
     """Projects each point in the tree (x,y,z) - input_point to a selected vector.
@@ -110,11 +104,6 @@ def get_point_projection(self, vect=(0, 1, 0), point=None):
     xyz = np.transpose([self.x, self.y, self.z]) - point
 
     return np.dot(xyz, vect)
-
-
-
-
-
 
 def get_pca(self, plane="xy", component=0):
     """Return the i-th principal component of PCA of the tree points in the selected plane."""
