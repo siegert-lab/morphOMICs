@@ -329,7 +329,7 @@ class Pipeline(object):
         my_population = Population(cells_frame = cells)
 
         print("Computing the TMD on morphoframe %s"%(morphoframe_name))
-        my_population.set_barcodes(filtration_function = filtration_function)
+        my_population.set_barcodes(filtration_function = filtration_function, from_trees = False)
         _morphoframe = my_population.cells
 
         # Merge back
@@ -639,7 +639,7 @@ class Pipeline(object):
 
         # save the file 
         if params["save_data"]:
-            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
 
         print("Subsampling done!")
