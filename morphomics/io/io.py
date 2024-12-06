@@ -8,6 +8,7 @@ import os, glob
 import numpy as np
 import re
 import pandas as pd
+import pickle as pkl
 
 from operator import itemgetter
 from morphomics.io.swc import SWC_DCT
@@ -62,6 +63,33 @@ def read_swc(file_path, line_delimiter="\n"):
             data.append(segment_point)
     swc_arr = np.array(data)
     return swc_arr
+
+def save_fig_pdf(fig, filepath):
+    """
+    Save a given Matplotlib figure as a PDF to the specified file path.
+    
+    Parameters:
+        fig (matplotlib.figure.Figure): The Matplotlib figure to save.
+        filepath (str): The file path where the figure should be saved.
+    """
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)  # Ensure directory exists
+    fig.savefig(filepath, format='pdf')  # Save the figure as a PDF
+    print(f"Plot saved to {filepath}")
+
+def save_obj(obj, filepath):
+    # Function to save an object to a file using pickle
+
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    # Open the file and save the object (create or overwrite)
+    with open(filepath + ".pkl", "wb") as f:
+        pkl.dump(obj, f, pkl.HIGHEST_PROTOCOL)
+
+
+def load_obj(name):
+    # Function to load a pkl file
+    with open(name + ".pkl", "rb") as f:
+        return pkl.load(f)
 
 
 def load_ph(filename, delimiter=" "):

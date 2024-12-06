@@ -136,7 +136,7 @@ exclude_sg_branches = true
 
 # must be an array with two elements [feature (one of the headers in morphoframe), "bars", "scalar" or "array"]
 "feature_to_bootstrap" = ["barcodes", "bars"]           # bootstraps by collapsing the lists into a single list 
-# "feature_to_bootstrap" = ["Barcode_length", "scalar"] # bootstraps by taking the average of an array
+# "feature_to_bootstrap" = ["nb_bars", "scalar"] # bootstraps by taking the average of an array
 # "feature_to_bootstrap" = ["Sholl", "array"]           # # bootstraps by taking the element-wise average of a high-dimensional NumPy array
 
 # conditions to bootstrap

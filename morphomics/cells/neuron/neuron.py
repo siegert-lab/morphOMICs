@@ -111,11 +111,13 @@ class Neuron:
 
         for tree in self.neurites:
             simplified_tree = tree.simplify()
-            simplified_neuron.append_tree(simplified_tree, DIGIT_TO_TREE_TYPE)
+            simplified_neuron.append_tree(simplified_tree)
 
         return simplified_neuron
     
     def combine_neurites(self):
+        """Creates a Neuron that only contains a Tree. 
+        This Tree is the combinations of all the Trees connected at the center of Soma"""
         # Set soma as the root
         com_soma = self.soma.get_center()
         d_soma = self.soma.get_diameter()

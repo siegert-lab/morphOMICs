@@ -19,7 +19,7 @@ class DefaultParams:
                                                         },
                                   'curve': self.general_vect_params,
                                   'hist': self.general_vect_params,
-                                  'stable_ranks': {'type': 'neg', 'density': False, 'bars_prob': False, 'resolution':1000},
+                                  'stable_ranks': {'type': 'neg', 'density': False, 'bars_prob': False, 'resolution': 1000},
         }
         self.vectorizer_params['persistence_image'].update(self.general_vect_params)
         self.dimreducer_params = {'pca': {"n_components": 20,
@@ -51,10 +51,15 @@ class DefaultParams:
                                             },
                                 'Load_data': {},
                                 'TMD': {"filtration_function": 'radial_distance',
-                                        "exclude_sg_branches": True,
-                                        "use_subsampled": False
                                         },
-                                'Clean_frame': {},
+                                'Clean_frame': {"combine_conditions": [],
+                                                "restrict_conditions": []
+                                                },
+                                'Filter_frame': {"barcode_size_cutoff": 5,
+                                                 },
+                                'Filter_morpho': {"barlength_cutoff": [],
+                                                "exclude_sg_branches": True,
+                                                  },
                                 'Subsample': {"extendedframe_name": 'subsampled_microglia',
                                                 "feature_to_subsample": 'barcodes',
                                                 "n_samples": 20,
@@ -99,7 +104,11 @@ class DefaultParams:
                                             },
                                 'Palantir': {},
                                 'Sholl_curves': {},
-                                'Morphometrics': {},
+                                'Morphometrics': {"Lmeasure_functions": None,
+                                                  "concatenate": False,
+                                                  "histogram": False,
+                                                  "bins": 100,
+                                                  "tmp_folder": "results"},
                                 'Plotting': {"conditions": ['Region', 'Model', 'Sex'],
                                             "reduced_vectors_name": 'pca_umap',
                                             "axis_labels": ['umap_1', 'umap_2', 'umap_3'],
@@ -130,6 +139,7 @@ class DefaultParams:
     
 
     def complete_with_default_params(self, defined_params, method, type = 'protocol'):
+        # Complete the input parameters with the default one.
         completed_params = self._get_default_params(type=type, method=method)
         for key, value in defined_params.items():
             completed_params[key] = value
@@ -137,16 +147,16 @@ class DefaultParams:
         return completed_params
     
     def check_params(self, defined_params, method, type = 'protocol'):
+        # Check if all input parameters correspond to a meaningful parameter.
         param_names = self._get_default_params(type=type, method=method).keys()
         not_params_list = []
         for key in defined_params.keys():
             if key not in param_names:
                 not_params_list.append(key)
-        if not_params_list:
+        if len(not_params_list) != 0:
             # Create a warning if the list is not empty
             warnings.warn(f"The following parameter names are not correct: {not_params_list}", UserWarning)
             raise ValueError(f"Error: Invalid elements found in the list: {not_params_list}")
-
         else:
             print("All parameter names are correct.")        
 

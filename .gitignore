@@ -11,18 +11,6 @@ Morphomics.Parameters.0.toml
 examples/trial_folder
 
 # Folder Experiments
-br_experiments
-br_proper_experiments
-br1_ale_data_ale_experiments
-br2_experiments
-br2_raw_data_ale_experiments
-bt_pi_experiments
-reproduce_experiments
-retina_experiments
+*experiments*/
+
 test_everything
-test_subsampler
-v1_experiments
-v1_sg_l_experiments
-vae_experiments
-mehmet_params
-nn_examples
