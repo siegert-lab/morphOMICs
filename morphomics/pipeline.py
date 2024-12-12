@@ -766,12 +766,19 @@ class Pipeline(object):
         vect_methods = vect_method_parameters.keys()
         vect_methods_codenames_list = [vectorization_codenames[vect_method] for vect_method in vect_methods]
         vect_methods_codename = '_'.join(vect_methods_codenames_list)
-
+        
         if '_' not in vect_methods_codename:
             print("Computes %s." %(vect_methods_codename))
         else:
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
+        for vect_method in vect_methods:
+            self.default_params.check_params(vect_method_parameters, vect_method, type = 'vectorization')
+            vect_method_parameters[vect_method] = self.default_params.complete_with_default_params(vect_method_parameters[vect_method], 
+                                                                                                        vect_method,
+                                                                                                        type = 'vectorization')
+            self.parameters["Vectorizations"]["vect_method_parameters"][vect_method] = vect_method_parameters[vect_method]
+
         # initalize an instance of Vectorizer
         vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
                                 vect_parameters = vect_method_parameters,
