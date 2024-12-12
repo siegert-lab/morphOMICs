@@ -9,7 +9,7 @@ from morphomics.utils import norm_methods
 
 class Vectorizer(object):
     
-    def __init__(self, tmd, vect_parameters, subsampled):
+    def __init__(self, tmd, vect_parameters):
         """
         Initializes the Vectorizer instance.
 
@@ -29,7 +29,6 @@ class Vectorizer(object):
         self.tmd = tmd
         self.vect_parameters = vect_parameters
         self.default_params = DefaultParams()
-        self.subsampled = subsampled
 
     ## Private
     def _curve_vectorization(self, 
@@ -199,10 +198,8 @@ class Vectorizer(object):
         def vect_ph(ph):
             return vectorizations.persistence_image(ph, method=pi_method, std_isotropic=std_isotropic, xlim = xlims, ylim = ylims, bw_method = bw_method, weights = barcode_weight, resolution = resolution)
 
-        if self.subsampled:
-            pi_list = self.tmd.apply(lambda ph_list : sum([vect_ph(ph) for ph in ph_list])/len(ph_list))
-        else:
-            pi_list = self.tmd.apply(vect_ph)
+
+        pi_list = self.tmd.apply(vect_ph)
 
         if flatten:
             pi_list = pi_list.apply(lambda pi: pi.flatten())
@@ -296,15 +293,10 @@ class Vectorizer(object):
         bars_prob = stable_ranks_params['bars_prob']
         resolution = stable_ranks_params['resolution']
         print("Computing stable ranks...")
-
-        if self.subsampled:
-            scaled_bar_lengths = self.tmd.apply(lambda l : [get_lengths(x, type, density) for x in l])
-            maxL_SR = scaled_bar_lengths.apply(lambda l : np.array([max(x) if len(x)>0 else 0 for x in l]).max() ).max()
-            stable_r = scaled_bar_lengths.apply(lambda l : sum( [vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution) for x in l] )/len(l) )
-        else:
-            scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
-            maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
-            stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
+        
+        scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
+        maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
+        stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
 
         print("sr done! \n")
         return np.array(list(stable_r))
