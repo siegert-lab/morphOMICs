@@ -1,5 +1,12 @@
+import numpy as np
+
 # Define a function to filter out the extremes based on cutoff value
-def remove_extremes_absolute(df, col_name, min, max):
+def remove_extremes_absolute(df, col_name, min = None, max = None):
+    if min is None:
+        min = - np.inf
+    if max is None:
+        max = np.inf
+        
     # Filter out values outside the [low_limit, high_limit] range
     filtered_df = df[(df[col_name] >= min) & (df[col_name] <= max)]
     extreme_df = (df[col_name] < min) | (df[col_name] > max)

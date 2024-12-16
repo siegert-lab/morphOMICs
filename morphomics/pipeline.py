@@ -440,6 +440,9 @@ class Pipeline(object):
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be filtered out.
             barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
+            feature_to_filter (list, [col_name, min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
+                                                                        lim_type can be relative or absolute, 
+                                                                        i.e. the min and max represnt values of the feature or percentile of the feature disctribution.
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): Location where to save the variable.
 
@@ -455,6 +458,8 @@ class Pipeline(object):
 
         barcode_size_cutoff = float(params["barcode_size_cutoff"])
 
+        features_to_filter = params["feature_to_filter"]
+
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
@@ -468,8 +473,20 @@ class Pipeline(object):
             drop=True
         )
         
+        extreme_df = pd.DataFrame({})
+
         # barcode size filtering
-        filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
+        _morphoframe, sub_extreme_df = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
+
+        for feature_to_filter_params in features_to_filter:
+            col_name, _min, _max, _type = feature_to_filter_params
+            if _type == 'relative':
+                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(df = _morphoframe, col_name = col_name, 
+                                                     min = _min, max = _max)
+            else:
+                 _morphoframe, sub_extreme_df = filter_frame.remove_extremes_absolute(df = _morphoframe, col_name = col_name, 
+                                                     low_percentile = _min, high_percentile = _max)
+            
 
         # initialize output filename
         default_save_filename = "Filter_frame"
