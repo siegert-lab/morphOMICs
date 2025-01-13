@@ -56,6 +56,7 @@ class DefaultParams:
                                                 "restrict_conditions": []
                                                 },
                                 'Filter_frame': {"barcode_size_cutoff": 5,
+                                                 "features_to_filter": [],
                                                  },
                                 'Filter_morpho': {"barlength_cutoff": [],
                                                 "exclude_sg_branches": True,

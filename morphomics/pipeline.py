@@ -127,6 +127,7 @@ class Pipeline(object):
             _tokeep = io.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
         else:
             std = str(params["pixel_std_cutoff"])
+            _tokeep = None
             print("Keeping pixels in persistence image with standard deviation higher than " + std + " ...")
         
         filtered_images, _tokeep = pi_transformations.filter_pi_list(persistence_images, 
@@ -309,8 +310,6 @@ class Pipeline(object):
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
-        use_subsampled = params["use_subsampled"]
-
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)
@@ -458,7 +457,7 @@ class Pipeline(object):
 
         barcode_size_cutoff = float(params["barcode_size_cutoff"])
 
-        features_to_filter = params["feature_to_filter"]
+        features_to_filter = params["features_to_filter"]
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -476,7 +475,7 @@ class Pipeline(object):
         extreme_df = pd.DataFrame({})
 
         # barcode size filtering
-        _morphoframe, sub_extreme_df = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
+        _morphoframe = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
 
         for feature_to_filter_params in features_to_filter:
             col_name, _min, _max, _type = feature_to_filter_params
@@ -548,7 +547,7 @@ class Pipeline(object):
         if exclude_sg_branches:
                 my_population.exclude_sg_branches()
         _morphoframe = my_population.cells
-        _morphoframe = _morphoframe[~pd.isna(_morphoframe['barcodes'])]
+        _morphoframe = _morphoframe[~pd.isna(_morphoframe['cells'])]
 
         # bar length filtering
         for _operation, barl_cutoff in barlength_cutoff:
@@ -811,7 +810,7 @@ class Pipeline(object):
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
         for vect_method in vect_methods:
-            self.default_params.check_params(vect_method_parameters, vect_method, type = 'vectorization')
+            self.default_params.check_params(vect_method_parameters[vect_method], vect_method, type = 'vectorization')
             vect_method_parameters[vect_method] = self.default_params.complete_with_default_params(vect_method_parameters[vect_method], 
                                                                                                         vect_method,
                                                                                                         type = 'vectorization')
@@ -821,22 +820,23 @@ class Pipeline(object):
         vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
                                 vect_parameters = vect_method_parameters)
         
-        self.morphoframe[morphoframe_name] = _morphoframe
         
         # compute vectors
         for i, vect_method in enumerate(vect_methods):
             perform_vect_method = getattr(vectorizer, vect_method)
             output_vector = perform_vect_method()
 
-            self.morphoframe[morphoframe_name][vect_methods_codenames_list[i]] = list(output_vector)
+            _morphoframe_copy[vect_methods_codenames_list[i]] = list(output_vector)
 
 
         # Merge back
         if is_list:
-            _morphoframe = _morphoframe.groupby(_morphoframe.index).agg({
+            _morphoframe_copy = _morphoframe_copy.groupby(_morphoframe.index).agg({
                     k: "mean" if k in vect_methods_codenames_list else "first" 
-                    for k in _morphoframe.columns
+                    for k in _morphoframe_copy.columns
         })
+            
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
 
         # define output filename
         default_save_filename = "Vectorizations-%s"%(vect_methods_codename)
