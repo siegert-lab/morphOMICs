@@ -68,10 +68,9 @@ def get_bootstrap_frame(
     N_bags,
     replacement,
     n_samples,
-    rand_seed=0,
+    rand_seed=None,
     ratio=None,
 ):
-
     np.random.seed(rand_seed)
 
     _feature, _dtype = feature_to_bootstrap

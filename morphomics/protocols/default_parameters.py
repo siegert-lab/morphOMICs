@@ -76,7 +76,7 @@ class DefaultParams:
                                                 "N_bags": 200,
                                                 "n_samples": 20,
                                                 "ratio": 0,
-                                                "rand_seed": 51,
+                                                "rand_seed": None,
                                                 "bootstrapframe_name": 'bootstraped_microglia',
                                             },
                                 'Vectorizations': {"vect_method_parameters": self.vectorizer_params,

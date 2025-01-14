@@ -788,11 +788,11 @@ class Pipeline(object):
         ), "Missing `barcodes` column in info_frame..."
 
         if all(isinstance(item, list) for item in _morphoframe[barcode_column]):
-            is_list = True
-        elif all(isinstance(item, morphomics.cells.neuron.Neuron) for item in _morphoframe[barcode_column]):
+            is_list = True  
+        elif all(isinstance(item, np.ndarray) for item in _morphoframe[barcode_column]):
             is_list = False
         else:
-            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all Neuron instances.")
+            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all np array instances.")
 
         if is_list:
             _morphoframe = _morphoframe.explode(barcode_column)
