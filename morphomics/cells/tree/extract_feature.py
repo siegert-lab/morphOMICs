@@ -181,7 +181,7 @@ def get_direction_between(self, start_node_idx=0, end_node_idx=1):
         return vect / np.linalg.norm(vect)
     return vect
 
-def _vec_angle(u, v):
+def _vec_angle(self, u, v):
     """Return the angle between v and u in 3D."""
     c = np.dot(u, v) / np.linalg.norm(u) / np.linalg.norm(v)
     return np.arccos(c)
