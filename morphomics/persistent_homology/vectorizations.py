@@ -118,7 +118,7 @@ def lifespan_curve(ph, t_list = None, resolution = 1000):
     # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
     if t_list is None:
         t_list = np.linspace(np.min(ph), np.max(ph), resolution)
-    bars_length = get_lengths(ph, abs = False)
+    bars_length = get_lengths(ph, type="abs")
     # bar_differences = bar_differences.ravel().astype(float)
     lifespan_c = [np.sum([
                         bar_len if _index_bar(bar, t) else 0.
@@ -165,7 +165,7 @@ def stable_ranks(bar_lengths, prob, maxL, disc_steps):
     else:
         sr = np.array( [np.count_nonzero(bar_lengths >= x) for x in x_values] )
 
-    return np.vstack((x_values, sr))
+    return sr
 
 def histogram_stepped(ph):
     """Calculate step distance of ph data."""
@@ -214,7 +214,7 @@ def lifespan_hist(ph, bins = None, num_bins = 1000):
         bins = _subintervals(xlims=xlims, num_bins=num_bins)
     masks = _mask_bars(ph, bins)
 
-    bars_length = get_lengths(ph, abs = False)
+    bars_length = get_lengths(ph, type="abs")
     lifespan_h = [np.sum([
                         bar_len if m else 0.
                         for m, bar_len in zip(mask, bars_length)

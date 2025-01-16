@@ -156,12 +156,12 @@ class DimReducer(object):
         tsne_params = self.default_params.complete_with_default_params(tsne_params, 'tsne', type = 'dim_reduction')
 
         n_components = tsne_params["n_components"]
-        n_neighbors = tsne_params["n_neighbors"]
+        perplexity = tsne_params["perplexity"]
         lr = tsne_params["lr"]
         
         print("Running t-SNE...")
         fit_tsne = TSNE(n_components = n_components,
-                        perplexity = n_neighbors,
+                        perplexity = perplexity,
                         learning_rate = lr)
         
         reduced_vectors = fit_tsne.fit_transform(X = self.tmd_vectors)

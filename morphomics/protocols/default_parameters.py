@@ -18,7 +18,12 @@ class DefaultParams:
                                                         'barcode_weight': None,
                                                         },
                                   'curve': self.general_vect_params,
+                                  'lifespan_curve': self.general_vect_params,
+                                  'betti_curve': self.general_vect_params,
+                                  'life_entropy_curve': self.general_vect_params,
                                   'hist': self.general_vect_params,
+                                  'betti_hist': self.general_vect_params,
+                                  'lifespan_hist': self.general_vect_params,
                                   'stable_ranks': {'type': 'neg', 'density': False, 'bars_prob': False, 'resolution': 1000},
         }
         self.vectorizer_params['persistence_image'].update(self.general_vect_params)
@@ -35,8 +40,8 @@ class DefaultParams:
                                              "densmap": False,
                                              },
                                     'tsne': {'n_components': 2,
-                                             'n_neighbors': 50,
-                                             'lr': 0.01}
+                                             'perplexity': 50,
+                                             'lr': "auto"}
         }
         self.general_io_params ={"morphoframe_filepath": False,
                                 "morphoframe_name": 'microglia',

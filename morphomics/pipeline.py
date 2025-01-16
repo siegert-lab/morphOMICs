@@ -24,6 +24,10 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics import silhouette_score
 from skbio.stats.distance import DistanceMatrix
 from skbio.stats.distance import anosim
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.utils import resample
 
 import wandb
 
@@ -1099,6 +1103,58 @@ class Pipeline(object):
         -------
         
         """
+
+        def knn_class(distance_matrix, labels, n_neighbors=3):
+
+            min_class_size = labels.value_counts().min()
+
+            # Create a DataFrame to handle indices and labels
+            data = pd.DataFrame({'Index': np.arange(len(labels)), 'Label': labels})
+
+            # Downsample each class to the minimum size
+            downsampled_data = pd.concat([
+                resample(data[data['Label'] == label], 
+                        replace=False,  # Do not sample with replacement
+                        n_samples=min_class_size, 
+                        random_state=42)
+                for label in labels.unique()
+            ])
+
+            # Extract indices of downsampled samples
+            downsampled_indices = downsampled_data['Index'].values
+
+            # Subset the distance matrix and labels
+            distance_matrix = distance_matrix[np.ix_(downsampled_indices, downsampled_indices)]
+            labels = labels.iloc[downsampled_indices]
+
+            n_samples = distance_matrix.shape[0]
+            # Split labels into train and test sets
+            train_indices, test_indices = train_test_split(range(n_samples), test_size=0.3, random_state=42)
+
+            # Create train and test distance matrices
+            train_distance_matrix = distance_matrix[np.ix_(train_indices, train_indices)]
+            test_distance_matrix = distance_matrix[np.ix_(test_indices, train_indices)]
+
+            # Train and test labels
+            y_train = labels.iloc[train_indices]
+            y_test = labels.iloc[test_indices]
+
+            # Initialize KNeighborsClassifier with precomputed distances
+            knn = KNeighborsClassifier(n_neighbors=n_neighbors, metric='precomputed')
+
+            # Train the classifier
+            knn.fit(train_distance_matrix, y_train)
+
+            # Predict on the test set
+            y_pred = knn.predict(test_distance_matrix)
+
+            # Evaluate the results
+            #print("Accuracy:", accuracy_score(y_test, y_pred))
+            #print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+            return accuracy_score(y_test, y_pred)
+        
+
         self._set_default_params('Log_results')
         params = self.parameters["Log_results"]
 
@@ -1126,6 +1182,7 @@ class Pipeline(object):
 
 
         avg_test_statistic = 0
+        avg_acc = 0
         for check in checks:
             df = _morphoframe
             filtered_df = df[eval(check["filter"])].copy()
@@ -1142,13 +1199,18 @@ class Pipeline(object):
             
             result['test statistic']
 
+            acc = knn_class(distMat, filtered_df[check["crit"]], n_neighbors=5)
+
             avg_test_statistic += result['test statistic']
+            avg_acc += acc
 
             wandb.log({check["name"]+"_sil": sil_score})
             wandb.log({check["name"]+"_anosim": result['test statistic']})
+            wandb.log({check["name"]+"_acc": acc})
 
 
         wandb.log({"avg_test_statistic": avg_test_statistic/len(checks)})
+        wandb.log({"avg_acc": avg_acc/len(checks)})
             
 
         print("Logging of results done!")
