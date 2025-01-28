@@ -78,6 +78,8 @@ class DefaultParams:
                                                 },
                                 'Bootstrap': {"feature_to_bootstrap": ['pi', 'array'],
                                                 "bootstrap_conditions": ['Region', 'Model', 'Sex'],
+                                                "numeric_condition": False,
+                                                "numeric_condition_std": 1.5,
                                                 "N_bags": 200,
                                                 "n_samples": 20,
                                                 "ratio": 0,

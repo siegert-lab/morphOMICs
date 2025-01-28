@@ -296,10 +296,28 @@ class Vectorizer(object):
         
         scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
         maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
-        stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
+
+        if bars_prob != "long" or bars_prob != "short":
+            # Faster vectorized implementation
+            x_values = np.linspace(0, maxL_SR, num=resolution)
+            # Count the maximum length of the numpy arrays in scaled_bar_lengths
+            max_length = max(scaled_bar_lengths.apply(len))
+
+            # Create a new numpy array with dimensions number of rows in scaled_bar_lengths times the max length
+            scaled_bar_lengths_array = np.zeros((len(scaled_bar_lengths), max_length)) - 1
+
+            # Insert scaled_bar_lengths into the new numpy array
+            for i, row in enumerate(scaled_bar_lengths):
+                scaled_bar_lengths_array[i, :len(row)] = row
+
+            srs = np.array([np.count_nonzero(scaled_bar_lengths_array >= disc, axis=1) for disc in x_values]).T
+
+        else:
+            stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
+            srs = np.array(list(stable_r))
 
         print("sr done! \n")
-        return np.array(list(stable_r))
+        return srs
 
 
     def betti_hist(self):

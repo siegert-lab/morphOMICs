@@ -24,9 +24,9 @@ def filter_ph(ph, cutoff, method="<="):
 
         if len(cut_offs) >= 1:
             barcode_length = [ph[i] for i in cut_offs]
-            return barcode_length
+            return np.array(barcode_length)
     
-    return []
+    return np.array([])
 
 def tmd_scale(barcode, thickness):
     """Scale the first two components according to the thickness parameter.

@@ -697,6 +697,8 @@ class Pipeline(object):
 
         feature_to_bootstrap = params["feature_to_bootstrap"]
         bootstrap_conditions = params["bootstrap_conditions"]
+        numeric_condition = params["numeric_condition"]
+        numeric_condition_std = params["numeric_condition_std"]
 
         N_bags = params["N_bags"]
         n_samples = params["n_samples"]
@@ -726,6 +728,8 @@ class Pipeline(object):
                 _morphoframe_copy,
                 feature_to_bootstrap = feature_to_bootstrap,
                 bootstrap_conditions = bootstrap_conditions,
+                numeric_condition = numeric_condition,
+                numeric_condition_std = numeric_condition_std,
                 N_bags = N_bags,
                 replacement = True,
                 n_samples = n_samples,
@@ -1171,7 +1175,10 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath, 
                                            variable_name = morphoframe_name)
         
-        artifact = wandb.Artifact("reduced_info", type="reduced_info")
+        run_id = wandb.run.id
+        artifact = wandb.Artifact(f"reduced_info_{run_id}", type="reduced_info")
+        artifact.metadata = {"run_id": wandb.run.id, "sweep_name": wandb.run.sweep_id}
+
         csv_filepath = self._set_filename(protocol_name = "Save_reduced", 
                                               save_folderpath = self.parameters["Save_reduced"]["save_folderpath"], 
                                               save_filename = self.parameters["Save_reduced"]["save_filename"],
@@ -1208,9 +1215,9 @@ class Pipeline(object):
             wandb.log({check["name"]+"_anosim": result['test statistic']})
             wandb.log({check["name"]+"_acc": acc})
 
-
-        wandb.log({"avg_test_statistic": avg_test_statistic/len(checks)})
-        wandb.log({"avg_acc": avg_acc/len(checks)})
+        if len(checks) > 1:
+            wandb.log({"avg_test_statistic": avg_test_statistic/len(checks)})
+            wandb.log({"avg_acc": avg_acc/len(checks)})
             
 
         print("Logging of results done!")
