@@ -1,5 +1,5 @@
 import warnings
-
+import torch.nn as nn
 """
 Contains all the default parameters for mehtods in Pipeline, Vectorizer and Dim_reducer. 
 """
@@ -41,7 +41,18 @@ class DefaultParams:
                                              },
                                     'tsne': {'n_components': 2,
                                              'perplexity': 50,
-                                             'lr': "auto"}
+                                             'lr': "auto"
+                                             },
+                                    'vae': {'n_components': 2,      
+                                            'nn_layers': [64, 32, 16, 8], 
+                                            'activation_layer': nn.SELU,
+                                            'batch_layer_norm': False,
+                                            'optimizer': 'cocob',
+                                            'learning_rate': None,
+                                            'scheduler': None,
+                                            'nb_epochs': 100,
+                                            'batch_size': 32,
+                                            }
         }
         self.general_io_params ={"morphoframe_filepath": False,
                                 "morphoframe_name": 'microglia',

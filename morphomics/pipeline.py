@@ -445,7 +445,7 @@ class Pipeline(object):
             barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
             feature_to_filter (list, [col_name, min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
                                                                         lim_type can be relative or absolute, 
-                                                                        i.e. the min and max represnt values of the feature or percentile of the feature disctribution.
+                                                                        i.e. the min and max reprsent values of the feature or percentile of the feature disctribution.
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): Location where to save the variable.
 
@@ -605,7 +605,7 @@ class Pipeline(object):
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
         
-        extendedframe_name = params["extendedframe_name"]
+        # extendedframe_name = params["extendedframe_name"]
 
         feature_to_subsample = params["feature_to_subsample"]
         #could be a ratio of the number of bars
@@ -623,29 +623,27 @@ class Pipeline(object):
         _morphoframe_copy = _morphoframe.copy()
         features = _morphoframe_copy[feature_to_subsample]
         _morphoframe_copy[feature_to_subsample + "_not_subsampled"] = _morphoframe_copy[feature_to_subsample]
+        
         if feature_to_subsample == "barcodes":
             main_branches = params["main_branches"]
             k_elements = params["k_elements"]
-            _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(#feature_to_subsample = feature_to_subsample,
-                                                                                        feature_list = features, 
+            _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(feature_list = features, 
                                                                                         main_branches = main_branches)
             probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
-                                                                                                        feature_list = features,
-                                                                                                        probas = probas, 
-                                                                                                        k_elements = k_elements, 
-                                                                                                        n_samples = n_samples, 
-                                                                                                        rand_seed = rand_seed,
-                                                                                                        main_branches = main_branches)
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_w_replacement(feature_list = features,
+                                                                                        probas = probas, 
+                                                                                        k_elements = k_elements, 
+                                                                                        n_samples = n_samples, 
+                                                                                        rand_seed = rand_seed,
+                                                                                        main_branches = main_branches)
         else:
             _type = params['type']
             number = params['nb_sections']
             _morphoframe_copy[feature_to_subsample] = subsampler.subsample_trees(feature_list = features,
-                                                                                                type = _type,
-                                                                                                number = number,
-                                                                                                n_samples = n_samples, 
-                                                                                                rand_seed = rand_seed,)
-
+                                                                                    _type = _type,
+                                                                                    number = number,
+                                                                                    n_samples = n_samples, 
+                                                                                    rand_seed = rand_seed,)
 
         # initialize output filename
         default_save_filename = "Subsampled"
@@ -658,7 +656,7 @@ class Pipeline(object):
         self.morphoframe[morphoframe_name] = _morphoframe_copy
 
         # save the file 
-        if params["save_data"]:
+        if save_data:
             io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
 

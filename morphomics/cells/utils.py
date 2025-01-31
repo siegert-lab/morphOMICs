@@ -30,3 +30,11 @@ class LoadNeuronError(Exception):
 
 class TmdError(Exception):
     """Specific exception raised by TMD."""
+
+from itertools import combinations
+
+def get_pairs(elements):
+    all_combinations = combinations(elements, 2)
+    # Convert to a list of lists (optional)
+    all_combinations = [list(comb) for comb in all_combinations]
+    return all_combinations

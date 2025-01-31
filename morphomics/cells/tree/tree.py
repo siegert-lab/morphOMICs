@@ -49,6 +49,8 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_way_length
     from morphomics.cells.tree.extract_feature import get_way_order
     from morphomics.cells.tree.extract_feature import get_nodes_way_order
+    from morphomics.cells.tree.extract_feature import get_all_ways
+
     
     from morphomics.cells.tree.extract_feature import get_edges_coords
     from morphomics.cells.tree.extract_feature import get_edges_length
@@ -59,6 +61,10 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_direction_between
     from morphomics.cells.tree.extract_feature import _vec_angle
     from morphomics.cells.tree.extract_feature import get_angle_between_sections
+    from morphomics.cells.tree.extract_feature import get_way_consecutive_angles
+
+    from morphomics.cells.tree.extract_feature import get_all_consecutive_angles
+    from morphomics.cells.tree.extract_feature import get_bifurcation_angles
 
     from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
     from morphomics.cells.tree.extract_feature import get_nodes_path_distance
@@ -231,6 +237,7 @@ class Tree:
             elif _type == 'prune':
                 way = self.prune_branch(leaf, nb_nodes = number)
             subsampled_nodes.update(way)
+            
         subsampled_nodes = list(subsampled_nodes)
         if len(subsampled_nodes) == 0:
             subsampled_nodes = [0]

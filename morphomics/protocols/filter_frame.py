@@ -9,7 +9,7 @@ def remove_extremes_absolute(df, col_name, min = None, max = None):
         
     # Filter out values outside the [low_limit, high_limit] range
     filtered_df = df[(df[col_name] >= min) & (df[col_name] <= max)]
-    extreme_df = (df[col_name] < min) | (df[col_name] > max)
+    extreme_df = df[(df[col_name] < min) | (df[col_name] > max)]
     return filtered_df, extreme_df
 
 # Define a function to filter out the extremes based on percentiles

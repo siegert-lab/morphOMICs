@@ -4,6 +4,7 @@ from collections import OrderedDict
 from itertools import starmap
 from morphomics.utils import distances
 import scipy.sparse as sp
+from morphomics.cells import utils
 
 def size(self):
     """Tree method to get the size of the tree list.
@@ -98,6 +99,17 @@ def get_nodes_way_order(self):
       of sections between nodes and root."""
     return np.array([self.get_way_order(i) for i in range(self.size())])
 
+def get_all_ways(self):
+    # Get all the ways from the root to the leaves
+    # The ways
+    way_list = []
+    t_tips = self.get_terminations()
+
+    for tip in t_tips:
+        way = self.get_way_to_root(tip)
+        way_list.append(way[::-1])
+    return way_list
+
 # Edges features
 def get_edges_coords(self, seg_ids=None):
     """Return edges coordinates.
@@ -183,7 +195,11 @@ def get_direction_between(self, start_node_idx=0, end_node_idx=1):
 
 def _vec_angle(self, u, v):
     """Return the angle between v and u in 3D."""
-    c = np.dot(u, v) / np.linalg.norm(u) / np.linalg.norm(v)
+    norm_u = np.linalg.norm(u) 
+    norm_v = np.linalg.norm(v)
+    c = np.dot(u, v) / (norm_u*norm_v)
+    c = np.clip(c, -1, 1)
+
     return np.arccos(c)
 
 def get_angle_between_sections(self, sec1_ids, sec2_ids):  # noqa: D417
@@ -202,8 +218,55 @@ def get_angle_between_sections(self, sec1_ids, sec2_ids):  # noqa: D417
 
     return _vec_angle(u, v)
 
+def get_way_consecutive_angles(self, leaf):
+    # Get angles between edges from the root to the leaf
+    way = self.get_way_to_root(leaf)
+    way= way[::-1]
+    angle_list = []
+    node0 = way[0]
+    node1 = way[1]
+    u = self.get_direction_between(node0, node1)
+
+    for idx in range(len(way)-2):
+        node2 = way[idx+2]
+        v = self.get_direction_between(node1, node2)
+        angle = self._vec_angle(u, v)
+        angle_list.append(angle)
+        v = u
+        node1 = node2
+    return angle_list
+
+def get_all_consecutive_angles(self):
+    all_leaves = self.get_terminations()
+    # The angles
+    angle_list = []
+    for leaf in all_leaves:
+        consecutive_angles = self.get_way_consecutive_angles(leaf)
+    angle_list += consecutive_angles
+    return angle_list
+
+def get_bifurcation_angles(self): 
+    multifurcation_idcs_list = self.get_multifurcations()
+    children =  self.get_children()
+    angle_list = []
+    for m in multifurcation_idcs_list:
+        m_children = children[m]
+        node0 = m
+        c_dir_list = []
+        for c in m_children:
+            node1 = c
+            c_direction = self.get_direction_between(node0, node1)
+            c_dir_list.append(c_direction)
+        
+        pairs = utils.get_pairs(c_dir_list)
+        for pair in pairs:
+            u, v = pair
+            angle = self._vec_angle(u, v)
+            angle_list.append(angle)
+    return angle_list
+
 # Nodes features to be used for topological extraction
-def get_nodes_radial_distance(self, point=None, dim="xyz"):
+def get_nodes_radial_distance(self, point = None, dim = "xyz"):
     """Tree method to get radial distances from nodes in a Tree.
 
     If point is None, the soma surface -defined by

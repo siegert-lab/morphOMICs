@@ -3,7 +3,8 @@ from morphomics.protocols.default_parameters import DefaultParams
 from sklearn.decomposition import PCA, KernelPCA, TruncatedSVD, TruncatedSVD
 import umap
 from sklearn.manifold import TSNE
-
+from morphomics.nn_models import vae, criterion, cocob, train_test
+import torch.optim as optim
 
 class DimReducer(object):
 
@@ -170,7 +171,72 @@ class DimReducer(object):
 
 
 
-    def autoencoder(self):
-        return
+    def vae(self):
+        ''' Dim reduction of tmd vectors with encoder of variaational autoencoder.
+
+        Parameters
+        ----------
+        pca_params (dict): the parameters for the vae:
+            n_components (int): The dimension of the space to embed into. This defaults to 2 to provide easy visualization, 
+                but can reasonably be set to any integer value in the range 2 to 100.
+
+        Returns
+        -------
+        fit_vae (torch.nn.Module): The fitted instance.
+        reduced_vectors (np.array): The dim reduced vectors.
+        '''
+        vae_params = self.dimred_parameters["pca"]
+        vae_params = self.default_params.complete_with_default_params(vae_params, 'vae', type = 'dim_reduction')
+        
+        n_components = vae_params['n_components']
+        nn_layers = vae_params['nn_layers']
+        activation_layer = vae_params['activation_layer']
+        batch_layer_norm = vae_params['batch_layer_norm']
+        optimizer = vae_params['optimizer']
+        lr = vae_params['learning_rate']
+        scheduler = vae_params['scheduler']
+        nb_epochs = vae_params['nb_epochs']
+        batch_size = vae_params['batch_size']
+
+        # Set the vae
+        input_dim = self.tmd_vectors.shape[1]
+        model = vae.VAE(input_dim = input_dim, 
+                        latent_dim = n_components, 
+                        encoder_hidden_dimensions = nn_layers, 
+                        decoder_hidden_dimensions = nn_layers[::-1],
+                        batch_layer_norm = batch_layer_norm,
+                        activation = activation_layer)
+
+        loss_fn = criterion.VAELoss()
+
+        if optimizer == 'adam':
+            optimizer = optim.Adam(model.parameters(), lr = lr, weight_decay=1e-3)
+        elif optimizer == 'cocob':
+            optimizer = cocob.COCOBBackprop(model.parameters())
+        else:
+            print("This optimizer is not available")
+        
+        if scheduler is not None:
+            # Define the learning rate scheduler
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=20)
+        
+        # Train the vae
+        trained_model = train_test.vae_train(data = self.tmd_vectors,
+                                            model = model, 
+                                            sample_size = 3,
+                                            optimizer = optimizer, 
+                                            loss_fn = loss_fn, 
+                                            epochs = nb_epochs, 
+                                            batch_size = batch_size,
+                                            scheduler = scheduler)
+        
+        pred, z_mean, z_log_var, mse = train_test.vae_test(data = self.tmd_vectors,
+                                                            model = trained_model, 
+                                                            sample_size = 3,
+                                                        )
+        reduced_vectors = z_mean
+        
+        return trained_model, reduced_vectors
 
  
+    
