@@ -110,11 +110,12 @@ def get_bootstrap_frame(
     _info_frame = info_frame.copy()
     _info_frame = _info_frame[keys_list]
     
+    if numeric_condition:
+        _info_frame["Time"] = _info_frame["Time"].apply(extract_and_convert)
+
     # Creating condition for bootstrap.
     _info_frame['condition'] = _info_frame[bootstrap_conditions].apply(lambda x: '-'.join(x), axis=1)
     condition_list = _info_frame['condition'].unique()
-    
-    _info_frame["Time"] = _info_frame["Time"].apply(extract_and_convert)
 
     bootstrap_frame_list = []
     for condition in condition_list:
@@ -147,13 +148,14 @@ def get_bootstrap_frame(
                 sampled_idxs_list.append(sampled_idxs)
 
         else:
-            # Get the list of the bags. A bag is composed of randomly chose sampled indxs.    
+            # Get the list of the bags. A bag is composed of randomly chose sampled indcs.    
             # But if the nb of samples is higher than the size of the pop, n_samples is reajusted.
             if not replacement and n_samples > pop_length:
-                sampled_idxs_list = [np.random.choice(pop_idxs, pop_length, replace=replacement) 
-                                    for _ in range(N_bags)]
+                _size = pop_length
+            else:
+                _size = n_samples
             
-            sampled_idxs_list = [np.random.choice(pop_idxs, n_samples, replace=replacement) 
+            sampled_idxs_list = [np.random.choice(pop_idxs, size = _size, replace=replacement) 
                                 for _ in range(N_bags)]
 
         bootstraped_bag_list = []

@@ -678,6 +678,7 @@ class Pipeline(object):
             N_bags (int): Number of bootstrapped/averaged points in one population (i.e. per combination of conditions).
             n_samples (int): Number of sampled points to create a bootstrapped point.
             ratio (float): Only used if n_samples = 0. A number between 0 and 1, defines the number of samples per population with respect to the pop size. 
+            replacement (bool): When sampling to average for bootstrap, is it a sampling with or without replacement.
             bootstrapframe_name (str): Where the bootstrapped morphoframe will be stored.
             save_data (bool): Trigger to save output of protocol.
             save_folderpath (str): Location where to save the data.
@@ -701,6 +702,7 @@ class Pipeline(object):
         N_bags = params["N_bags"]
         n_samples = params["n_samples"]
         ratio = params["ratio"]
+        replacement = params["replacement"]
 
         rand_seed = params["rand_seed"]
 
@@ -729,7 +731,7 @@ class Pipeline(object):
                 numeric_condition = numeric_condition,
                 numeric_condition_std = numeric_condition_std,
                 N_bags = N_bags,
-                replacement = True,
+                replacement = replacement,
                 n_samples = n_samples,
                 ratio = ratio,
                 rand_seed = rand_seed,

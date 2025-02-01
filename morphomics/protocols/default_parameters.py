@@ -94,6 +94,7 @@ class DefaultParams:
                                                 "N_bags": 200,
                                                 "n_samples": 20,
                                                 "ratio": 0,
+                                                "replacement": True,
                                                 "rand_seed": None,
                                                 "bootstrapframe_name": 'bootstraped_microglia',
                                             },
