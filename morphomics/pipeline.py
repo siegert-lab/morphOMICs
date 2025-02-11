@@ -13,6 +13,7 @@ from morphomics.protocols.dim_reducer import DimReducer
 from morphomics.protocols import plotting
 from morphomics.persistent_homology import ph_transformations
 from morphomics.persistent_homology import pi_transformations
+from morphomics.persistent_homology.ph_analysis import get_lengths
 
 from morphomics.utils import vectorization_codenames
 from sklearn.preprocessing import Normalizer, StandardScaler
@@ -443,9 +444,10 @@ class Pipeline(object):
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be filtered out.
             barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
-            feature_to_filter (list, [col_name, min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
-                                                                        lim_type can be relative or absolute, 
-                                                                        i.e. the min and max reprsent values of the feature or percentile of the feature disctribution.
+            feature_to_filter (dict, col_name :[min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
+            !!!! For now can only be 'nb_trunks', 'max_length_bar', 'nb_bars'
+                                                            lim_type can be relative or absolute, 
+                                                            i.e. the min and max reprsent values of the feature or percentile of the feature disctribution.
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): Location where to save the variable.
 
@@ -476,20 +478,42 @@ class Pipeline(object):
             drop=True
         )
         
-        extreme_df = pd.DataFrame({})
-
         # barcode size filtering
         _morphoframe = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
 
-        for feature_to_filter_params in features_to_filter:
-            col_name, _min, _max, _type = feature_to_filter_params
-            if _type == 'relative':
-                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(df = _morphoframe, col_name = col_name, 
-                                                     min = _min, max = _max)
-            else:
-                 _morphoframe, sub_extreme_df = filter_frame.remove_extremes_absolute(df = _morphoframe, col_name = col_name, 
-                                                     low_percentile = _min, high_percentile = _max)
+        cells = _morphoframe.copy()
+        my_population = Population(cells_frame = cells)
+        my_population.combine_neurites()
+
+        # Compute tree features to filter out
+        if 'nb_trunks' in features_to_filter.keys():
+            my_population.apply_tree_method('get_node_children_number', col_name='nb_children')
+            my_population.cells['nb_trunks'] = my_population.cells['nb_children'].apply(lambda nb_children: nb_children[0])
+
+        if 'max_length_bar' in features_to_filter.keys():
+            my_population.cells['max_length_bar'] = my_population.cells['barcodes'].apply(lambda barcode: max(get_lengths(barcode)))
+
+        if 'nb_bars' in features_to_filter.keys():
+            my_population.cells['nb_bars'] = my_population.cells['barcodes'].apply(lambda barcode: len(barcode))
+
+        _morphoframe = my_population.cells
+
+        extreme_df = pd.DataFrame()
+
+        for feature_to_filter_names in features_to_filter.keys():
+            feature_to_filter_params = features_to_filter[feature_to_filter_names]
+            _min, _max, _type = feature_to_filter_params
             
+            if _type == 'relative':
+                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(
+                    df=_morphoframe, col_name=feature_to_filter_names, min=_min, max=_max
+                )
+            else:
+                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_absolute(
+                    df=_morphoframe, col_name=feature_to_filter_names, low_percentile=_min, high_percentile=_max
+                )
+
+            extreme_df = pd.concat([extreme_df, sub_extreme_df]).drop_duplicates()
 
         # initialize output filename
         default_save_filename = "Filter_frame"
@@ -500,12 +524,15 @@ class Pipeline(object):
                                               save_data = save_data)
         
         self.morphoframe[morphoframe_name] = _morphoframe
-
+        self.morphoframe[morphoframe_name +'_extremes'] = extreme_df
         # save the file 
         if save_data:
             print("Saving filtered morphoframe in %s"%(save_filename))
             io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            io.save_obj(self.morphoframe[morphoframe_name + '_extremes'], save_filepath + '_extremes')
+
             print("The filtered morphoframe is saved in %s" %(save_filepath))
+            print("The extreme morphoframe is saved in %s" %(save_filepath + '_extremes'))
 
         print("Filtering done!")        
         print("")  
@@ -907,11 +934,20 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
         _morphoframe_copy = _morphoframe.copy()
-
         vectorization_list = vectors_to_reduce.split('_')
+      
         _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy.apply(lambda row: np.concatenate([row[col] for col in vectorization_list]), axis=1)
+        
+        if normalize and len(_morphoframe_copy[vectors_to_reduce].iloc[0].shape) == 2:
+            def normalize_array(arr):
+                arr_min = arr.min()
+                arr_max = arr.max()
+                return 2 * (arr - arr_min) / (arr_max - arr_min) - 1  # Normalizes to [-1, 1]
+            print("Normalize the images")
 
-        X = np.vstack(_morphoframe_copy[vectors_to_reduce])
+            _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy[vectors_to_reduce].apply(normalize_array)
+
+        X = np.stack(_morphoframe_copy[vectors_to_reduce])
         
         dimred_methods = dimred_method_parameters.keys()
         dimred_method_names = '_'.join(list(dimred_methods))
@@ -930,7 +966,7 @@ class Pipeline(object):
             X = filtered_image
 
         # normalize data 
-        if normalize:
+        if normalize and len(X[0].shape) == 1:
             print("Normalize the vectors")
             normalizer = Normalizer()
             X = normalizer.fit_transform(X)
@@ -953,12 +989,17 @@ class Pipeline(object):
         fit_dimreducers = []
         for dimred_method in dimred_methods:
             perform_dimred_method = getattr(dimreducer, dimred_method)
-            fit_dimreducer, reduced_vectors = perform_dimred_method()
+            if dimred_method == 'vae' or dimred_method == 'vaecnn':
+                fit_dimreducer, reduced_vectors, mse = perform_dimred_method()
+            else:
+                fit_dimreducer, reduced_vectors = perform_dimred_method()
 
             fit_dimreducers.append(fit_dimreducer)
    
             dimreducer.tmd_vectors = reduced_vectors
-
+        
+        if "mse" in self.metadata.keys():
+            self.metadata['mse'] = mse
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
         self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
@@ -1389,7 +1430,7 @@ class Pipeline(object):
             Empty_indicator (str): column name in morphoframe which will be the indicator for empty morphologies
             temp_folder (str): location where to store .swc files that contain spaces in their filename
             Lmeasure_functions (list, (str, str)) or None: list containing morphometric quantities of interests, 
-            must be (Lmeasure function, "TotalSum", "Maximum", "Minimum", "Average")
+                must be (Lmeasure function, "TotalSum", "Maximum", "Minimum", "Average")
             Morphometric_colname (str): key to the metadata where the morphometrics will be stored
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data

@@ -27,6 +27,13 @@ class DefaultParams:
                                   'stable_ranks': {'type': 'neg', 'density': False, 'bars_prob': False, 'resolution': 1000},
         }
         self.vectorizer_params['persistence_image'].update(self.general_vect_params)
+        self.general_dl_params = {'batch_layer_norm': False,
+                                'optimizer': 'cocob',
+                                'learning_rate': None,
+                                'momentum': 0.9,
+                                'scheduler': False,
+                                'nb_epochs': 100,
+                                'batch_size': 32,}
         self.dimreducer_params = {'pca': {"n_components": 20,
                                           "svd_solver": False,
                                           "pca_version": 'standard',
@@ -46,14 +53,14 @@ class DefaultParams:
                                     'vae': {'n_components': 2,      
                                             'nn_layers': [64, 32, 16, 8], 
                                             'activation_layer': nn.SELU,
-                                            'batch_layer_norm': False,
-                                            'optimizer': 'cocob',
-                                            'learning_rate': None,
-                                            'scheduler': None,
-                                            'nb_epochs': 100,
-                                            'batch_size': 32,
+                                            },
+                                    'vaecnn': {'n_components': 2,      
+                                            'nn_layers': [8, 16, 32], 
                                             }
         }
+        self.dimreducer_params['vae'].update(self.general_dl_params)
+        self.dimreducer_params['vaecnn'].update(self.general_dl_params)
+
         self.general_io_params ={"morphoframe_filepath": False,
                                 "morphoframe_name": 'microglia',
                                 "save_data": False,
@@ -72,7 +79,9 @@ class DefaultParams:
                                                 "restrict_conditions": []
                                                 },
                                 'Filter_frame': {"barcode_size_cutoff": 5,
-                                                 "features_to_filter": [],
+                                                 "features_to_filter": {'nb_trunks':[0, 10, 'abs'],
+                                                                        'max_length_bar':[0, 150, 'abs'],
+                                                                        'nb_bars':[5, 250, 'abs']},
                                                  },
                                 'Filter_morpho': {"barlength_cutoff": [],
                                                 "exclude_sg_branches": True,

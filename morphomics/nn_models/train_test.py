@@ -2,13 +2,18 @@ import torch
 import torch_geometric 
 from tqdm import tqdm
 import numpy as np
-
+from .criterion import VAELoss
 def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, scheduler=None):
-    
+    # If it is an image add a channel dim
+    if len(data.shape) == 3:
+        data = data.unsqueeze(1)  # Adds a channel dimension, so the shape becomes (batch_size, 1, 100, 100)
+
     # Create a DataLoader with shuffling enabled (it's already shuffled each epoch)
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
-    x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
-    kl_factor_list = 1 - np.exp(-x_values)  # Calculate y = 1 - exp(-x)
+
+    # Create kl factors
+    x_values = np.linspace(1, 7, epochs)  # Generate 100 points between 0 and 5
+    kl_factor_list = (1 - np.exp(-x_values))/200
 
     # Loop through the epochs
     for epoch in range(epochs):
@@ -22,9 +27,8 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
 
             # Pass the input through the model
             out, z_mean, z_log_var = model(x, sample_size=sample_size)
-            
             # Calculate the loss
-            loss, mse = loss_fn(x, out, z_mean, z_log_var, kl_factor_list[epoch])
+            loss, mse = loss_fn.forward(x, out, z_mean, z_log_var, kl_factor_list[epoch])
             
             # Backpropagate
             loss.backward()
@@ -38,9 +42,10 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
 
         # Print the loss every 10 epochs
         if epoch % 10 == 0:
-            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}')
-            current_lr = optimizer.param_groups[0]['lr']
-            print(f'Epoch {epoch}, Current Learning Rate: {current_lr}')
+            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}, i: {i}')
+            if scheduler:
+                current_lr = optimizer.param_groups[0]['lr']
+                print(f'Epoch {epoch}, Current Learning Rate: {current_lr}')
         
         # Step the learning rate scheduler if provided
         if scheduler:
@@ -48,17 +53,18 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
 
     return model
 
-def vae_test(data, model, sample_size, loss_fn = None):
-    
+def vae_test(data, model, sample_size):
+    # If it is an image add a channel dim
+    if len(data.shape) == 3:
+        data = data.unsqueeze(1)  # Adds a channel dimension, so the shape becomes (batch_size, 1, 100, 100)
+    criterion = VAELoss()
+    criterion.eval()
     model.eval()
     with torch.no_grad():
         # Pass the data through the model
         out, z_mean, z_log_var = model(data, sample_size = sample_size)
-
         # compute mse
-        x_expanded = data.unsqueeze(0).expand(*out.shape)
-        l2 = torch.norm(out - x_expanded, dim = -1, p=2)
-        mse = torch.mean(l2)
+        mse = criterion.get_mse(data, out)
 
     return out, z_mean, z_log_var, mse
 

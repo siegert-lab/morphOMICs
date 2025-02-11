@@ -8,7 +8,7 @@ def remove_extremes_absolute(df, col_name, min = None, max = None):
         max = np.inf
         
     # Filter out values outside the [low_limit, high_limit] range
-    filtered_df = df[(df[col_name] >= min) & (df[col_name] <= max)]
+    filtered_df = df[(df[col_name] >= min) & (df[col_name] <= max)].reset_index(drop=True)
     extreme_df = df[(df[col_name] < min) | (df[col_name] > max)]
     return filtered_df, extreme_df
 
