@@ -37,7 +37,7 @@ Lmeasure_FunctionList = [
     "Branch_pathlength",
     "Contraction",
     "Fragmentation",
-    #"Daughter_Ratio",                  # All these ones don't work too for some .swc
+    #"Daughter_Ratio",                  # All these ones don't work for some .swc
     # "Parent_Daughter_Ratio",
     # "Partition_asymmetry",
     "Rall_Power",
@@ -173,18 +173,29 @@ def compute_morphometrics_distribution(filenames_to_process, Lm_functions, bins=
     return np.array(morphometric_quantities), np.array(morphometric_bins)
 
 
-def compute_lmeasures(filenames, Lmeasure_functions = None, histogram = False, bins = 100, tmp_folder = ''):
+def compute_lmeasures(filenames, 
+                      Lmeasure_functions = None, 
+                      histogram = False, 
+                      bins = 100, 
+                      tmp_folder = ''):
     '''This Python function processes SWC files for morphometric analysis using pyLmeasure and returns the
     calculated morphometric quantities.
     '''
     # Lmeasure does not like filenames with spaces
+    if "nt" in os.name:
+        char0 = '%s\\tmp%d.swc'
+        char1 = "\\"
+    else:
+        char0 = '%s/tmp%d.swc'
+        char1 = "/"
+
     filenames_to_process = []
     tmp_ind = 0
     for filename in filenames:
         space_in_filename = " " in filename
         if space_in_filename:
-            os.system("cp '%s' '%s/tmp%d.swc'" % (filename, tmp_folder, tmp_ind))
-            filename = "%s/tmp%d.swc" % (tmp_folder, tmp_ind)
+            os.system("cp '%s' '%s'" % (filename, char0 % (tmp_folder, tmp_ind)))
+            filename = char0 % (tmp_folder, tmp_ind)
             tmp_ind = tmp_ind + 1
         filenames_to_process.append(filename)
     if tmp_ind > 0:
@@ -206,7 +217,7 @@ def compute_lmeasures(filenames, Lmeasure_functions = None, histogram = False, b
     # Remove temporary files
     if tmp_ind > 0:
         print("Removing temporary files...")
-        for file_path in glob.glob(f"{tmp_folder}/tmp*.swc"):
+        for file_path in glob.glob(f"{tmp_folder}{char1}tmp*.swc"):
             os.remove(file_path)
     if not histogram:
         return morphometric_quantities, Lm_functions, Lm_quantities

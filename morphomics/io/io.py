@@ -115,19 +115,28 @@ def get_info_frame(
     Returns:
         DataFrame: dataframe containing conditions, 'file_name', 'file_path' and 'neuron'
     """
+    if "nt" in os.name:
+        char0 = "%s%s\\*%s"
+        char1 = "\\*"
+        char2 = "\\"
+    else:
+        char0 = "%s%s/*%s"
+        char1 = "/*"
+        char2 = "/"  
+
     print(os.getcwd())
 
     print("You are now collecting the 3D reconstructions (.swc files) from this folder: \n%s\n"%folder_location)
     
     # get all the file paths in folder_location
     filepaths = glob.glob(
-        "%s%s/*%s" % (folder_location, "/*" * len(conditions), extension)
+        char0 % (folder_location, char1 * len(conditions), extension)
     )
     print("Found %d files..." % len(filepaths))
 
     # convert the filepaths to array for metadata
     file_info = np.array(
-        [_files.replace(folder_location, "").split("/")[1:] for _files in filepaths]
+        [_files.replace(folder_location, "").split(char2)[1:] for _files in filepaths]
     )
 
     # create the dataframe for the population of cells

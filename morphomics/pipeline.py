@@ -111,6 +111,13 @@ class Pipeline(object):
         save_filepath (str): The path of the file containing the output of the protocol.
         Also, update save_folderpath and save_filename of the protocol in self.parameters.
         """
+
+        if "nt" in os.name:
+            char0 = "%s\\%s"
+
+        else:
+            char0 = "%s/%s"
+
         if save_data:
             if save_filename == 0:
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
@@ -118,7 +125,7 @@ class Pipeline(object):
                 self.parameters[protocol_name]["save_filename"] = save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
-            save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
+            save_filepath = char0 % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
             save_filepath = None
 
