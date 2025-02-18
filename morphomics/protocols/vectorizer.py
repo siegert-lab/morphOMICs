@@ -208,7 +208,6 @@ class Vectorizer(object):
         pis = pi_list.apply(lambda pi: pi/norm_m(pi) if len(pi)>0 else np.nan)
     
         print("pi done! \n")
-        print(np.array(pis).shape)
         return np.array(list(pis))
 
 

@@ -506,14 +506,14 @@ class Pipeline(object):
             
             if _type == 'relative':
                 _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(
-                    df=_morphoframe, col_name=feature_to_filter_names, min=_min, max=_max
+                    df=_morphoframe, col_name=feature_to_filter_names, low_percentile=_min, high_percentile=_max
                 )
             else:
                 _morphoframe, sub_extreme_df = filter_frame.remove_extremes_absolute(
-                    df=_morphoframe, col_name=feature_to_filter_names, low_percentile=_min, high_percentile=_max
+                    df=_morphoframe, col_name=feature_to_filter_names, min=_min, max=_max
                 )
 
-            extreme_df = pd.concat([extreme_df, sub_extreme_df]).drop_duplicates()
+            extreme_df = pd.concat([extreme_df, sub_extreme_df])
 
         # initialize output filename
         default_save_filename = "Filter_frame"

@@ -72,7 +72,6 @@ class DefaultParams:
                                             "conditions": ['Region', 'Model', 'Sex', 'Animal'],
                                             "separated_by": None,
                                             },
-                                'Load_data': {},
                                 'TMD': {"filtration_function": 'radial_distance',
                                         },
                                 'Clean_frame': {"combine_conditions": [],

@@ -12,8 +12,8 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
 
     # Create kl factors
-    x_values = np.linspace(1, 7, epochs)  # Generate 100 points between 0 and 5
-    kl_factor_list = (1 - np.exp(-x_values))/200
+    x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
+    kl_factor_list = (1 - np.exp(-x_values))
 
     # Loop through the epochs
     for epoch in range(epochs):
