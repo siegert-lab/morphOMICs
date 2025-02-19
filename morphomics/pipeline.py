@@ -4,19 +4,33 @@ import morphomics
 from morphomics.io import io
 
 from morphomics.cells.population.population import Population
-
 from morphomics.protocols.default_parameters import DefaultParams
+from morphomics.protocols import cleaner, filter_frame, filter_morpho
 from morphomics.protocols import subsampler
+from morphomics.protocols import morphometrics
 from morphomics.protocols.vectorizer import Vectorizer
 from morphomics.protocols.dim_reducer import DimReducer
 from morphomics.protocols import plotting
+from morphomics.persistent_homology import ph_transformations
+from morphomics.persistent_homology import pi_transformations
+from morphomics.persistent_homology.ph_analysis import get_lengths
 
-from morphomics.utils import save_obj, load_obj, vectorization_codenames
+from morphomics.utils import vectorization_codenames
 from sklearn.preprocessing import Normalizer, StandardScaler
 
 import numpy as np
 import pandas as pd
 
+from scipy.spatial.distance import cdist
+from sklearn.metrics import silhouette_score
+from skbio.stats.distance import DistanceMatrix
+from skbio.stats.distance import anosim
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.utils import resample
+
+import wandb
 
 
 class Pipeline(object):
@@ -73,7 +87,7 @@ class Pipeline(object):
 
         if variable_filepath:
             print("Loading %s file..." %(variable_filepath))
-            _morphoframe = morphomics.utils.load_obj(variable_filepath.replace(".pkl", ""))
+            _morphoframe = io.load_obj(variable_filepath.replace(".pkl", ""))
         elif morphoframe:
             _morphoframe = self.morphoframe[variable_name]  
         else:
@@ -97,6 +111,13 @@ class Pipeline(object):
         save_filepath (str): The path of the file containing the output of the protocol.
         Also, update save_folderpath and save_filename of the protocol in self.parameters.
         """
+
+        if "nt" in os.name:
+            char0 = "%s\\%s"
+
+        else:
+            char0 = "%s/%s"
+
         if save_data:
             if save_filename == 0:
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
@@ -104,7 +125,7 @@ class Pipeline(object):
                 self.parameters[protocol_name]["save_filename"] = save_filename
             if save_folderpath == 0:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
-            save_filepath = "%s/%s" % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
+            save_filepath = char0 % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
             save_filepath = None
 
@@ -115,40 +136,39 @@ class Pipeline(object):
         #if os.path.isfile(params["FilteredPixelIndex_filepath"]):
         if params["FilteredPixelIndex_filepath"]:
             print("Loading indices used for filtering persistence images...")
-            _tokeep = morphomics.utils.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
+            _tokeep = io.load_obj(params["FilteredPixelIndex_filepath"].replace(".pkl", ""))
         else:
             std = str(params["pixel_std_cutoff"])
+            _tokeep = None
             print("Keeping pixels in persistence image with standard deviation higher than " + std + " ...")
-            _tokeep = np.where(
-                np.std(persistence_images, axis=0) >= params["pixel_std_cutoff"]
-            )[0]
-            print(len(_tokeep), 'pixels to keep over', persistence_images.shape[1])
         
-        # Create a boolean mask for the rest of the elements
-        mask = np.ones(len(persistence_images[0]), dtype=bool)
-        mask[_tokeep] = False
-        # Array with the rest of the elements
-        filtered_image = np.array([np.array(pi[mask]) for pi in persistence_images])
-        #filtered_image = np.array([np.array(pi[_tokeep]) for pi in persistence_images])
-        print(filtered_image.shape)
+        filtered_images, _tokeep = pi_transformations.filter_pi_list(persistence_images, 
+                                                                    tokeep = _tokeep, 
+                                                                    std_threshold = params["pixel_std_cutoff"])
         self.metadata["pixes_tokeep"] = _tokeep
 
         if params["save_data"]:
             print("The filtration is saved in %s" %(save_filepath))
-            morphomics.utils.save_obj(self.metadata, "%s-FilteredIndex" % (save_filepath))
-            morphomics.utils.save_obj(filtered_image, "%s-FilteredMatrix" % (save_filepath))
+            io.save_obj(self.metadata, "%s-FilteredIndex" % (save_filepath))
+            io.save_obj(filtered_images, "%s-FilteredMatrix" % (save_filepath))
             
-        return filtered_image
+        return filtered_images
 
+    def _set_default_params(self, protocol):
+        if protocol not in self.parameters.keys():
+            self.parameters[protocol] = {}
+        defined_params = self.parameters[protocol]
+        self.default_params.check_params(defined_params, protocol)
+        self.parameters[protocol] = self.default_params.complete_with_default_params(defined_params, protocol)
 
     ## Public
     def Input(self):
         """
-        Protocol: Build panda DataFrame with cell info, load .swc files, 
+        Protocol: Build panda DataFrame with cell info, load .swc files in data_location_filepath, 
             transform them into Neuron instances and store them as an element of self.morphoframe.
         
-        Essential parameters:
-        ---------------------
+        Parameters:
+        -----------
             data_location_filepath (str): Location of the parent folder containing the .swc files arranged hierarchically according to conditions.
             extension (str): .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
             conditions (list, str): This must match the hierarchical structure of `data_location_filepath`.
@@ -164,9 +184,8 @@ class Pipeline(object):
         Each row in the dataframe is data from one cell and each column is a feature of the cell.
         """
 
-        defined_params = self.parameters["Input"]
-        params = self.default_params.complete_with_default_params(defined_params, "Input")
-        self.parameters["Input"] = params
+        self._set_default_params('Input')
+        params = self.parameters["Input"]
         
         data_location_filepath = params["data_location_filepath"]
         extension = params["extension"]
@@ -210,7 +229,7 @@ class Pipeline(object):
                 # Set the columns of swc arrays and Neuron.
                 my_population = Population(info_frame = _sub_info_frame,
                                             conditions = conditions,
-                                            folder_path = data_location_filepath)
+                                            )
                 morphoframe[_v] = my_population.cells
                 
                 # Save the file 
@@ -227,7 +246,7 @@ class Pipeline(object):
                                                             default_save_filename = _default_save_filename, 
                                                             save_data = save_data)
                     print("Saving sub dataset in %s"%(_save_filepath))
-                    morphomics.utils.save_obj(morphoframe[_v], _save_filepath)
+                    io.save_obj(morphoframe[_v], _save_filepath)
                     print("The sub dataset is saved in %s" %(_save_filepath))
                     print(" ")
             _morphoframe = pd.concat([morphoframe[_v] for _v in cond_values], ignore_index=True)
@@ -236,7 +255,7 @@ class Pipeline(object):
             # Set the columns of swc arrays and Neuron.
             my_population = Population(info_frame = info_frame,
                                         conditions = conditions,
-                                        folder_path = data_location_filepath)
+                                        )
             _morphoframe = my_population.cells
 
         main_save_filepath = self._set_filename(protocol_name = "Input", 
@@ -254,8 +273,8 @@ class Pipeline(object):
 
         # save the file 
         if save_data:
-            print("Saving dataset in %s"%(main_save_filepath))
-            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], main_save_filepath)
+            print("Saving morphoframe in %s"%(main_save_filepath))
+            io.save_obj(self.morphoframe[morphoframe_name], main_save_filepath)
             print("The morphoframe is saved in %s" %(main_save_filepath))
 
             # Save name of failed files in .txt
@@ -273,54 +292,12 @@ class Pipeline(object):
 
 
 
-    def Load_data(self):
-        """
-        Protocol: Load morphoframe from .pkl files.
-        
-        Essential parameters:
-            filepath_to_data (0 or str): Full path to file to be loaded.
-            morphoframe_name (str): This is how the variable in self.morphoframe will be called.
-            folderpath_to_data (str): Location to the pickle file outputs to Protocols.Input.
-            conditions_to_include (list of str): The different conditions that you want to load
-
-        Returns
-        -------
-        Add a dataframe to morphoframe.
-        """
-        defined_params = self.parameters["Load_data"]
-        params = self.default_params.complete_with_default_params(defined_params, "Load_data")
-        self.parameters["Load_data"] = params
-
-        filepath_to_data = params["filepath_to_data"]
-        morphoframe_name = params["morphoframe_name"]
-
-
-        if filepath_to_data != 0:
-            self.morphoframe[morphoframe_name] = load_obj(filepath_to_data)
-
-        else:
-            conditions_to_include = params["conditions_to_include"]
-            folderpath_to_data = params["folderpath_to_data"]
-            filename_prefix = params["filename_prefix"]
-            _morphoframe = {}
-            for _c in conditions_to_include:
-                print("...loading %s" % _c)
-                filepath = "%s/%s%s" % (folderpath_to_data, filename_prefix, _c)
-                _morphoframe[_c] = morphomics.utils.load_obj(filepath.replace(".pkl", ""))
-
-            self.morphoframe[morphoframe_name] = pd.concat([_morphoframe[_c] for _c in conditions_to_include], ignore_index=True)
-        
-        print('Loading done!')
-        print("")
-
-
-
     def TMD(self):
         '''
         Protocol: Compute and Add the Topological Morphology Descriptor to morphoframe for each cell in morphoframe.
 
-        Essential parameters:
-        ---------------------
+        Parameters:
+        -----------
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             filtration_function (str): This is the TMD filtration function, can either be radial_distance, or path_distance.
             exclude_sg_branches (bool): if you want to remove the branches link to the soma that do not have ramifications i.e. simple trunks.
@@ -333,15 +310,13 @@ class Pipeline(object):
         -------
         Add the TMD (also called barcode or persistence homology) of each cell into morphoframe.
         '''
-        defined_params = self.parameters["TMD"]
-        params = self.default_params.complete_with_default_params(defined_params, "TMD")
-        self.parameters["TMD"] = params
+        self._set_default_params('TMD')
+        params = self.parameters["TMD"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
 
         filtration_function = params["filtration_function"]
-        exclude_sg_branches = params["exclude_sg_branches"]
         
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -349,17 +324,29 @@ class Pipeline(object):
 
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
-                                            variable_name = morphoframe_name)   
-
+                                            variable_name = morphoframe_name)
+        
+        if all(isinstance(item, list) for item in _morphoframe["cells"]):
+            is_list = True
+        elif all(isinstance(item, morphomics.cells.neuron.Neuron) for item in _morphoframe["cells"]):
+            is_list = False
+        else:
+            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all Neuron instances.")
+        
+        if is_list:
+            _morphoframe = _morphoframe.explode("cells")
+            
         cells = _morphoframe.copy()
         my_population = Population(cells_frame = cells)
-        
-        if exclude_sg_branches:
-                my_population.exclude_sg_branches()
 
         print("Computing the TMD on morphoframe %s"%(morphoframe_name))
-        my_population.set_barcodes(filtration_function = filtration_function)
+        my_population.set_barcodes(filtration_function = filtration_function, from_trees = False)
         _morphoframe = my_population.cells
+
+        # Merge back
+        if is_list:
+            _morphoframe = _morphoframe.groupby(_morphoframe.index).agg(list)
+
         _morphoframe = _morphoframe[~pd.isna(_morphoframe['barcodes'])]
 
         # define output filename
@@ -375,7 +362,7 @@ class Pipeline(object):
         # save the file 
         if save_data:
             print("Saving dataset in %s"%(save_filepath))
-            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             print("The TMD morphoframe is saved in %s" %(save_filepath))
 
         print("...finished computing barcodes...")
@@ -386,14 +373,11 @@ class Pipeline(object):
 
     def Clean_frame(self):
         """
-        Protocol: Clean out the morphoframe, to filter out artifacts and unwanted conditions.
+        Protocol: Clean out the morphoframe, to filter out unwanted conditions or generally rename them.
         
         Essential parameters:
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be filtered out.
-            barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
-            barlength_cutoff (list, (str, float)): Retain bars whose length satisfy a certain cutoff
-                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff].
             combine_conditions (list, (str, list, str)): # enumerate which conditions will be merged
                                     must be an array with three elements 
                                         [a header of the info_frame (is an element of `Input.conditions`),
@@ -405,69 +389,39 @@ class Pipeline(object):
                                             list of conditions to either drop or keep (must be an array), 
                                             "drop" or "keep" conditions specified]
             save_data (bool): trigger to save output of protocol
-            save_folder (str): location where to save the data
-            file_prefix (str or 0): this will be used as the file prefix
+            save_folderpath (str): Location where to save the variable.
+            save_filename (str or 0): This will be used as the file name.
 
         Returns
         -------
-        Add a dataframe to morphoframe. the samples that don't respond to the conditions are removed.
+        Add a dataframe to morphoframe. The samples are selected or removed based on the value of their conditions.
+        And the modified value of conditions is set. 
         """
-        defined_params = self.parameters["Clean_frame"]
-        params = self.default_params.complete_with_default_params(defined_params, "Clean_frame")
-        self.parameters["Clean_frame"] = params
+        self._set_default_params('Clean_frame')
+        params = self.parameters["Clean_frame"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+        
+        combine_conditions = params["combine_conditions"]
+        restrict_conditions = params["restrict_conditions"]
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
 
         # define morphoframe to clean
-        _morphoframe = self._get_variable(variable_filepath = params["morphoframe_filepath"],
-                                            variable_name = params["morphoframe_name"])
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)
 
-        # drops empty morphologies, potentially artifacts
-        _morphoframe = _morphoframe.loc[~_morphoframe.barcodes.isna()].reset_index(
-            drop=True
-        )
-
-        # barcode size filtering
-        barcode_size_cutoff = float(params["barcode_size_cutoff"])
-        print("Removing morphologies with barcode size less than %.2f..."%barcode_size_cutoff)
-        _morphoframe["Barcode_length"] = _morphoframe.barcodes.apply(lambda x: len(x))
-        _morphoframe = _morphoframe.query(
-            "Barcode_length >= @barcode_size_cutoff"
-            ).reset_index(drop=True)
-
-        # bar length filtering
-        for _operation, barlength_cutoff in params["barlength_cutoff"]:
-            print("Removing bars from all barcodes with the following criteria: bar length %s %.2f"%(_operation, float(barlength_cutoff)))
-            _morphoframe.barcodes = _morphoframe.barcodes.apply(lambda x: morphomics.Topology.analysis.filter_ph(x, float(barlength_cutoff), method=_operation))
-            
         # replace/rename/combine conditions
-        if len(params["combine_conditions"]) > 0:
-            for _cond, _before, _after in params["combine_conditions"]:
-                print("Replacing all instances of `%s` in the `%s` morphoframe column with %s"%(_before, _cond, _after))
-                _morphoframe.loc[_morphoframe[_cond].isin(_before), _cond] = _after
+        for _cond, _before, _after in combine_conditions:
+            _morphoframe = cleaner.modify_condition(_morphoframe, _cond, _before, _after)
 
         # restrict conditions
-        if len(params["restrict_conditions"]) > 0:
-            for _cond, _restricts, _action in params["restrict_conditions"]:
-                assert _cond in _morphoframe.keys(), "%s not in morphoframe..."%_cond
-                if _action == "drop":
-                    for _restrictions in _restricts:
-                        print("Filtering out %s from %s..."%(_restrictions, _cond))
-                        assert _restrictions in _morphoframe[_cond].unique(), "%s not in the available condition..."%_restrictions
-                        _morphoframe = _morphoframe.loc[~_morphoframe[_cond].str.contains(_restrictions)].reset_index(drop=True)
-                elif _action == "keep":
-                    _restrictions = "|".join(_restricts)
-                    print("Keeping %s in %s..."%(_restrictions, _cond))
-                    _morphoframe = _morphoframe.loc[_morphoframe[_cond].str.contains(_restrictions)].reset_index(drop=True)
-                else:
-                    print("Warning for ", _cond, _restricts)
-                    print("Third column must be either 'drop' or 'keep'...")
-                    print("Nothing will be done...")
+        for _cond, _restricts, _action in restrict_conditions:
+            _morphoframe = cleaner.restrict_conditions(_morphoframe, _cond, _restricts, _action)
 
-        print("Clean done!")
-        
         # initialize output filename
         default_save_filename = "Cleaned"
         save_filepath = self._set_filename(protocol_name = "Clean_frame", 
@@ -476,16 +430,190 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
-        # change file name prefix
+        self.morphoframe[morphoframe_name] = _morphoframe
+
         # save the file 
-        if params["save_data"]:
-            morphomics.utils.save_obj(_morphoframe, save_filepath)
+        if save_data:
+            print("Saving cleaned morphoframe in %s"%(save_filename))
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             print("The cleaned morphoframe is saved in %s" %(save_filepath))
 
-        self.morphoframe[params["morphoframe_name"]] = _morphoframe
+        print("Clean done!")        
+        print("")     
+     
 
-     
-     
+
+    def Filter_frame(self):
+        """
+        Protocol: Filter out morphologies that don't respect some conditions based on their Tree or Barcode.
+        
+        Essential parameters:
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be filtered out.
+            barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
+            feature_to_filter (dict, col_name :[min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
+            !!!! For now can only be 'nb_trunks', 'max_length_bar', 'nb_bars'
+                                                            lim_type can be relative or absolute, 
+                                                            i.e. the min and max reprsent values of the feature or percentile of the feature disctribution.
+            save_data (bool): trigger to save output of protocol
+            save_folderpath (str): Location where to save the variable.
+
+        Returns
+        -------
+        Add a dataframe to morphoframe. The samples are selected or removed based on some metrics.
+        """
+        self._set_default_params('Filter_frame')
+        params = self.parameters["Filter_frame"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
+        barcode_size_cutoff = float(params["barcode_size_cutoff"])
+
+        features_to_filter = params["features_to_filter"]
+
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        # define morphoframe to filter
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)
+
+        # drops morphologies with empty barcodes, potentially artifacts
+        _morphoframe = _morphoframe.loc[~_morphoframe['barcodes'].isna()].reset_index(
+            drop=True
+        )
+        
+        # barcode size filtering
+        _morphoframe = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
+
+        cells = _morphoframe.copy()
+        my_population = Population(cells_frame = cells)
+        my_population.combine_neurites()
+
+        # Compute tree features to filter out
+        if 'nb_trunks' in features_to_filter.keys():
+            my_population.apply_tree_method('get_node_children_number', col_name='nb_children')
+            my_population.cells['nb_trunks'] = my_population.cells['nb_children'].apply(lambda nb_children: nb_children[0])
+
+        if 'max_length_bar' in features_to_filter.keys():
+            my_population.cells['max_length_bar'] = my_population.cells['barcodes'].apply(lambda barcode: max(get_lengths(barcode)))
+
+        if 'nb_bars' in features_to_filter.keys():
+            my_population.cells['nb_bars'] = my_population.cells['barcodes'].apply(lambda barcode: len(barcode))
+
+        _morphoframe = my_population.cells
+
+        extreme_df = pd.DataFrame()
+
+        for feature_to_filter_names in features_to_filter.keys():
+            feature_to_filter_params = features_to_filter[feature_to_filter_names]
+            _min, _max, _type = feature_to_filter_params
+            
+            if _type == 'relative':
+                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(
+                    df=_morphoframe, col_name=feature_to_filter_names, low_percentile=_min, high_percentile=_max
+                )
+            else:
+                _morphoframe, sub_extreme_df = filter_frame.remove_extremes_absolute(
+                    df=_morphoframe, col_name=feature_to_filter_names, min=_min, max=_max
+                )
+
+            extreme_df = pd.concat([extreme_df, sub_extreme_df])
+
+        # initialize output filename
+        default_save_filename = "Filter_frame"
+        save_filepath = self._set_filename(protocol_name = "Filter_frame", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe
+        self.morphoframe[morphoframe_name +'_extremes'] = extreme_df
+        # save the file 
+        if save_data:
+            print("Saving filtered morphoframe in %s"%(save_filename))
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            io.save_obj(self.morphoframe[morphoframe_name + '_extremes'], save_filepath + '_extremes')
+
+            print("The filtered morphoframe is saved in %s" %(save_filepath))
+            print("The extreme morphoframe is saved in %s" %(save_filepath + '_extremes'))
+
+        print("Filtering done!")        
+        print("")  
+
+
+
+    def Filter_morpho(self):
+        """
+        Protocol: Preprocess features like trees or barcodes modifying them based on some conditions.
+        
+        Essential parameters:
+            morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
+            morphoframe_name (str): Key of the morphoframe which will be filtered out.
+            barlength_cutoff (list, (str, float)): Retain bars whose length satisfy a certain cutoff
+                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff].           
+            save_data (bool): trigger to save output of protocol
+            save_folderpath (str): Location where to save the variable.
+
+        Returns
+        -------
+        Add a dataframe to morphoframe that contains the new morphologies.
+        """
+
+        self._set_default_params('Filter_morpho')
+        params = self.parameters["Filter_morpho"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+        
+        exclude_sg_branches = params["exclude_sg_branches"]
+        barlength_cutoff = params["barlength_cutoff"]
+
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        # define morphoframe to preprocess
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                            variable_name = morphoframe_name)
+        
+        cells = _morphoframe.copy()
+        my_population = Population(cells_frame = cells)
+        if exclude_sg_branches:
+                my_population.exclude_sg_branches()
+        _morphoframe = my_population.cells
+        _morphoframe = _morphoframe[~pd.isna(_morphoframe['cells'])]
+
+        # bar length filtering
+        for _operation, barl_cutoff in barlength_cutoff:
+            barl_cutoff = float(barl_cutoff)
+            print("Removing bars from all barcodes with the following criteria: bar length %s %.2f"%(_operation, barl_cutoff))
+            _morphoframe.barcodes = _morphoframe.barcodes.apply(lambda x: ph_transformations.filter_ph(np.array(x), barl_cutoff, method=_operation))
+        
+        # initialize output filename
+        default_save_filename = "Filter_morpho"
+        save_filepath = self._set_filename(protocol_name = "Filter_morpho", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe
+
+        # save the file 
+        if save_data:
+            print("Saving filtered morphoframe in %s"%(save_filename))
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            print("The filtered morphoframe is saved in %s" %(save_filepath))
+
+        print("Filtering done!")        
+        print("")     
+
+
+
     def Subsample(self):
         """
         Protocol: subsample/modify a tree or a barcode to reduce its "noise".
@@ -505,14 +633,13 @@ class Pipeline(object):
             save_filename (str or 0): Name of the file containing the bootstrap frame.
 
         """
-        defined_params = self.parameters["Subsample"]
-        params = self.default_params.complete_with_default_params(defined_params, "Subsample")
-        self.parameters["Subsample"] = params
+        self._set_default_params('Subsample')
+        params = self.parameters["Subsample"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
         
-        extendedframe_name = params["extendedframe_name"]
+        # extendedframe_name = params["extendedframe_name"]
 
         feature_to_subsample = params["feature_to_subsample"]
         #could be a ratio of the number of bars
@@ -528,33 +655,29 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)   
         _morphoframe_copy = _morphoframe.copy()
-
         features = _morphoframe_copy[feature_to_subsample]
+        _morphoframe_copy[feature_to_subsample + "_not_subsampled"] = _morphoframe_copy[feature_to_subsample]
+        
         if feature_to_subsample == "barcodes":
             main_branches = params["main_branches"]
             k_elements = params["k_elements"]
-            _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(#feature_to_subsample = feature_to_subsample,
-                                                                                        feature_list = features, 
+            _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(feature_list = features, 
                                                                                         main_branches = main_branches)
             probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_w_replacement(#feature_to_subsample = feature_to_subsample,
-                                                                                                        feature_list = features,
-                                                                                                        probas = probas, 
-                                                                                                        k_elements = k_elements, 
-                                                                                                        n_samples = n_samples, 
-                                                                                                        rand_seed = rand_seed,
-                                                                                                        main_branches = main_branches)
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_w_replacement(feature_list = features,
+                                                                                        probas = probas, 
+                                                                                        k_elements = k_elements, 
+                                                                                        n_samples = n_samples, 
+                                                                                        rand_seed = rand_seed,
+                                                                                        main_branches = main_branches)
         else:
-            type = params['type']
+            _type = params['type']
             number = params['nb_sections']
-            _morphoframe_copy[feature_to_subsample + "_subsampled"] = subsampler.subsample_trees(feature_list = features,
-                                                                                                type = type,
-                                                                                                number = number,
-                                                                                                n_samples = n_samples, 
-                                                                                                rand_seed = rand_seed,)
-
-        _morphoframe_copy[feature_to_subsample + '_id'] = _morphoframe_copy.index
-        extendedframe = _morphoframe_copy.explode(feature_to_subsample + "_subsampled").reset_index(drop = True)
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_trees(feature_list = features,
+                                                                                    _type = _type,
+                                                                                    number = number,
+                                                                                    n_samples = n_samples, 
+                                                                                    rand_seed = rand_seed,)
 
         # initialize output filename
         default_save_filename = "Subsampled"
@@ -565,12 +688,10 @@ class Pipeline(object):
                                               save_data = save_data)
         
         self.morphoframe[morphoframe_name] = _morphoframe_copy
-        self.morphoframe[extendedframe_name] = extendedframe[[feature_to_subsample + "_subsampled", feature_to_subsample + '_id']]
 
         # save the file 
-        if params["save_data"]:
-            morphomics.utils.save_obj(self.morphoframe[morphoframe_name], save_filepath)
-            morphomics.utils.save_obj(self.morphoframe[extendedframe_name], save_filepath + '_extended')
+        if save_data:
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
             print("The Subsampled morphoframe is saved in %s" %(save_filepath))
 
         print("Subsampling done!")
@@ -591,6 +712,7 @@ class Pipeline(object):
             N_bags (int): Number of bootstrapped/averaged points in one population (i.e. per combination of conditions).
             n_samples (int): Number of sampled points to create a bootstrapped point.
             ratio (float): Only used if n_samples = 0. A number between 0 and 1, defines the number of samples per population with respect to the pop size. 
+            replacement (bool): When sampling to average for bootstrap, is it a sampling with or without replacement.
             bootstrapframe_name (str): Where the bootstrapped morphoframe will be stored.
             save_data (bool): Trigger to save output of protocol.
             save_folderpath (str): Location where to save the data.
@@ -600,19 +722,21 @@ class Pipeline(object):
         -------
         Add a dataframe containing bootstrapped data to morphoframe. The samples are bootstrapped points of microglia.
         """
-        defined_params = self.parameters["Bootstrap"]
-        params = self.default_params.complete_with_default_params(defined_params, "Bootstrap")
-        self.parameters["Bootstrap"] = params
+        self._set_default_params('Bootstrap')
+        params = self.parameters["Bootstrap"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
 
         feature_to_bootstrap = params["feature_to_bootstrap"]
         bootstrap_conditions = params["bootstrap_conditions"]
+        numeric_condition = params["numeric_condition"]
+        numeric_condition_std = params["numeric_condition_std"]
 
         N_bags = params["N_bags"]
         n_samples = params["n_samples"]
         ratio = params["ratio"]
+        replacement = params["replacement"]
 
         rand_seed = params["rand_seed"]
 
@@ -638,8 +762,10 @@ class Pipeline(object):
                 _morphoframe_copy,
                 feature_to_bootstrap = feature_to_bootstrap,
                 bootstrap_conditions = bootstrap_conditions,
+                numeric_condition = numeric_condition,
+                numeric_condition_std = numeric_condition_std,
                 N_bags = N_bags,
-                replacement = True,
+                replacement = replacement,
                 n_samples = n_samples,
                 ratio = ratio,
                 rand_seed = rand_seed,
@@ -657,7 +783,7 @@ class Pipeline(object):
         self.morphoframe[bootstrapframe_name] = bootstrapped_frame
         
         if save_filepath is not None:
-            save_obj(self.morphoframe[bootstrapframe_name], save_filepath)
+            io.save_obj(self.morphoframe[bootstrapframe_name], save_filepath)
             print("The bootstraped morphoframe is saved in %s" %(save_filepath))
 
         print("Bootstrap done!")
@@ -682,49 +808,77 @@ class Pipeline(object):
         -------
         Add a list of vectors to a morphoframe. A row per sample, the colums are the dimensions of the vector (result of the TMD vectorization).
         """
-
-        defined_params = self.parameters["Vectorizations"]
-        params = self.default_params.complete_with_default_params(defined_params, "Vectorizations")
-        self.parameters["Vectorizations"] = params
+        self._set_default_params('Vectorizations')
+        params = self.parameters["Vectorizations"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
         vect_method_parameters = params["vect_method_parameters"]
+        barcode_column = params["barcode_column"]
         
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
+        
 
         # define morphoframe containing barcodes to compute vectorizations
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
-        _morphoframe_copy = _morphoframe.copy()
+        
         assert (
-            "barcodes" in _morphoframe_copy.keys()
+            barcode_column in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
+
+        if all(isinstance(item, list) for item in _morphoframe[barcode_column]):
+            is_list = True  
+        elif all(isinstance(item, np.ndarray) for item in _morphoframe[barcode_column]):
+            is_list = False
+        else:
+            raise ValueError("Items in _morphoframe['cells'] must be either all lists or all np array instances.")
+
+        if is_list:
+            _morphoframe = _morphoframe.explode(barcode_column)
+
+        _morphoframe_copy = _morphoframe.copy()
 
         # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
-        vect_methods_names = [vectorization_codenames[vect_method] for vect_method in vect_methods]
-        vect_methods_codename = '_'.join(vect_methods_names)
-
+        vect_methods_codenames_list = [vectorization_codenames[vect_method] for vect_method in vect_methods]
+        vect_methods_codename = '_'.join(vect_methods_codenames_list)
+        
         if '_' not in vect_methods_codename:
             print("Computes %s." %(vect_methods_codename))
         else:
             print("Computes %s and concatenates the vectors from the same microglia." %(vect_methods_codename))
         
+        for vect_method in vect_methods:
+            self.default_params.check_params(vect_method_parameters[vect_method], vect_method, type = 'vectorization')
+            vect_method_parameters[vect_method] = self.default_params.complete_with_default_params(vect_method_parameters[vect_method], 
+                                                                                                        vect_method,
+                                                                                                        type = 'vectorization')
+            self.parameters["Vectorizations"]["vect_method_parameters"][vect_method] = vect_method_parameters[vect_method]
+
         # initalize an instance of Vectorizer
-        vectorizer = Vectorizer(tmd = _morphoframe_copy["barcodes"], 
+        vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
                                 vect_parameters = vect_method_parameters)
         
+        
         # compute vectors
-        output_vectors = []
-        for vect_method in vect_methods:
+        for i, vect_method in enumerate(vect_methods):
             perform_vect_method = getattr(vectorizer, vect_method)
             output_vector = perform_vect_method()
+
+            _morphoframe_copy[vect_methods_codenames_list[i]] = list(output_vector)
+
+
+        # Merge back
+        if is_list:
+            _morphoframe_copy = _morphoframe_copy.groupby(_morphoframe.index).agg({
+                    k: "mean" if k in vect_methods_codenames_list else "first" 
+                    for k in _morphoframe_copy.columns
+        })
             
-            output_vectors.append(output_vector)
-        output_vectors = np.concatenate(output_vectors, axis=1)
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
 
         # define output filename
         default_save_filename = "Vectorizations-%s"%(vect_methods_codename)
@@ -734,14 +888,13 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
-        self.morphoframe[morphoframe_name][vect_methods_codename] = list(output_vectors)
-
+        
         print("Vectorization done!")
 
         # save the output vectors
         if save_filepath is not None:
             print("The vectors are saved in %s" %(save_filepath))
-            save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath)
+            io.save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath)
 
 
 
@@ -767,9 +920,8 @@ class Pipeline(object):
         -------
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
-        defined_params = self.parameters["Dim_reductions"]
-        params = self.default_params.complete_with_default_params(defined_params, "Dim_reductions")
-        self.parameters["Dim_reductions"] = params
+        self._set_default_params('Dim_reductions')
+        params = self.parameters["Dim_reductions"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -789,8 +941,20 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
         _morphoframe_copy = _morphoframe.copy()
+        vectorization_list = vectors_to_reduce.split('_')
+      
+        _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy.apply(lambda row: np.concatenate([row[col] for col in vectorization_list]), axis=1)
+        
+        if normalize and len(_morphoframe_copy[vectors_to_reduce].iloc[0].shape) == 2:
+            def normalize_array(arr):
+                arr_min = arr.min()
+                arr_max = arr.max()
+                return 2 * (arr - arr_min) / (arr_max - arr_min) - 1  # Normalizes to [-1, 1]
+            print("Normalize the images")
 
-        X = np.vstack(_morphoframe_copy[vectors_to_reduce])
+            _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy[vectors_to_reduce].apply(normalize_array)
+
+        X = np.stack(_morphoframe_copy[vectors_to_reduce])
         
         dimred_methods = dimred_method_parameters.keys()
         dimred_method_names = '_'.join(list(dimred_methods))
@@ -809,15 +973,19 @@ class Pipeline(object):
             X = filtered_image
 
         # normalize data 
-        if normalize:
+        if normalize and len(X[0].shape) == 1:
             print("Normalize the vectors")
             normalizer = Normalizer()
             X = normalizer.fit_transform(X)
+            self.metadata['normalizer'] = normalizer
+
         # standardize data 
         if standardize:
             print("Standardize the vectors")
             standardize = StandardScaler()
             X = standardize.fit_transform(X)
+            self.metadata['standardizer'] = standardize
+
 
         print("Reduces the vectors with the following techniques %s " %(dimred_method_names))
         # initialize an instance of DimReducer
@@ -828,22 +996,27 @@ class Pipeline(object):
         fit_dimreducers = []
         for dimred_method in dimred_methods:
             perform_dimred_method = getattr(dimreducer, dimred_method)
-            fit_dimreducer, reduced_vectors = perform_dimred_method()
+            if dimred_method == 'vae' or dimred_method == 'vaecnn':
+                fit_dimreducer, reduced_vectors, mse = perform_dimred_method()
+            else:
+                fit_dimreducer, reduced_vectors = perform_dimred_method()
 
             fit_dimreducers.append(fit_dimreducer)
    
             dimreducer.tmd_vectors = reduced_vectors
-
+        
+        if "mse" in self.metadata.keys():
+            self.metadata['mse'] = mse
         self.metadata['fitted_' + dimred_method_names] = fit_dimreducers
-
+        self.morphoframe[morphoframe_name] = _morphoframe
         self.morphoframe[morphoframe_name][dimred_method_names] = list(reduced_vectors)
 
         # save the reduced vectors
         if save_filepath is not None:
-            save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath + '_reduced_data')
+            io.save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath + '_reduced_data')
             print("The reduced vectors are saved in %s" %(save_filepath))
         if save_dimreducer:
-            save_obj(obj = self.metadata, filepath = save_filepath + '_fitted_dimreducer')
+            io.save_obj(obj = self.metadata, filepath = save_filepath + '_fitted_dimreducer')
             print("The fitted dimreducers are saved in %s" %(save_filepath))
 
         print("Reducing done!")
@@ -904,7 +1077,8 @@ class Pipeline(object):
         """
         Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
         
-        Essential parameters:
+        Parameters:
+        -----------
             morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
             morphoframe_name (str): morphoframe key which will be processed out
             conditions_to_save (list of str): the list of the keys in morphoframe you want to save with reduced vectors
@@ -919,9 +1093,8 @@ class Pipeline(object):
         A saved .csv file containing a column for each wanted condition and a column for each dimension of the reduced vectors. 
         A row per sample.
         """
-        defined_params = self.parameters["Save_reduced"]
-        params = self.default_params.complete_with_default_params(defined_params, "Save_reduced")
-        self.parameters["Save_reduced"] = params
+        self._set_default_params('Save_reduced')
+        params = self.parameters["Save_reduced"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -966,6 +1139,140 @@ class Pipeline(object):
 
 
 
+    def Log_results(self):
+        """
+        Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
+        
+        Parameters:
+        -----------
+            morphoframe_filepath (str or 0): if not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name
+            morphoframe_name (str): morphoframe key which will be processed out
+            save_data (bool): trigger to save output of protocol
+            save_folderpath (str): location where to save the data
+            save_filename (str or 0): this will be used as the file name
+
+        Returns
+        -------
+        
+        """
+
+        def knn_class(distance_matrix, labels, n_neighbors=3):
+
+            min_class_size = labels.value_counts().min()
+
+            # Create a DataFrame to handle indices and labels
+            data = pd.DataFrame({'Index': np.arange(len(labels)), 'Label': labels})
+
+            # Downsample each class to the minimum size
+            downsampled_data = pd.concat([
+                resample(data[data['Label'] == label], 
+                        replace=False,  # Do not sample with replacement
+                        n_samples=min_class_size, 
+                        random_state=42)
+                for label in labels.unique()
+            ])
+
+            # Extract indices of downsampled samples
+            downsampled_indices = downsampled_data['Index'].values
+
+            # Subset the distance matrix and labels
+            distance_matrix = distance_matrix[np.ix_(downsampled_indices, downsampled_indices)]
+            labels = labels.iloc[downsampled_indices]
+
+            n_samples = distance_matrix.shape[0]
+            # Split labels into train and test sets
+            train_indices, test_indices = train_test_split(range(n_samples), test_size=0.3, random_state=42)
+
+            # Create train and test distance matrices
+            train_distance_matrix = distance_matrix[np.ix_(train_indices, train_indices)]
+            test_distance_matrix = distance_matrix[np.ix_(test_indices, train_indices)]
+
+            # Train and test labels
+            y_train = labels.iloc[train_indices]
+            y_test = labels.iloc[test_indices]
+
+            # Initialize KNeighborsClassifier with precomputed distances
+            knn = KNeighborsClassifier(n_neighbors=n_neighbors, metric='precomputed')
+
+            # Train the classifier
+            knn.fit(train_distance_matrix, y_train)
+
+            # Predict on the test set
+            y_pred = knn.predict(test_distance_matrix)
+
+            # Evaluate the results
+            #print("Accuracy:", accuracy_score(y_test, y_pred))
+            #print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+            return accuracy_score(y_test, y_pred)
+        
+
+        self._set_default_params('Log_results')
+        params = self.parameters["Log_results"]
+
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        checks = params["checks"]
+
+        print("Computing evaluation metrics and logging to W&B...")
+
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath, 
+                                           variable_name = morphoframe_name)
+        
+        run_id = wandb.run.id
+        artifact = wandb.Artifact(f"reduced_info_{run_id}", type="reduced_info")
+        artifact.metadata = {"run_id": wandb.run.id, "sweep_name": wandb.run.sweep_id}
+
+        csv_filepath = self._set_filename(protocol_name = "Save_reduced", 
+                                              save_folderpath = self.parameters["Save_reduced"]["save_folderpath"], 
+                                              save_filename = self.parameters["Save_reduced"]["save_filename"],
+                                              default_save_filename = "ReductionInfo")
+        csv_filepath = "%s.csv" % (csv_filepath)
+        artifact.add_file(csv_filepath)
+        wandb.log_artifact(artifact)
+
+
+        avg_test_statistic = 0
+        avg_acc = 0
+        for check in checks:
+            df = _morphoframe
+            filtered_df = df[eval(check["filter"])].copy()
+            #X = np.array( filtered_df["pca_umap"].to_list() )
+            X = np.array( filtered_df[ self.parameters["Save_reduced"]["dimred_method"] ].to_list() )
+            distMat = cdist(X, X, metric='euclidean')
+            dm = DistanceMatrix(distMat)
+
+            # Perform ANOSIM
+            result = anosim(dm, np.array( filtered_df[check["crit"]] ), permutations=999)
+
+            labels = filtered_df[check["crit"]].values
+            sil_score = silhouette_score(X, labels)
+            
+            result['test statistic']
+
+            acc = knn_class(distMat, filtered_df[check["crit"]], n_neighbors=5)
+
+            avg_test_statistic += result['test statistic']
+            avg_acc += acc
+
+            wandb.log({check["name"]+"_sil": sil_score})
+            wandb.log({check["name"]+"_anosim": result['test statistic']})
+            wandb.log({check["name"]+"_acc": acc})
+
+        if len(checks) > 1:
+            wandb.log({"avg_test_statistic": avg_test_statistic/len(checks)})
+            wandb.log({"avg_acc": avg_acc/len(checks)})
+            
+
+        print("Logging of results done!")
+        print("")
+
+
+
     def Mapping(self):
         """
         Protocol: Takes a pre-calculated UMAP function, maps persistence images into the UMAP manifold and outputs the manifold coordinates
@@ -990,9 +1297,8 @@ class Pipeline(object):
         -------
         Add a list of reduced vectors to a morphoframe. A row per sample (example: microglia), the colums are the dimensions of the reduced vectors (result of the dimensionality reduction).
         """
-        defined_params = self.parameters["Mapping"]
-        params = self.default_params.complete_with_default_params(defined_params, "Mapping")
-        self.parameters["Mapping"] = params
+        self._set_default_params('Mapping')
+        params = self.parameters["Mapping"]
 
         fitted_dimreducer_filepath = params["fitted_dimreducer_filepath"]
         dimred_method = params["dimred_method"]
@@ -1057,7 +1363,7 @@ class Pipeline(object):
         if save_data:
             print("The reduced vectors are saved in %s" %(save_filepath))
 
-            morphomics.utils.save_obj(obj = self.morphoframe[morphoframe_name],
+            io.save_obj(obj = self.morphoframe[morphoframe_name],
                                       filepath = "%s-reduceCoords%dD" % (save_filepath, reduced_vectors.shape[1]) )
         
         print("Mapping done!")
@@ -1104,7 +1410,7 @@ class Pipeline(object):
                 print("Sholl curve calculation is now at %s"%(filename.split("/")[-1]))
             
             if not empty:
-                s = morphomics.morphometrics.calculate_sholl_curves(filename, params["Sholl_radius"], _type=params["swc_types"])
+                s = morphomics.morphometrics_old.calculate_sholl_curves(filename, params["Sholl_radius"], _type=params["swc_types"])
             else:
                 s = []
             sholl_plots.append(s)
@@ -1118,7 +1424,7 @@ class Pipeline(object):
 
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
-            morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
+            io.save_obj(self.metadata, "%s" % (save_filename) )
 
             
             
@@ -1130,53 +1436,84 @@ class Pipeline(object):
             morphoframe_name (str): morphoframe which contains Filenames of morphologies for Sholl analysis
             Empty_indicator (str): column name in morphoframe which will be the indicator for empty morphologies
             temp_folder (str): location where to store .swc files that contain spaces in their filename
-            Lmeasure_functions (list, (float, float)): list containing morphometric quantities of interests, must be (Lmeasure function, "TotalSum", "Maximum", "Minimum", "Average")
+            Lmeasure_functions (list, (str, str)) or None: list containing morphometric quantities of interests, 
+                must be (Lmeasure function, "TotalSum", "Maximum", "Minimum", "Average")
             Morphometric_colname (str): key to the metadata where the morphometrics will be stored
             save_data (bool): trigger to save output of protocol
             save_folder (str): location where to save the data
             file_prefix (str or 0): this will be used as the file prefix
         """
+        self._set_default_params('Morphometrics')
         params = self.parameters["Morphometrics"]
 
+        morphoframe_filepath = params["morphoframe_filepath"]
+        morphoframe_name = params["morphoframe_name"]
+
+        Lmeasure_functions = params["Lmeasure_functions"]
+        concatenate = params["concatenate"]
+        histogram = params["histogram"]
+        bins = params["bins"]
+        tmp_folder = params["tmp_folder"]
         # define output filename
-        file_prefix = "%s.Morphometrics"%(self.file_prefix)
-        save_filename = self._set_filename(protocol_name = "Morphometrics", 
-                                              save_folder_path = params["save_folder"], 
-                                              file_prefix = file_prefix, 
-                                              save_data = params["save_data"])   
-            
-        assert params["morphoframe_name"] in self.morphoframe.keys(), "There is no `morphoframe_name`. Check this or make sure that you ran either `Input` or `Load_data` first."
-        assert "Filenames" in self.morphoframe[params["morphoframe_name"]].columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
-        assert params["Empty_indicator"] in self.morphoframe[params["morphoframe_name"]].columns, "There is no column with the assigned `Empty_indicator` in the `morphoframe`. Check the morphoframe structre."
+        save_data = params["save_data"]
+        save_folderpath = params["save_folderpath"]
+        save_filename = params["save_filename"]
+
+        _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
+                                           variable_name = morphoframe_name)
+        _morphoframe_copy = _morphoframe.copy()
+        assert "file_path" in _morphoframe_copy.columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
         
         print("Calculating classical morphometric quantities...")
-        
-        Lm_functions, Lm_quantities = morphomics.morphometrics.create_Lm_functions(params["Lmeasure_functions"])
-        
-        files = self.morphoframe[params["morphoframe_name"]].Filenames
-        empty_morphologies = self.morphoframe[params["morphoframe_name"]][params["Empty_indicator"]].isna()
-        
-        non_empty_files = files[~empty_morphologies]
-        non_empty_files, morphometric_quantities = morphomics.morphometrics.calculate_morphometrics(
-            non_empty_files, params["temp_folder"], Lm_functions, Lm_quantities)
-        
-        morphometrics = pd.DataFrame(
-            morphometric_quantities,
+        filenames = _morphoframe_copy["file_path"]
+        if histogram:
+            morphometric_quantities, Lm_functions, morphometric_bins = morphometrics.compute_lmeasures(filenames, 
+                                                                                         Lmeasure_functions, 
+                                                                                         histogram, 
+                                                                                         bins, 
+                                                                                         tmp_folder)
             columns=[
-                "%s_%s" % (func_i[0], func_i[1]) for func_i in params["Lmeasure_functions"]
-            ],
-        )
-        morphometrics["Files"] = non_empty_files
-        morphometrics = morphometrics[np.hstack(["Files", morphometrics.columns[:-1]])]
-        self.metadata[params["Morphometric_colname"]] = morphometrics
+                    "%s_hist" % (f) for f in Lm_functions
+                ]
+            self.metadata["Lmeasure"] = columns
+            for i, col in enumerate(columns):
+                _morphoframe_copy[col] = list(morphometric_quantities[:, i+bins : (i+1)*bins])
+                _morphoframe_copy[col + '_bins'] = list(morphometric_bins[:, i*bins : (i+1)*bins])
+
+        else:
+            morphometric_quantities, Lm_functions, Lm_quantities = morphometrics.compute_lmeasures(filenames, 
+                                                                                        Lmeasure_functions, 
+                                                                                        histogram, 
+                                                                                        tmp_folder=tmp_folder)
+            columns=[
+                        "%s_%s" % (f, q) for f, q in zip(Lm_functions, Lm_quantities)
+                    ]
+            self.metadata["Lmeasure"] = columns
+            if not concatenate:
+                for i, col in enumerate(columns):
+                    _morphoframe_copy[col] = morphometric_quantities[:, i]
+            else:
+                _morphoframe_copy['morphometrics'] = list(morphometric_quantities)
+
+        # define output filename
+        default_save_filename = "Morphometrics"
+        save_filepath = self._set_filename(protocol_name = "Morphometrics", 
+                                              save_folderpath = save_folderpath, 
+                                              save_filename = save_filename,
+                                              default_save_filename = default_save_filename, 
+                                              save_data = save_data)
+        
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
+
+        # save the file 
+        if save_data:
+            print("Saving dataset in %s"%(save_filepath))
+            io.save_obj(self.metadata["Lmeasure"], save_filepath + '_Lmeasure')
+            io.save_obj(self.morphoframe[morphoframe_name], save_filepath)
+            print("The TMD morphoframe is saved in %s" %(save_filepath))
         
         print("Morphometrics done!")
         print("")
-
-        if params["save_data"]:
-            #print("The Sholl curves are saved in %s" (save_filepath))
-
-            morphomics.utils.save_obj(self.metadata, "%s" % (save_filename) )
              
 
 
@@ -1198,9 +1535,8 @@ class Pipeline(object):
             save_folderpath (str): Location where to save the data.
             save_filename (str): This will be used as the file name.
         """
-        defined_params = self.parameters["Plotting"]
-        params = self.default_params.complete_with_default_params(defined_params, "Plotting")
-        self.parameters["Plotting"] = params
+        self._set_default_params('Plotting')
+        params = self.parameters["Plotting"]
 
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
@@ -1213,6 +1549,7 @@ class Pipeline(object):
         circle_color = params['circle_colors']
         size = params['size']
         amount = params['amount']
+        show = params['show']
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -1221,8 +1558,7 @@ class Pipeline(object):
         # define morphoframe that contains the data points to plot
         print("Loading fitted dim reduced data...")   
 
-        if type(morphoframe_filepath) is str:
-            if "csv" in morphoframe_filepath:
+        if type(morphoframe_filepath) is str and "csv" in morphoframe_filepath:
                 _morphoframe = pd.read_csv(morphoframe_filepath, index_col = 0)
         else:
             _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
@@ -1243,7 +1579,10 @@ class Pipeline(object):
                                     circle_color = circle_color,
                                     amount= amount,
                                     size = size,
-                                    title = title)
+                                    title = title,
+                                    show = show)
+            self.metadata['fig3d'] = fig3d
+
         if nb_dims >= 2:
             fig2d = plotting.plot_2d_scatter(morphoframe = _morphoframe,
                                     axis_labels = axis_labels,
@@ -1252,7 +1591,9 @@ class Pipeline(object):
                                     circle_color = circle_color,
                                     amount= amount,
                                     size = size,
-                                    title = title)
+                                    title = title,
+                                    show = show)
+            self.metadata['fig2d'] = fig2d
         
         # define output filename
         default_save_filename = "Plotting"
@@ -1267,13 +1608,11 @@ class Pipeline(object):
             # Save the plot as an HTML file
             if nb_dims >= 3:
                 fig3d.write_html(save_filepath + '3d.html')
-                self.metadata['fig3d'] = fig3d
 
             #fig3d.write_image(save_filepath + '3d.pdf', format = 'pdf')
             #fig2d.write_html(save_filepath + '2d.html')
             if nb_dims >= 2:
                 fig2d.write_image(save_filepath + '2d.pdf', format = 'pdf')
-                self.metadata['fig2d'] = fig2d
             
             #save_obj(obj = self.metadata, filepath = save_filepath + '_figures')
             print(f"Plot saved as {save_filepath}")
@@ -1322,7 +1661,7 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename)
         
         self.metadata['exp_param'] = stored_parameters
-        morphomics.utils.save_obj(obj = stored_parameters,
+        io.save_obj(obj = stored_parameters,
                                     filepath = save_filepath) 
         print("The experiment parameters are saved in %s" %(save_filepath))
         print("")

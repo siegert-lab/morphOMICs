@@ -25,12 +25,14 @@ from morphomics.persistent_homology.ph_analysis import get_limits, get_lengths, 
 ### 2D vectorizations
 
 def persistence_image(
-    ph, xlim=None, ylim=None, bw_method=None, weights=None, resolution=100
+    ph, method="kde", std_isotropic=0.1, xlim=None, ylim=None, bw_method=None, weights=None, resolution=100
 ):
     """Create array of the persistence image.
 
     Args:
         ph: persistence diagram.
+        method: whether to aggregate the diagram using Gaussian with covariance estimated from data (in kde fashion) or with isotropic gaussian
+        std_isotropic: standard deviation of the isotropic gaussian.
         xlim: The image limits on x axis.
         ylim: The image limits on y axis.
         bw_method: The method used to calculate the estimator bandwidth for the gaussian_kde.
@@ -43,13 +45,53 @@ def persistence_image(
         xlim, ylim = get_limits(ph)
     res = complex(0, resolution)
     X, Y = np.mgrid[xlim[0] : xlim[1] : res, ylim[0] : ylim[1] : res]
-
-    values = np.transpose(ph)
-    kernel = stats.gaussian_kde(values, bw_method=bw_method, weights=weights)
     positions = np.vstack([X.ravel(), Y.ravel()])
-    Z = np.reshape(kernel(positions).T, X.shape)
+    values = np.transpose(ph)
+
+    if method == "kde":
+        kernel = stats.gaussian_kde(values, bw_method=bw_method, weights=weights)
+        Z = np.reshape(kernel(positions).T, X.shape)
+    elif method == "isotropic":
+        Z = _pi_isotropic(ph, positions.T, std_isotropic)
+        Z = np.reshape(Z, X.shape)
 
     return Z
+
+def _pi_isotropic(ph, eval_points, std):
+    """
+    Compute KDE for a dataset of 2D points using an isotropic Gaussian kernel.
+
+    Parameters:
+    - ph: np.ndarray, shape (N, 2)
+        Array of 2D points from the dataset.
+    - eval_points: np.ndarray, shape (M, 2)
+        Array of 2D points where the KDE should be evaluated.
+    - std: float
+        Standard deviation of the isotropic Gaussian kernel.
+
+    Returns:
+    - kde_values: np.ndarray, shape (M,)
+        The KDE values at each of the evaluation points.
+    """
+    # Ensure input is numpy arrays
+    data_points = np.asarray(ph)
+    eval_points = np.asarray(eval_points)
+
+    # Gaussian kernel normalization constant in 2D
+    normalization = 1 / (2 * np.pi * std**2)
+
+    # Compute pairwise squared distances using broadcasting
+    diff = eval_points[:, np.newaxis, :] - data_points[np.newaxis, :, :]  # Shape: (M, N, 2)
+    squared_distances = np.sum(diff**2, axis=2)  # Shape: (M, N)
+
+    # Apply Gaussian kernel
+    weights = np.exp(-squared_distances / (2 * std**2))  # Shape: (M, N)
+
+    # Sum over the data points (axis=1) and normalize
+    kde_values = normalization * np.sum(weights, axis=1)  # Shape: (M,)
+
+    return kde_values
+
 
 ### 1D curve vectorizations
 
@@ -61,12 +103,14 @@ def _index_bar(bar, t):
         return 0
 
 def betti_curve(ph, t_list=None, resolution=1000):
-    """Computes the betti curves of a persistence diagram.
+    """Computes the betti curve of a persistence diagram.
     Corresponding to the number of bars at each distance t.
     """
     if t_list is None:
         t_list = np.linspace(np.min(ph), np.max(ph), resolution)
-    betti_c = [np.sum([_index_bar(bar, t) for bar in ph]) for t in t_list]
+    ph = np.array(ph)
+    ph[:, [0, 1]] = np.sort(ph[:, [0, 1]], axis=1)
+    betti_c = np.array( [np.count_nonzero((ph[:, 0] <= x) & (ph[:, 1] >= x)) for x in t_list] )
     return betti_c, t_list
 
 def lifespan_curve(ph, t_list = None, resolution = 1000):
@@ -74,7 +118,7 @@ def lifespan_curve(ph, t_list = None, resolution = 1000):
     # Returns the lifespan curve of a barcode and the sub intervals on which it was computed.
     if t_list is None:
         t_list = np.linspace(np.min(ph), np.max(ph), resolution)
-    bars_length = get_lengths(ph, abs = False)
+    bars_length = get_lengths(ph, type="abs")
     # bar_differences = bar_differences.ravel().astype(float)
     lifespan_c = [np.sum([
                         bar_len if _index_bar(bar, t) else 0.
@@ -104,17 +148,24 @@ def life_entropy_curve(ph, t_list=None, resolution=1000):
 
 # 1D ordered vectorization
 
-def stable_ranks(ph, type = 'standard'):
-    bars_length = get_lengths(ph, abs = False)
-    if type == 'standard':
-        bars_length_filtered = -bars_length
-    elif type == 'abs':
-        bars_length_filtered = np.abs(bars_length)
-    elif type == 'positiv':
-        bars_length_filtered = np.abs(bars_length[bars_length < 0])
+def stable_ranks(bar_lengths, prob, maxL, disc_steps):
+    """Compute the stable ranks of a barcode."""
+    if len(bar_lengths) == 0:
+        return np.zeros(disc_steps)
+    
+    if prob=="long":
+        prob_bars = bar_lengths / bar_lengths.sum()
+    elif prob=="short":
+        prob_bars = (bar_lengths.max() - bar_lengths) / (bar_lengths.max() - bar_lengths).sum()
+        
+    x_values = np.linspace(0, maxL, num=disc_steps)
 
-    bars_length_sorted = np.sort(bars_length_filtered)[::-1]
-    return bars_length_sorted
+    if prob=="long" or prob=="short":
+        sr = np.array( [bar_lengths.shape[0]*prob_bars[bar_lengths >= x].sum() for x in x_values] )
+    else:
+        sr = np.array( [np.count_nonzero(bar_lengths >= x) for x in x_values] )
+
+    return sr
 
 def histogram_stepped(ph):
     """Calculate step distance of ph data."""
@@ -151,7 +202,8 @@ def _subintervals(xlims, num_bins = 1000):
 
 def betti_hist(ph, bins = None, num_bins = 1000):
     if bins is None:
-        bins = _subintervals(ph, num_bins=num_bins)
+        xlims = [np.min(ph), np.max(ph)]
+        bins = _subintervals(xlims=xlims, num_bins=num_bins)
     masks = _mask_bars(ph, bins)
     betti_h = np.sum(masks, axis=-1)
     return betti_h, bins
@@ -162,7 +214,7 @@ def lifespan_hist(ph, bins = None, num_bins = 1000):
         bins = _subintervals(xlims=xlims, num_bins=num_bins)
     masks = _mask_bars(ph, bins)
 
-    bars_length = get_lengths(ph, abs = False)
+    bars_length = get_lengths(ph, type="abs")
     lifespan_h = [np.sum([
                         bar_len if m else 0.
                         for m, bar_len in zip(mask, bars_length)

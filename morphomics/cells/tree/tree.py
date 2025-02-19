@@ -40,15 +40,32 @@ class Tree:
     from morphomics.cells.tree.extract_feature import get_type
 
     from morphomics.cells.tree.extract_feature import get_children
-    from morphomics.cells.tree.extract_feature import get_bif_term
+    from morphomics.cells.tree.extract_feature import get_node_children_number
     from morphomics.cells.tree.extract_feature import get_bifurcations
     from morphomics.cells.tree.extract_feature import get_multifurcations
     from morphomics.cells.tree.extract_feature import get_terminations
 
+    from morphomics.cells.tree.extract_feature import get_way_to_root
+    from morphomics.cells.tree.extract_feature import get_way_length
+    from morphomics.cells.tree.extract_feature import get_way_order
+    from morphomics.cells.tree.extract_feature import get_nodes_way_order
+    from morphomics.cells.tree.extract_feature import get_all_ways
+
+    
     from morphomics.cells.tree.extract_feature import get_edges_coords
     from morphomics.cells.tree.extract_feature import get_edges_length
     from morphomics.cells.tree.extract_feature import get_lifetime
+    # from morphomics.cells.tree.extract_feature import get_sections_only_points
+    from morphomics.cells.tree.extract_feature import get_sections_length
     
+    from morphomics.cells.tree.extract_feature import get_direction_between
+    from morphomics.cells.tree.extract_feature import _vec_angle
+    from morphomics.cells.tree.extract_feature import get_angle_between_sections
+    from morphomics.cells.tree.extract_feature import get_way_consecutive_angles
+
+    from morphomics.cells.tree.extract_feature import get_all_consecutive_angles
+    from morphomics.cells.tree.extract_feature import get_bifurcation_angles
+
     from morphomics.cells.tree.extract_feature import get_nodes_radial_distance
     from morphomics.cells.tree.extract_feature import get_nodes_path_distance
 
@@ -124,42 +141,42 @@ class Tree:
                     The ending point ids of sections
         """
         """Get indices of the parents of the first sections' points and of their last points."""
-        end = np.array(sp.csr_matrix.sum(self.dA, 0) != 1)[0].nonzero()[0]
-
+        children_counts = self.get_node_children_number() 
+        end = np.array(children_counts != 1).nonzero()[0]
         if 0 in end:  # If first segment is a bifurcation
             end = end[1:]
 
         beg = np.append([0], self.p[np.delete(np.hstack([0, 1 + end]), len(end))][1:])
-
         return beg, end
     
     @lru_cache(maxsize=None)  # This decorator caches the results
     def parents_children(self, edges=False):
-        """Returns the parents and children nodes of each section.
+        """Returns the dictionnaries of parents to children and children to parents.
 
         Returns:
-            parents (dict): Each key corresponds to a section id
-                and the respective values to the parent section ids
-            children (dict): Each key corresponds to a section id
-                and the respective values to the children section ids
+            children_to_parents (dict): Each key corresponds to a section id (node)
+                and the respective values to the parent section ids (node).
+            parents_to_children (dict): Each key corresponds to a section id (node)
+                and the respective values to the children section ids (nodes)
 
         Notes:
             If 0 exists in starting nodes, the parent from tree is assigned
         """
-
+        if len(self.p) == 1:
+            return {}, {}
         if edges:
             begs, ends = self.edges
         else:
             begs, ends = self.sections
 
-        parents = {e: b for b, e in zip(begs, ends)}
+        children_to_parents = {e: b for b, e in zip(begs, ends)}
 
         if 0 in begs:
-            parents[0] = self.p[0]
+            children_to_parents[0] = self.p[0]
 
-        children = {b: ends[np.where(begs == b)[0]] for b in np.unique(begs)}
+        parents_to_children = {b: ends[np.where(begs == b)[0]] for b in np.unique(begs)}
 
-        return parents, children
+        return children_to_parents, parents_to_children
     
     def move_to_point(self, point=(0, 0, 0)):
         """Moves the tree in the x-y-z plane so that it starts from the selected point."""
@@ -176,6 +193,9 @@ class Tree:
 
     def simplify(self):
         """Returns a simplified tree that corresponds to the start - end of the sections points."""
+        if self.size() == 1:
+            return self
+         
         beg0, end0 = self.sections
         sections = np.transpose([beg0, end0])
 
@@ -203,19 +223,24 @@ class Tree:
 
         return Tree(x, y, z, d, t, p)
     
-    def subsample_tree(self, type, number):
+    # def simplify(self):
+    #     """Returns a simplified tree that corresponds to the start - end of the sections points."""
+    #     k_out = self.get_node_children_number()
+
+    def subsample_tree(self, _type, number):
         tip_starts = self.get_terminations()
         subsampled_nodes = set()
+
         for leaf in tip_starts:
-            if type == 'cut':
+            if _type == 'cut':
                 way = self.cut_branch(leaf, degree = number)
-            elif type == 'prune':
+            elif _type == 'prune':
                 way = self.prune_branch(leaf, nb_nodes = number)
-
             subsampled_nodes.update(way)
-            subsampled_nodes.discard(-1)
-            subsampled_nodes = list(subsampled_nodes)
-
+            
+        subsampled_nodes = list(subsampled_nodes)
+        if len(subsampled_nodes) == 0:
+            subsampled_nodes = [0]
         new_x = self.x[subsampled_nodes]
         new_y = self.y[subsampled_nodes]
         new_z = self.z[subsampled_nodes]
@@ -223,11 +248,14 @@ class Tree:
         new_t = self.t[subsampled_nodes]
         new_p = self.p[subsampled_nodes]
 
-        # Step 1: Create a mapping of numbers to their indices in subsampled_nodes
-        index_map = {value: index for index, value in enumerate(subsampled_nodes)}
+        # Step 1: Create a mapping of nodes to their indices in subsampled_nodes
+        index_map = {node: index for index, node in enumerate(subsampled_nodes)}
         index_map[-1] = -1
         # Step 2: Replace each number in list p with its index from subsampled_nodes
         new_p = [index_map[number] for number in new_p]
 
-        new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
-        return new_tree
+        if len(subsampled_nodes) > 1:
+            new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
+            return new_tree
+        else:
+            return None

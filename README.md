@@ -13,17 +13,22 @@
 
 
 # Required Dependencies
-Python : <= 3.10
 
 numpy : 1.8.1+, scipy : 0.13.3+, pickle : 4.0+, enum34 : 1.0.4+, scikit-learn : 0.19.1+, tomli: 2.0.1+, matplotlib : 3.2.0+, ipyvolume: 0.6.1+, umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2_modified, TMD
 
 # Installation Guide
 
 You need Python 3.9 or 3.10 to run this package.
+
+Create a virtual environment, with Python or if you have conda with:
 ``` console
 conda create -n morphology python=3.9
 conda activate morphology
-pip install morphomics
+```
+
+Navigate to the directory where you cloned the repository and install the package:
+``` console
+pip install -e .
 ```
 
 

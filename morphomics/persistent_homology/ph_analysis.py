@@ -1,12 +1,19 @@
 import numpy as np
+from scipy.stats import norm
 
 def get_limits(phs_list):
     """Returns the x-y coordinates limits (min, max) for a list of persistence diagrams."""
-    # if any((isinstance(ph[0], list) for ph in phs_list)):
-    #     phs = [list(ph_bar) for ph in phs_list for ph_bar in ph]
-    # else:
-    #     phs = phs_list
-    phs = np.vstack(phs_list)
+
+    def recursive_vstack(lst):
+
+        # If the input is already a numpy array, return it as is
+        if isinstance(lst, np.ndarray):
+            return lst
+    
+        # If the input is a list, recursively stack its elements
+        return np.vstack([recursive_vstack(sublist) for sublist in lst])
+
+    phs = recursive_vstack(phs_list)
     xlim = [min(np.transpose(phs)[0]), max(np.transpose(phs)[0])]
     ylim = [min(np.transpose(phs)[1]), max(np.transpose(phs)[1])]
     return xlim, ylim
@@ -19,12 +26,29 @@ def get_terminations(ph):
     """Return the terminations from the diagram."""
     return np.array(ph)[:, 0]
 
-def get_lengths(ph, abs = True):
+def get_lengths(ph, type="abs", density=False):
     """Return the length of the bars from the diagram."""
-    lengths = ph[:,1]-ph[:,0] 
-    if abs:
-        lengths = np.abs(lengths)
-    return lengths
+    if density:
+        if density["type"]=="gaussian":
+            try:
+                mu = density["mean"]
+                sigma = density["std"]
+            except KeyError as e:
+                raise KeyError(f"Missing key in density dictionary: {e}")
+
+            bar_lengths = np.sort(norm.cdf(ph[:,1], loc=mu, scale=sigma) - norm.cdf(ph[:,0], loc=mu, scale=sigma))
+    else:
+        # "standard"
+        bar_lengths = np.sort(ph[:,1] - ph[:,0])
+
+    if type == 'neg':
+        bars_length_filtered = np.abs( bar_lengths[bar_lengths < 0] )
+    elif type == 'abs':
+        bars_length_filtered = np.abs(bar_lengths)
+    elif type == 'pos':
+        bars_length_filtered = bar_lengths[bar_lengths > 0]
+
+    return bars_length_filtered
 
 def get_total_length(ph, abs = True):
     """Calculate the total length of a barcode.
@@ -33,7 +57,8 @@ def get_total_length(ph, abs = True):
     This should be equivalent to the total length of the tree if the barcode represents path
     distances.
     """
-    return np.sum(get_lengths(ph, abs))
+    type = "abs" if abs else "standard"
+    return np.sum(get_lengths(ph, type=type))
 
 def closest_ph(ph_list, target_extent, method="from_above"):
     """Get index of the persistent homology in the ph_list closest to a target extent.

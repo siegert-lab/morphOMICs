@@ -8,10 +8,11 @@ import os, glob
 import numpy as np
 import re
 import pandas as pd
+import pickle as pkl
 
 from operator import itemgetter
 from morphomics.io.swc import SWC_DCT
-from morphomics.cells.utils import LoadNeuronError
+from morphomics.cells.utils import LoadSWCError
 
 # The following codes were adapted from TMD:
 # https://github.com/BlueBrain/TMD
@@ -24,7 +25,7 @@ def read_swc(file_path, line_delimiter="\n"):
         assert file_path.endswith((".swc"))
     except AssertionError:
         raise Warning("{} is not a valid swc file".format(file_path))
-    except LoadNeuronError:
+    except LoadSWCError:
         return np.nan
     
     with open(file_path, "r", encoding="utf-8") as f:
@@ -32,7 +33,6 @@ def read_swc(file_path, line_delimiter="\n"):
 
     # Split data per lines
     split_data = read_data.split(line_delimiter)
-
     # Clean data from comments and empty lines
     split_data = [a for a in split_data if "#" not in a]
     split_data = [a for a in split_data if a != ""]
@@ -52,13 +52,11 @@ def read_swc(file_path, line_delimiter="\n"):
     )
 
     data = []
-
     for dpoint in split_data:
         if expected_data.match(dpoint.replace("\r", "")):
             segment_point = np.array(
                 expected_data.match(dpoint.replace("\r", "")).groups(), dtype=float
             )
-
             # make the radius diameter
             segment_point[SWC_DCT["radius"]] = 2.0 * segment_point[SWC_DCT["radius"]]
 
@@ -66,11 +64,40 @@ def read_swc(file_path, line_delimiter="\n"):
     swc_arr = np.array(data)
     return swc_arr
 
+def save_fig_pdf(fig, filepath):
+    """
+    Save a given Matplotlib figure as a PDF to the specified file path.
+    
+    Parameters:
+        fig (matplotlib.figure.Figure): The Matplotlib figure to save.
+        filepath (str): The file path where the figure should be saved.
+    """
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)  # Ensure directory exists
+    fig.savefig(filepath, format='pdf')  # Save the figure as a PDF
+    print(f"Plot saved to {filepath}")
+
+def save_obj(obj, filepath):
+    # Function to save an object to a file using pickle
+
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    # Open the file and save the object (create or overwrite)
+    with open(filepath + ".pkl", "wb") as f:
+        pkl.dump(obj, f, pkl.HIGHEST_PROTOCOL)
+
+
+def load_obj(name):
+    # Function to load a pkl file
+    with open(name + ".pkl", "rb") as f:
+        return pkl.load(f)
+
+
 def load_ph(filename, delimiter=" "):
     """Load PH file in a `np.array`."""
     with open(filename, "r", encoding="utf-8") as f:
         ph = np.array([np.array(line.split(delimiter), dtype=float) for line in f])
     return ph
+
 
 def get_info_frame(
     folder_location,
@@ -88,18 +115,28 @@ def get_info_frame(
     Returns:
         DataFrame: dataframe containing conditions, 'file_name', 'file_path' and 'neuron'
     """
+    if "nt" in os.name:
+        char0 = "%s%s\\*%s"
+        char1 = "\\*"
+        char2 = "\\"
+    else:
+        char0 = "%s%s/*%s"
+        char1 = "/*"
+        char2 = "/"  
+
+    print(os.getcwd())
 
     print("You are now collecting the 3D reconstructions (.swc files) from this folder: \n%s\n"%folder_location)
     
     # get all the file paths in folder_location
     filepaths = glob.glob(
-        "%s%s/*%s" % (folder_location, "/*" * len(conditions), extension)
+        char0 % (folder_location, char1 * len(conditions), extension)
     )
     print("Found %d files..." % len(filepaths))
 
     # convert the filepaths to array for metadata
     file_info = np.array(
-        [_files.replace(folder_location, "").split("/")[1:] for _files in filepaths]
+        [_files.replace(folder_location, "").split(char2)[1:] for _files in filepaths]
     )
 
     # create the dataframe for the population of cells

@@ -2,7 +2,7 @@ import numpy as np
 
 from morphomics.protocols.default_parameters import DefaultParams
 from morphomics.persistent_homology import vectorizations
-from morphomics.persistent_homology.ph_analysis import get_limits
+from morphomics.persistent_homology.ph_analysis import get_limits, get_lengths
 
 from morphomics.utils import norm_methods
 
@@ -170,6 +170,8 @@ class Vectorizer(object):
         rescale_lims = pi_params["rescale_lims"]
         xlims=pi_params["xlims"]
         ylims=pi_params["ylims"]
+        pi_method=pi_params["method"]
+        std_isotropic=pi_params["std_isotropic"]
         bw_method=pi_params["bw_method"]
         if bw_method == "None":
             bw_method = None
@@ -193,14 +195,12 @@ class Vectorizer(object):
             if ylims is None or ylims == "None":
                 ylims = _ylims
         
-        pi_list = self.tmd.apply(lambda ph: vectorizations.persistence_image(ph,
-                                                                            xlim = xlims,
-                                                                            ylim = ylims,
-                                                                            bw_method = bw_method,
-                                                                            weights = barcode_weight,
-                                                                            resolution = resolution,
-                                                                            )
-        )
+        def vect_ph(ph):
+            return vectorizations.persistence_image(ph, method=pi_method, std_isotropic=std_isotropic, xlim = xlims, ylim = ylims, bw_method = bw_method, weights = barcode_weight, resolution = resolution)
+
+
+        pi_list = self.tmd.apply(vect_ph)
+
         if flatten:
             pi_list = pi_list.apply(lambda pi: pi.flatten())
 
@@ -208,7 +208,6 @@ class Vectorizer(object):
         pis = pi_list.apply(lambda pi: pi/norm_m(pi) if len(pi)>0 else np.nan)
     
         print("pi done! \n")
-        print(np.array(pis).shape)
         return np.array(list(pis))
 
 
@@ -286,19 +285,38 @@ class Vectorizer(object):
 
     def stable_ranks(self):
         stable_ranks_params = self.vect_parameters["stable_ranks"]
-        # Type should be: 'standard', 'abs' or 'positiv'.
+        # Type should be: 'neg', 'pos' or 'abs'.
         stable_ranks_params = self.default_params.complete_with_default_params(stable_ranks_params, "stable_ranks", type = 'vectorization')
         type = stable_ranks_params['type']
+        density = stable_ranks_params['density']
+        bars_prob = stable_ranks_params['bars_prob']
+        resolution = stable_ranks_params['resolution']
         print("Computing stable ranks...")
-        stable_r = self.tmd.apply(lambda ph: vectorizations.stable_ranks(ph, type = type))
-        # Determine the maximum length of vectors
-        max_len = stable_r.apply(len).max()
+        
+        scaled_bar_lengths = self.tmd.apply(lambda x : get_lengths(x, type, density))
+        maxL_SR = scaled_bar_lengths.apply(lambda x : max(x) if len(x)>0 else 0).max()
 
-        # Pad each vector with zeros
-        stable_r = stable_r.apply(lambda x: np.pad(x, (0, max_len - len(x)), mode='constant'))
+        if bars_prob != "long" or bars_prob != "short":
+            # Faster vectorized implementation
+            x_values = np.linspace(0, maxL_SR, num=resolution)
+            # Count the maximum length of the numpy arrays in scaled_bar_lengths
+            max_length = max(scaled_bar_lengths.apply(len))
+
+            # Create a new numpy array with dimensions number of rows in scaled_bar_lengths times the max length
+            scaled_bar_lengths_array = np.zeros((len(scaled_bar_lengths), max_length)) - 1
+
+            # Insert scaled_bar_lengths into the new numpy array
+            for i, row in enumerate(scaled_bar_lengths):
+                scaled_bar_lengths_array[i, :len(row)] = row
+
+            srs = np.array([np.count_nonzero(scaled_bar_lengths_array >= disc, axis=1) for disc in x_values]).T
+
+        else:
+            stable_r = scaled_bar_lengths.apply(lambda x : vectorizations.stable_ranks(x, bars_prob, maxL_SR, resolution))
+            srs = np.array(list(stable_r))
 
         print("sr done! \n")
-        return np.array(list(stable_r))
+        return srs
 
 
     def betti_hist(self):

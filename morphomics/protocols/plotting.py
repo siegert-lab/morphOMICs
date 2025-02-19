@@ -89,8 +89,9 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
-    
+
     color_map = _set_colormap(colors, condition_list, amount)
+    sorted_conditions = sorted(list(color_map.keys()))
 
     if circle_color is None:
         fig = px.scatter_3d(morphoframe, 
@@ -99,6 +100,8 @@ def plot_3d_scatter(morphoframe, axis_labels, conditions, colors, amount, size, 
                             z = axis_labels[2], 
                             color = 'condition',
                             color_discrete_map = color_map,
+                            category_orders={'condition': sorted_conditions},  # Enforce the order for the color legend
+
                             title = title,
                         )
     
@@ -175,6 +178,7 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
     condition_list = morphoframe['condition'].unique()
     condition_list = condition_list.tolist()
     color_map = _set_colormap(colors, condition_list, amount)
+    sorted_conditions = sorted(list(color_map.keys()))
 
     if circle_color is None:
         # Create the Plotly scatter plot
@@ -183,8 +187,15 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
                         y=axis_labels[1], 
                         color='condition',
                         color_discrete_map=color_map,
+                        category_orders={'condition': sorted_conditions},  # Enforce the order for the color legend
+
                         title=title
                         )
+        # Update the category order to match the sorted conditions
+        # fig.update_layout(
+        #     legend={'traceorder': 'normal'},  # To control the trace order in the legend
+        #     xaxis={'categoryorder':'array', 'categoryarray': sorted_conditions}  # Sorts the x-axis categories
+        # )
 
     else:
         circle_color_map = _set_colormap(circle_color, condition_list, amount)
@@ -219,8 +230,8 @@ def plot_2d_scatter(morphoframe, axis_labels, conditions, colors, circle_color, 
         ),
         # Enforce square aspect ratio
     autosize=False,
-    width=800,  # Adjust as needed
-    height=500,  # Adjust as needed
+    width=1200,  # Adjust as needed
+    height=800,  # Adjust as needed
     )
 
     if show:

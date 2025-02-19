@@ -16,13 +16,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+from collections import Counter
 
-def size(self, neurite_type="all"):
+def get_nb_trees(self, tree_type_list="all"):
     """Neuron method to get the number of tress."""
-    if neurite_type == "all":
-        neurite_type = ["basal_dendrite", "axon", "apical_dendrite", "undefined"]
-    s = np.sum([len(getattr(self, neu)) for neu in neurite_type])
-
+    if tree_type_list == "all":
+        tree_type_list = ["basal_dendrite", "axon", "apical_dendrite", "glia_process", "undefined"]
+    s = np.sum([len(getattr(self, tree_type)) for tree_type in tree_type_list])
     return int(s)
 
 def get_bounding_box(self):
@@ -53,4 +53,11 @@ def get_bounding_box(self):
 
     return np.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
 
+def get_neurites_type(self):
+    type_list = [neurite.get_type() for neurite in self.neurites]
+    # Count occurrences of each digit in the list
+    digit_counts = Counter(type_list)
+    # Create a dictionary with neurite types as keys and their counts as values
+    neurite_counts = {self.tree_type_dict[digit]: count for digit, count in digit_counts.items()}
+    return neurite_counts
 

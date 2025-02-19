@@ -17,15 +17,24 @@
 
 term_dict = {"x": 0, "y": 1, "z": 2}
 
-# Definition of tree types
-TYPE_DCT = {"soma": 1, "basal": 3, "apical": 4, "axon": 2, "glia": 7}
-
-SOMA_TYPE = 1
+class LoadSWCError(Exception):
+    """
+    Captures the exception of failing to load a .swc file
+    """
 
 class LoadNeuronError(Exception):
     """
     Captures the exception of failing to load a single neuron
     """
 
+
 class TmdError(Exception):
     """Specific exception raised by TMD."""
+
+from itertools import combinations
+
+def get_pairs(elements):
+    all_combinations = combinations(elements, 2)
+    # Convert to a list of lists (optional)
+    all_combinations = [list(comb) for comb in all_combinations]
+    return all_combinations

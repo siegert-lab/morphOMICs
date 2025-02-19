@@ -7,15 +7,15 @@ from morphomics.cells.tree.tree import Tree
 
 from scipy import sparse as sp
 from scipy.sparse import csgraph as cs
-from morphomics.cells.neuron.neuron import TREE_TYPE_DICT 
-from morphomics.cells.utils import TYPE_DCT, LoadNeuronError
+from morphomics.cells.neuron.neuron import DIGIT_TO_TREE_TYPE, TREE_TYPE_TO_DIGIT 
+from morphomics.cells.utils import LoadNeuronError
 
 # Definition of swc data container
 SWC_DCT = {"index": 0, "type": 1, "x": 2, "y": 3, "z": 4, "radius": 5, "parent": 6}
 
-def make_tree(data):
+def swc_to_tree(swc_arr):
     """Make tree structure from loaded data."""
-    tr_data = np.transpose(data)
+    tr_data = np.transpose(swc_arr)
 
     parents = [
         np.where(tr_data[SWC_DCT["index"]] == i)[0][0] if len(np.where(tr_data[0] == i)[0]) > 0 else -1
@@ -39,15 +39,15 @@ def swc_to_neuron(swc_arr, name = 'Microglia'):
     neuron = Neuron(name = name)
     
     # Check for duplicated IDs
-    IDs_counts = np.unique(swc_arr_T[0], return_counts=True)
+    IDs_counts = np.unique(swc_arr_T[SWC_DCT['index']], return_counts=True)
     IDs, counts = IDs_counts[0], IDs_counts[1]
     if (counts != 1).any():
         warnings.warn(f"The following IDs are duplicated: {IDs[counts > 1]}")
 
     # Check the ID of the soma
-    soma_index = TYPE_DCT["soma"]
+    soma_digit = TREE_TYPE_TO_DIGIT["soma"]
     try:
-        soma_ids = np.where(swc_arr_T[SWC_DCT["type"]] == soma_index)[0]
+        soma_ids = np.where(swc_arr_T[SWC_DCT["type"]] == soma_digit)[0]
     except IndexError:
         raise LoadNeuronError("Soma points not in the expected format")
     
@@ -68,7 +68,9 @@ def swc_to_neuron(swc_arr, name = 'Microglia'):
     try:
         dA = sp.csr_matrix(
             (
+                # This is the weight of a link 
                 np.ones(len(p) - len(soma_ids)),
+                # This is the list of row (child) and columns (parents)
                 (range(len(soma_ids), len(p)), p[len(soma_ids) :]),
             ),
             shape=(len(p), len(p)),
@@ -84,7 +86,7 @@ def swc_to_neuron(swc_arr, name = 'Microglia'):
     # Extract trees
     for i in range(comp[0]):
         tree_ids = np.where(comp[1] == i)[0] + len(soma_ids)
-        tree = make_tree(swc_arr[tree_ids])
-        neuron.append_tree(tree, TREE_TYPE_DICT)
+        tree = swc_to_tree(swc_arr[tree_ids])
+        neuron.append_tree(tree)
 
     return neuron

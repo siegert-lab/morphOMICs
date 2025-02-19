@@ -8,12 +8,12 @@ def get_image_add_data(Z1, Z2, normalized=True):
         Z2 = Z2 / Z2.max()
     return Z1 + Z2
 
-def image_diff_data(Z1, Z2, normalized=True):
+def get_image_diff_data(Z1, Z2, normalized=True):
     """Get the diff of two images from the gaussian kernel plotting function."""
     if normalized:
         Z1 = Z1 / Z1.max()
         Z2 = Z2 / Z2.max()
-    return Z1 + Z2
+    return Z1 - Z2
 
 def get_average_persistence_image(ph_list, xlim=None, ylim=None, 
                                   bw_method=None, 
@@ -49,3 +49,16 @@ def get_average_persistence_image(ph_list, xlim=None, ylim=None,
             except BaseException:  # pylint: disable=broad-except
                 pass
     return im_av / k
+
+
+def filter_pi_list(pis, tokeep = None, std_threshold = 1e-5):
+    # pis is a matrix of flatten images i.e. a list of rows where each row is an image
+    if tokeep is None:
+        tokeep = np.where(
+            np.std(pis, axis=0) >= std_threshold)[0]
+        
+    print(len(tokeep), 'pixels to keep over', pis.shape[1])
+    mask = np.zeros(len(pis[0]), dtype=bool)
+    mask[tokeep] = True
+    pis_filtered = np.array([np.array(row[mask]) for row in pis])
+    return pis_filtered, tokeep

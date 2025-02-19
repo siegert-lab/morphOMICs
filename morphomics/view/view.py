@@ -22,7 +22,7 @@ from matplotlib.collections import LineCollection as _LC
 
 from morphomics.persistent_homology.tmd import _filtration_function
 from morphomics.persistent_homology.tmd import tree_to_property_barcode as tp_barcode
-from morphomics.cells.neuron.neuron import TREE_TYPE_DICT
+from morphomics.cells.neuron.neuron import DIGIT_TO_TREE_TYPE
 from morphomics.cells.utils import term_dict
 from morphomics.view import common as cm
 from morphomics.view import plot
@@ -76,9 +76,9 @@ def trunk(tr, plane="xy", new_fig=True, subplot=False, hadd=0.0, vadd=0.0, N=10,
 
         return ((horz1, vert1), (horz2, vert2))
 
-    N = min(N, len(tr.get_segments()))
+    N = min(N, len(tr.get_edges_coords()))
 
-    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_segments()[:N]]
+    segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_edges_coords()[:N]]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -88,7 +88,7 @@ def trunk(tr, plane="xy", new_fig=True, subplot=False, hadd=0.0, vadd=0.0, N=10,
         scale = _get_default("diameter_scale", **kwargs)
         linewidth = [d * scale for d in tr.d]
 
-    treecolor = cm.get_color(_get_default("treecolor", **kwargs), TREE_TYPE_DICT[tr.get_type()])
+    treecolor = cm.get_color(_get_default("treecolor", **kwargs), DIGIT_TO_TREE_TYPE[tr.get_type()])
 
     # Plot the collection of lines.
     collection = _LC(
@@ -149,10 +149,10 @@ def tree(tr, plane="xy", new_fig=True, subplot=False, hadd=0.0, vadd=0.0, **kwar
         scale = _get_default("diameter_scale", **kwargs)
         linewidth = [d * scale for d in tr.d]
 
-    if tr.get_type() not in TREE_TYPE_DICT:
+    if tr.get_type() not in DIGIT_TO_TREE_TYPE:
         treecolor = "black"
     else:
-        treecolor = cm.get_color(_get_default("treecolor", **kwargs), TREE_TYPE_DICT[tr.get_type()])
+        treecolor = cm.get_color(_get_default("treecolor", **kwargs), DIGIT_TO_TREE_TYPE[tr.get_type()])
 
     # Plot the collection of lines.
     collection = _LC(
@@ -594,7 +594,8 @@ def tree3d(tr, new_fig=True, new_axes=True, subplot=False, **kwargs):
 
         return ((horz1, vert1, depth1), (horz2, vert2, depth2))
 
-    segs = [_seg_3d(seg) for seg in tr.get_segments()]
+    segs = [_seg_3d(seg) for seg in tr.get_edges_coords()]
+    #segs = [_seg_2d(seg, hadd, vadd) for seg in tr.get_edges_coords()]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -604,7 +605,7 @@ def tree3d(tr, new_fig=True, new_axes=True, subplot=False, **kwargs):
         scale = _get_default("diameter_scale", **kwargs)
         linewidth = [d * scale for d in tr.d]
 
-    treecolor = cm.get_color(_get_default("treecolor", **kwargs), TREE_TYPE_DICT[tr.get_type()])
+    treecolor = cm.get_color(_get_default("treecolor", **kwargs), DIGIT_TO_TREE_TYPE[tr.get_type()])
 
     # Plot the collection of lines.
     collection = Line3DCollection(
@@ -693,9 +694,9 @@ def trunk3d(tr, new_fig=True, new_axes=True, subplot=False, N=10, **kwargs):
 
         return ((horz1, vert1, depth1), (horz2, vert2, depth2))
 
-    N = min(N, len(tr.get_segments()))
+    N = min(N, len(tr.get_edges_coords()))
 
-    segs = [_seg_3d(seg) for seg in tr.get_segments()[:N]]
+    segs = [_seg_3d(seg) for seg in tr.get_edges_coords()[:N]]
 
     linewidth = _get_default("linewidth", **kwargs)
 
@@ -705,7 +706,7 @@ def trunk3d(tr, new_fig=True, new_axes=True, subplot=False, N=10, **kwargs):
         scale = _get_default("diameter_scale", **kwargs)
         linewidth = [d * scale for d in tr.d]
 
-    treecolor = cm.get_color(_get_default("treecolor", **kwargs), TREE_TYPE_DICT[tr.get_type()])
+    treecolor = cm.get_color(_get_default("treecolor", **kwargs), DIGIT_TO_TREE_TYPE[tr.get_type()])
 
     # Plot the collection of lines.
     collection = Line3DCollection(
@@ -1086,7 +1087,7 @@ def _get_polar_data(pop, neurite_type="neurites", bins=20):
 
     segs = []
     for tr in getattr(pop, neurite_type):
-        segs = segs + tr.get_segments()
+        segs = segs + tr.get_edges_coords()
 
     angles = np.array([seg_angle(s) for s in segs])
     lens = np.array([seg_length(s) for s in segs])
@@ -1210,7 +1211,7 @@ def _tree_colors(
 
         return ((horz1, vert1), (horz2, vert2))
 
-    segs = [_seg_2d(seg) for seg in tr.get_segments()]
+    segs = [_seg_2d(seg) for seg in tr.get_edges_coords()]
 
     # Definition of the linewidth according to diameter, if diameter is True.
 

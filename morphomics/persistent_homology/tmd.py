@@ -56,7 +56,7 @@ def tree_to_property_barcode(tree, filtration_function, property_class=NoPropert
 
     prop = property_class(tree)
 
-    active = tree.get_bif_term() == 0
+    active = tree.get_node_children_number() == 0
     alives = np.where(active)[0]
     point_ids_track = {al: [al] for al in alives}
     bars_to_points = []
