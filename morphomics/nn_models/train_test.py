@@ -3,7 +3,7 @@ import torch_geometric
 from tqdm import tqdm
 import numpy as np
 from .criterion import VAELoss
-def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, scheduler=None):
+def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, kl_factor_list = None, scheduler=None):
     # If it is an image add a channel dim
     if len(data.shape) == 3:
         data = data.unsqueeze(1)  # Adds a channel dimension, so the shape becomes (batch_size, 1, 100, 100)
@@ -12,8 +12,9 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
     loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
 
     # Create kl factors
-    x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
-    kl_factor_list = (1 - np.exp(-x_values))
+    if kl_factor_list is None:
+        x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
+        kl_factor_list = (1 - np.exp(-x_values))
 
     # Loop through the epochs
     for epoch in range(epochs):

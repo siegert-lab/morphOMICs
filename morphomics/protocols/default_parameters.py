@@ -53,9 +53,12 @@ class DefaultParams:
                                     'vae': {'n_components': 2,      
                                             'nn_layers': [64, 32, 16, 8], 
                                             'activation_layer': nn.SELU,
+                                            'kl_factor_list' : None,
+
                                             },
                                     'vaecnn': {'n_components': 2,      
                                             'nn_layers': [8, 16, 32], 
+                                            'kl_factor_list' : None, 
                                             }
         }
         self.dimreducer_params['vae'].update(self.general_dl_params)
