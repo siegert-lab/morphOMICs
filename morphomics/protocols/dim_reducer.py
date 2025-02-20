@@ -206,14 +206,9 @@ class DimReducer(object):
         lr = vae_params['learning_rate']
         scheduler = vae_params['scheduler']
         nb_epochs = vae_params['nb_epochs']
-        kl_factor_list = vae_params['kl_factor_list']
+        kl_factor_function = vae_params['kl_factor_function']
         batch_size = vae_params['batch_size']
         
-        if  kl_factor_list is not None and len(kl_factor_list) != nb_epochs:
-            kl_factor_list=  None
-            print('kl_factor_list should have size nb_epochs')
-            print('kl_factor_list was set as default')
-            print('')
         self.tmd_vectors = th.tensor(self.tmd_vectors, dtype=th.float32)
 
         # Set the vae
@@ -247,7 +242,7 @@ class DimReducer(object):
                                             loss_fn = loss_fn, 
                                             epochs = nb_epochs, 
                                             batch_size = batch_size,
-                                            kl_factor_list=kl_factor_list, 
+                                            kl_factor_function=kl_factor_function, 
                                             scheduler = scheduler)
         
         _, z_mean, _, mse = train_test.vae_test(data = self.tmd_vectors,
@@ -295,14 +290,9 @@ class DimReducer(object):
             m = vaecnn_params['momentum']
             scheduler = vaecnn_params['scheduler']
             nb_epochs = vaecnn_params['nb_epochs']
-            kl_factor_list = vaecnn_params['kl_factor_list']
+            kl_factor_function = vaecnn_params['kl_factor_function']
             batch_size = vaecnn_params['batch_size']
                     
-            if  kl_factor_list is not None and len(kl_factor_list) != nb_epochs:
-                kl_factor_list=  None
-                print('kl_factor_list should have size nb_epochs')
-                print('kl_factor_list was set as default')
-                print('')
             self.tmd_vectors = th.tensor(self.tmd_vectors, dtype=th.float32)
 
             # Set the vae
@@ -338,7 +328,7 @@ class DimReducer(object):
                                                 loss_fn = loss_fn, 
                                                 epochs = nb_epochs, 
                                                 batch_size = batch_size,
-                                                kl_factor_list = kl_factor_list, 
+                                                kl_factor_function = kl_factor_function, 
                                                 scheduler = scheduler)
             
             _, z_mean, _, mse = train_test.vae_test(data = self.tmd_vectors,
