@@ -19,7 +19,7 @@ This project relies on a range of scientific computing and machine learning libr
 # Installation Guide
 
 ### Clone the Repository:**  
-   `git clone https://github.com/.git`  
+   `git clone git@github.com:ThomasNgl/morphOMICs.git`  
    `cd morphOMICs`
 
 You need Python 3.9 or 3.10 to run this package.
