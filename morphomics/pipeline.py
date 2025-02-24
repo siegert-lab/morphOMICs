@@ -1396,8 +1396,8 @@ class Pipeline(object):
             
         sholl_plots = []
         
-        assert params["morphoframe_name"] in self.morphoframe.keys(), "There is no `morphoframe_name`. Check this or make sure that you ran either `Input` or `Load_data` first."
-        assert "Filenames" in self.morphoframe[params["morphoframe_name"]].columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
+        assert params["morphoframe_name"] in self.morphoframe.keys(), "There is no `morphoframe_name`. Check this or make sure that you ran either `Input`."
+        assert "Filenames" in self.morphoframe[params["morphoframe_name"]].columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input`."
         assert params["Empty_indicator"] in self.morphoframe[params["morphoframe_name"]].columns, "There is no column with the assigned `Empty_indicator` in the `morphoframe`. Check the morphoframe structre."
         
         files = self.morphoframe[params["morphoframe_name"]].Filenames
@@ -1462,7 +1462,7 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                            variable_name = morphoframe_name)
         _morphoframe_copy = _morphoframe.copy()
-        assert "file_path" in _morphoframe_copy.columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input` or `Load_data` properly."
+        assert "file_path" in _morphoframe_copy.columns, "There is no Filename column in the `morphoframe`. Make sure that you ran either `Input`."
         
         print("Calculating classical morphometric quantities...")
         filenames = _morphoframe_copy["file_path"]
