@@ -15,5 +15,6 @@ scipy>=0.13.3
 tomli  
 torch
 torch-geometric
+torch-scatter
 umap-learn>=0.3.10
 wandb

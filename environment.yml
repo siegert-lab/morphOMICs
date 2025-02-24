@@ -1,0 +1,28 @@
+name: morphomics
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - cython
+  - cached-property
+  - fa2-modified
+  - h5py>=2.8.0
+  - ipython_genutils
+  - matplotlib>=3.2.0
+  - networkx
+  - numpy<1.25
+  - pandas
+  - scikit-bio
+  - scikit-learn>=0.19.1
+  - scipy>=0.13.3
+  - tomli
+  - pytorch
+  - pip
+  - pip:
+      - morphon>=0.0.8
+      - pylmeasure>=0.2.0
+      - torch-geometric
+      - torch-scatter
+      - umap-learn>=0.3.10
+      - wandb
