@@ -80,9 +80,9 @@ class DefaultParams:
                                                 "restrict_conditions": []
                                                 },
                                 'Filter_frame': {"barcode_size_cutoff": 5,
-                                                 "features_to_filter": {'nb_trunks':[0, 10, 'abs'],
-                                                                        'max_length_bar':[0, 150, 'abs'],
-                                                                        'nb_bars':[5, 250, 'abs']},
+                                                 "features_to_filter":  { "nb_trunks" : { 'min': 0, 'max': 10, 'type': 'abs' },
+                                                                        "max_length_bar" : { 'min': 0, 'max': 150, 'type': 'abs' },
+                                                                        "nb_bars" : { 'min': 5, 'max': 250, 'type': 'abs' } }
                                                  },
                                 'Filter_morpho': {"barlength_cutoff": [],
                                                 "exclude_sg_branches": True,

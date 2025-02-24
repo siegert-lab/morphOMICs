@@ -1,3 +1,7 @@
+results/
+wandb/
+tmp/
+
 __pycache__
 *venv*
 .vscode

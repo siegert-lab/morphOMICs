@@ -450,7 +450,6 @@ class Pipeline(object):
         Essential parameters:
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be filtered out.
-            barcode_size_cutoff (int): Remove morphologies if the number of bars is less than the cutoff
             feature_to_filter (dict, col_name :[min, max, lim_type]): List of features that should be analyzed and used to flag the extremes.
             !!!! For now can only be 'nb_trunks', 'max_length_bar', 'nb_bars'
                                                             lim_type can be relative or absolute, 
@@ -468,8 +467,6 @@ class Pipeline(object):
         morphoframe_filepath = params["morphoframe_filepath"]
         morphoframe_name = params["morphoframe_name"]
 
-        barcode_size_cutoff = float(params["barcode_size_cutoff"])
-
         features_to_filter = params["features_to_filter"]
 
         save_data = params["save_data"]
@@ -485,9 +482,6 @@ class Pipeline(object):
             drop=True
         )
         
-        # barcode size filtering
-        _morphoframe = filter_frame.remove_small_barcodes(_morphoframe, barcode_size_cutoff)
-
         cells = _morphoframe.copy()
         my_population = Population(cells_frame = cells)
         my_population.combine_neurites()
@@ -509,7 +503,7 @@ class Pipeline(object):
 
         for feature_to_filter_names in features_to_filter.keys():
             feature_to_filter_params = features_to_filter[feature_to_filter_names]
-            _min, _max, _type = feature_to_filter_params
+            _min, _max, _type = feature_to_filter_params["min"], feature_to_filter_params["max"], feature_to_filter_params["type"]
             
             if _type == 'relative':
                 _morphoframe, sub_extreme_df = filter_frame.remove_extremes_relative(
