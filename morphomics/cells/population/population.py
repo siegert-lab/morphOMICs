@@ -22,24 +22,29 @@ class Population:
                              'Model' : None,
                              'Time' : None,
                              'Sex' : None,
-                             'Animal' : None}
+                             'Animal' : None},
+                extension = ".swc",
                 ):
         """
         Initialize the swc array and the Neuron instance for each sample in the DataFrame.
         """
+        # Set name
         if name is None and folder_path is not None:
             self.name =  os.path.basename(folder_path)
-        self.folder_path = folder_path
-        self.conditions = conditions
+        else:
+            self.name = name 
 
+        # Set conditions
+        self.conditions = conditions
         if isinstance(self.conditions, dict):
             conds = list(self.conditions.keys())
         else:
             conds = list(self.conditions)
 
+        self.folder_path = folder_path
         if self.folder_path is not None:
             info_frame = get_info_frame(self.folder_path,
-                        extension = ".swc",
+                        extension = extension,
                         conditions = conds)
 
         # Read infoframe and add a column for cells graph from swc files.
@@ -49,7 +54,10 @@ class Population:
                 "file_path" in info_frame.keys()
             ), "`file_path` must be a column in the info_frame DataFrame"
             morphoframe = {}
+            # This line returns a warning 
             info_frame_parts = np.array_split(info_frame, 4)
+            # Potential update
+            # info_frame_parts = [info_frame.iloc[i:i + len(info_frame) // 4] for i in range(0, len(info_frame), len(info_frame) // 4)]
             for i, sub_info_frame in enumerate(info_frame_parts):
                 # Read the swc files and add them in the column swc_array.
                 sub_info_frame['swc_array'] = sub_info_frame['file_path'].apply(lambda file_path: read_swc(file_path))                        
