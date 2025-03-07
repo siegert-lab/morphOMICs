@@ -2,8 +2,6 @@
 Contains all the commonly used functions and data
 useful for multiple tmd modules.
 """
-import os
-import pickle as pkl
 import numpy as np
 
 term_dict = {"x": 0, "y": 1, "z": 2}
@@ -20,14 +18,16 @@ array_operators = {
 }
 
 distances = {
-    "l1": lambda t1, t2: np.sum(np.abs(t1 - t2)),
-    "l2": lambda t1, t2: np.sqrt(np.dot(t1 - t2, t1 - t2)),
+    "l1": lambda t1, t2: np.linalg.norm(np.subtract(t1, t2), 1),
+    "l2": lambda t1, t2: np.linalg.norm(np.subtract(t1, t2), 2),
 }
 
 scipy_metric = {
     "l1": "cityblock",
     "l2": "euclidean",
 }
+
+barcode_dist = {"bd": "bottleneck_distance"}
 
 norm_methods = {
     # Returns the normalization factor based on the norm_method
@@ -38,7 +38,7 @@ norm_methods = {
     "std": lambda arr: np.std(arr),
     "l1": lambda arr: np.sum(np.abs(arr)),
     "l2": lambda arr: np.sqrt(np.dot(arr, arr)),
-    "one": lambda arr: np.ones_like(arr),
+    "id": lambda arr: np.ones_like(arr),
 }
 
 vectorization_codenames = {
@@ -47,26 +47,11 @@ vectorization_codenames = {
     "betti_curve" : "bc",
     "life_entropy_curve" : "lec",
     "lifespan_curve" : "lsc",
-    "stable_rank" : "sr"
+    "stable_ranks" : "sr",
+    "betti_hist" : "bh",
+    "lifespan_hist": "lh"
+
 }
-
-
-def save_obj(obj, filepath):
-    # Function to save an object to a file using pickle
-
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    
-    # Open the file and save the object (create or overwrite)
-    with open(filepath + ".pkl", "wb") as f:
-        pkl.dump(obj, f, pkl.HIGHEST_PROTOCOL)
-
-
-def load_obj(name):
-    # Function to load a pkl file
-
-    with open(name + ".pkl", "rb") as f:
-        return pkl.load(f)
     
     
 def inquire_numbers_per_layer(_info_frame):

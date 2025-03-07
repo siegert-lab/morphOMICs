@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from distutils.core import Extension
 from pathlib import Path
 
-MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical  analysis of microglia morphology (appliable to any cell structure)'''
+MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical analysis of microglia morphology (appliable to any tree structure)'''
 
 def get_requires():
     """Read requirements.txt."""
@@ -25,9 +25,9 @@ def read_description():
     return MINIMAL_DESCRIPTION
 
 setup(
-    name="Morphomics",
+    name="morphomics",
     version="2.0.6",
-    author='Amin Alam, Ryan Cubero, Thomas Negrello',
+    author='Amin Alam, Ryan Cubero, Thomas Negrello, Jens Agerberg',
     description=MINIMAL_DESCRIPTION,
     long_description=read_description(),
     long_description_content_type='text/markdown',

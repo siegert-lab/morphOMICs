@@ -1,3 +1,7 @@
+results/
+wandb/
+tmp/
+
 __pycache__
 *venv*
 .vscode
@@ -5,6 +9,12 @@ build
 dist
 *.egg*
 .ipynb_checkpoints
+.DS_Store
 saved_instances
 Morphomics.Parameters.0.toml
 examples/trial_folder
+
+# Folder Experiments
+*experiments*/
+
+test_everything

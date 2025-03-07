@@ -13,19 +13,37 @@
 
 
 # Required Dependencies
-Python : <= 3.10
 
-numpy : 1.8.1+, scipy : 0.13.3+, pickle : 4.0+, enum34 : 1.0.4+, scikit-learn : 0.19.1+, tomli: 2.0.1+, matplotlib : 3.2.0+, ipyvolume: 0.6.1+, umap-learn : 0.3.10+, morphon: 0.0.8+, pylmeasure: 0.2.0+, fa2_modified, TMD
+This project relies on a range of scientific computing and machine learning libraries to facilitate data analysis, visualization, and modeling. Key dependencies include NumPy, Pandas, and SciPy for numerical computations, scikit-learn for machine learning, and torch alongside torch-geometric for deep learning applications. Additionally, Matplotlib and UMAP-learn support data visualization and dimensionality reduction, while NetworkX aids in graph-based analyses. The project also integrates H5Py for handling HDF5 files and WandB for experiment tracking. Ensure all dependencies are installed to guarantee full functionality.
 
 # Installation Guide
 
-You need Python 3.9 or 3.10 to run this package.
-``` console
-conda create -n morphology python=3.9
-conda activate morphology
-pip install morphomics
-```
+### Clone the Repository:**  
+   `git clone git@github.com:ThomasNgl/morphOMICs.git`  
+   `cd morphOMICs`
 
+You need Python 3.9 or 3.10 to run this package.
+You can install morphOMICs using either Conda or pip. Follow the steps below based on your preferred package manager.
+
+### Using Conda
+2. **Create and Activate the Conda Environment:**  
+   `conda env create -f environment.yml`  
+   `conda activate morphomics`
+
+3. **Install the Package:**  
+   `pip install -e .`
+
+### Using pip
+2. **Create and Activate the Virtual Environment:**  
+   `python -m venv morphomics`  
+   On macOS/Linux:  
+   `source morphomics/bin/activate`  
+   On Windows:  
+   `morphomics\Scripts\activate`
+
+3. **Install the Required Packages:**  
+   `pip install -r requirements.txt`  
+   `pip install -e .`
 
 # Usage
 To run a typical morphOMICs pipeline, create a .toml parameter file (see examples).
