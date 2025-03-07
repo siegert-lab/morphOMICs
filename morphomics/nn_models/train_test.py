@@ -14,8 +14,8 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
     # Create kl factors
     if kl_factor_function is None:
         kl_factor_list = [None]*epochs
-        # x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
-        # kl_factor_list = (1 - np.exp(-x_values))
+        #x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
+        #kl_factor_list = (1 - np.exp(-x_values))
     else:
         kl_factor_list = []
         kl_factor_list = [kl_factor_function(i) for i in epochs]
