@@ -63,7 +63,6 @@ class Pipeline(object):
 
         self.default_params = DefaultParams()
         
-        #print("Unless you have specified the file prefix in the succeeding executables, 
         print("This will be the file prefix: %s"%(self.file_prefix))
         print("")
 
@@ -119,11 +118,11 @@ class Pipeline(object):
             char0 = "%s/%s"
 
         if save_data:
-            if save_filename == 0:
+            if save_filename is None:
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             else:
                 self.parameters[protocol_name]["save_filename"] = save_filename
-            if save_folderpath == 0:
+            if save_folderpath is None:
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
             save_filepath = char0 % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
@@ -235,10 +234,10 @@ class Pipeline(object):
                 # Save the file 
                 if save_data:
                     suffix = "%s-%s" % (separated_by, _v)
-                    if save_filename != 0:
+                    if save_filename is not None:
                         _save_filename = "%s.%s" % (save_filename, suffix)
                     else:
-                        _save_filename = 0
+                        _save_filename = None
                     _default_save_filename = "%s.%s" % (default_save_filename, suffix)
                     _save_filepath = self._set_filename(protocol_name = "Input", 
                                                             save_folderpath = save_folderpath, 

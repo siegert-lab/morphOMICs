@@ -67,7 +67,7 @@ class DefaultParams:
                                 "morphoframe_name": 'microglia',
                                 "save_data": False,
                                 "save_folderpath": 'results',
-                                "save_filename": 0
+                                "save_filename": None
         }
         self.pipeline_params = {'Input': {"data_location_filepath": 'data',
                                             "extension": '.swc',
