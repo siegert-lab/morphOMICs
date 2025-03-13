@@ -79,8 +79,7 @@ class DefaultParams:
                                 'Clean_frame': {"combine_conditions": [],
                                                 "restrict_conditions": []
                                                 },
-                                'Filter_frame': {"barcode_size_cutoff": 5,
-                                                 "features_to_filter":  { "nb_trunks" : { 'min': 0, 'max': 10, 'type': 'abs' },
+                                'Filter_frame': {"features_to_filter":  { "nb_trunks" : { 'min': 0, 'max': 10, 'type': 'abs' },
                                                                         "max_length_bar" : { 'min': 0, 'max': 150, 'type': 'abs' },
                                                                         "nb_bars" : { 'min': 5, 'max': 250, 'type': 'abs' } }
                                                  },
