@@ -864,7 +864,7 @@ class Pipeline(object):
                                                                                                         vect_method,
                                                                                                         type = 'vectorization')
             self.parameters["Vectorizations"]["vect_method_parameters"][vect_method] = vect_method_parameters[vect_method]
-        print(barcode_column)
+
         # initalize an instance of Vectorizer
         vectorizer = Vectorizer(tmd = _morphoframe[barcode_column], 
                                 vect_parameters = vect_method_parameters)
