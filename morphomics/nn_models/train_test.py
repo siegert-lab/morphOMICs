@@ -17,7 +17,15 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
         #x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
         #kl_factor_list = (1 - np.exp(-x_values))
     elif isinstance(kl_factor_function, list):
-        kl_factor_list = kl_factor_function
+        if len(kl_factor_function) != epochs:
+            print("Warning: kl_factor_list does not have the same length as epochs. Adjusting the list accordingly.")
+            # Pad with the last value or truncate
+            if len(kl_factor_function) < epochs:
+                kl_factor_list = kl_factor_function + [kl_factor_function[-1]] * (epochs - len(kl_factor_function))
+            else:
+                kl_factor_list = kl_factor_function[:epochs]
+        else:
+            kl_factor_list = kl_factor_function
     else:
         kl_factor_list = []
         kl_factor_list = [kl_factor_function(i) for i in epochs]
