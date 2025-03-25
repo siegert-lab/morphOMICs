@@ -93,7 +93,7 @@ class DefaultParams:
                                                 
                                                 "main_branches": 'keep',
                                                 "k_elements": 0.9,
-                                                "type": "keep",
+                                                "type": "cut",
                                                 "nb_sections": 1,
                                                 },
                                 'Bootstrap': {"feature_to_bootstrap": ['pi', 'array'],

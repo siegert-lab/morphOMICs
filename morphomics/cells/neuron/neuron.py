@@ -77,6 +77,7 @@ class Neuron:
         If type of object is tree this function finds the type of tree and adds the new_tree to the
         correct list of trees in neuron.
         """
+
         if isinstance(new_tree, Tree):
             t_type_digit = tree_type if tree_type else new_tree.get_type()
             if t_type_digit in self.tree_type_dict.keys():
