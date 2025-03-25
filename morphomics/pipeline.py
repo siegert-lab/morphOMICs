@@ -408,7 +408,6 @@ class Pipeline(object):
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
-
         # define morphoframe to clean
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)
@@ -420,7 +419,6 @@ class Pipeline(object):
         # restrict conditions
         for _cond, _restricts, _action in restrict_conditions:
             _morphoframe = cleaner.restrict_conditions(_morphoframe, _cond, _restricts, _action)
-
         # initialize output filename
         default_save_filename = "Cleaned"
         save_filepath = self._set_filename(protocol_name = "Clean_frame", 
@@ -430,7 +428,6 @@ class Pipeline(object):
                                               save_data = save_data)
         
         self.morphoframe[morphoframe_name] = _morphoframe
-
         # save the file 
         if save_data:
             print("Saving cleaned morphoframe in %s"%(save_filename))
@@ -1118,7 +1115,7 @@ class Pipeline(object):
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename)
-        print(save_filepath)
+        print("The dataset will be saved as a .csv in ", save_filepath)
         save_filepath = "%s.csv" % (save_filepath)
 
         # ensure the directory exists

@@ -1,4 +1,6 @@
 # Process Conditions
+import re
+
 def modify_condition(morphoframe, condition, before, after):
     if condition not in morphoframe.keys():
         print("%s not in morphoframe..."%condition)
@@ -12,7 +14,7 @@ def _drop_condition(morphoframe, condition, values):
         if value not in morphoframe[condition].unique():
             print("%s not in the available condition..."%value)
         else:
-            morphoframe = morphoframe.loc[~morphoframe[condition].str.contains(value)].reset_index(drop=True)
+            morphoframe = morphoframe.loc[~morphoframe[condition].str.contains(re.escape(value))].reset_index(drop=True)
     return morphoframe
 
 def _keep_condition(morphoframe, condition, values):

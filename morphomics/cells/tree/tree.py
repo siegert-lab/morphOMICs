@@ -99,6 +99,8 @@ class Tree:
     
     def is_equal(self, tree):
         """Tests if all tree lists are the same."""
+        if self.size() != tree.size(): 
+            return False
         eq = np.all(
             [
                 np.allclose(self.x, tree.x, atol=1e-4),

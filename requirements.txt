@@ -3,7 +3,12 @@ cached-property
 fa2-modified
 h5py>=2.8.0
 ipython_genutils
+ipykernel
+nbformat>=4.2.0
 matplotlib>=3.2.0
+plotly
+seaborn
+kaleido
 morphon>=0.0.8
 networkx
 numpy<1.25

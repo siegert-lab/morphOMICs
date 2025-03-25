@@ -121,7 +121,7 @@ class DefaultParams:
                                                 },
                                 'Save_reduced': {"conditions_to_save": ['Region', 'Model', 'Sex'],
                                                 "dimred_method": 'pca_umap',
-                                                "coordinate_axisnames": ['umap_1', 'umap_2', 'umap_3'],
+                                                "coordinate_axisnames": 'umap',
                                                 },
                                 'Log_results': {"checks":[]},
                                 'Mapping': {"fitted_dimreducer_filepath": 0,
