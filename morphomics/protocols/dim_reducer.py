@@ -160,11 +160,13 @@ class DimReducer(object):
         n_components = tsne_params["n_components"]
         perplexity = tsne_params["perplexity"]
         lr = tsne_params["lr"]
+        random_state = tsne_params["random_state"]
         
         print("Running t-SNE...")
         fit_tsne = TSNE(n_components = n_components,
                         perplexity = perplexity,
-                        learning_rate = lr)
+                        learning_rate = lr,
+                        random_state = random_state)
         
         reduced_vectors = fit_tsne.fit_transform(X = self.tmd_vectors)
 
