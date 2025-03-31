@@ -1,5 +1,4 @@
 import numpy as np
-from morphomics.cells.tree.tree import Tree
 from morphomics.cells.neuron import Neuron
 
 ## Barcodes
@@ -15,59 +14,88 @@ def set_proba(feature_list, main_branches = None):
     probas = bar_lengths.apply(lambda ph: ph/sum(np.sort(ph, axis=-1)) if sum(np.sort(ph, axis=-1))>1e-5 else np.zeros((len(ph))))
     return probas
 
-def subsample_w_replacement(feature_list, probas, k_elements, n_samples, 
+def subsample_phs_w_replacement(ph_list, probas, k_elements, n_samples, 
                             rand_seed = None, main_branches = None):
     # Subsample each feature n_samples time, following probas, to create a list of subfeatures with k_elements.
     if rand_seed is None:
         np.random.seed(rand_seed)
-    i = 0
     subsampled_features = []
-    for feature, proba in zip(feature_list, probas):
-        feature = np.array(feature)
-
+    for ph, proba in zip(ph_list, probas):
+        ph = np.array(ph)
+        # Update the number of elements to subsample from morphology
         if not isinstance(k_elements, int) :
-            k = int(k_elements*feature.shape[0])
+            k = max(1, int(k_elements * ph.shape[0]))
         else:
             k = k_elements
 
+        # Keep or remove the main branches
         if main_branches == 'keep':
-            main_branches_mask = np.any(feature < 0.001, axis=-1)
+            main_branches_mask = np.any(ph < 0.001, axis=-1)
             main_branches_indices = np.where(main_branches_mask)[0]
         else:
             main_branches_indices = np.array([], dtype=int)
+
+        # Sample the 
         indices_list = [np.hstack(([np.random.choice(len(proba), p=proba) for _ in range(k)] if sum(proba) > 0.9 else [], main_branches_indices)) 
                         for _ in range(n_samples)] 
-        subsamples = []
-        for indices in indices_list:
-            indices = indices.astype(int)
-            subsamples.append(feature[indices])
+        
+        subsamples = [ph[indices.astype(int)] for indices in indices_list]
         subsampled_features.append(subsamples)
     return subsampled_features
 
 ## Trees
 
-def subsample_trees(feature_list, _type, number, n_samples, rand_seed = None):
+def subsample_trees(tree_list, _type, number, n_samples, rand_seed = None):
     #_type can be 'cut' or 'prune'
     # if cut then n_samples is 1 because it is deterministic
-    # and number is 
-    # if prune then number is either the number of nodes or the probability to remove a node
-    if rand_seed is None:
+    # and number is:
+        # if _type = prune then number is either the number of nodes to remove or the probability to remove a node
+        # if _type = cut then the number is 
+    if rand_seed is not None:
         np.random.seed(rand_seed)
 
-    if _type[0] == 'cut':
+    if _type == 'cut':
         n_samples = 1
 
-    def subs(cell):
-        neuron_list = []
+
+    def subs(tree):
+        sub_tree_list = []
         for _ in range(n_samples):
-            cell = cell.combine_neurites()
-            tree = cell.neurites[0].subsample_tree(_type, number)
+            tree_copy = tree.copy_tree()
+            sub_tree = tree_copy.subsample_tree(_type, number)
+            sub_tree_list.append(sub_tree)
+        return sub_tree_list
+
+    subsampled_trees = tree_list.apply(subs)
+
+    return subsampled_trees
+
+
+def subsample_cells(cell_list, _type, number, n_samples, rand_seed = None):
+    #_type can be 'cut' or 'prune'
+    # if cut then n_samples is 1 because it is deterministic
+    # and number is:
+        # if _type = prune then number is either the number of nodes to remove or the probability to remove a node
+        # if _type = cut then the number is 
+    if rand_seed is not None:
+        np.random.seed(rand_seed)
+
+    if _type == 'cut' or (_type == 'prune' and isinstance(number, int)):
+        n_samples = 1
+    
+    def subs(cell):
+        sub_neuron_list = []
+        for _ in range(n_samples):
+            cell_copy = cell.copy_neuron()
+            cell_copy = cell_copy.combine_neurites()
+            tree = cell_copy.neurites[0]
+            sub_tree = tree.subsample_tree(_type, number)
             neu = Neuron()
-            neu.append_tree(tree, 3)
-            neuron_list.append(neu)
-        return neuron_list
+            neu.append_tree(sub_tree)
+            neu.set_soma(cell.soma)
+            sub_neuron_list.append(neu)
+        return sub_neuron_list
 
+    subsampled_neurons = cell_list.apply(subs)
 
-    subsampled_features = feature_list.apply(subs)
-
-    return subsampled_features
+    return subsampled_neurons

@@ -5,7 +5,8 @@ import os
 from morphomics.io.io import read_swc, get_info_frame
 from morphomics.io.swc import swc_to_neuron
 from morphomics.persistent_homology.tmd import get_ph_neuron, get_persistence_diagram
-
+from morphomics.view import view
+import matplotlib.pyplot as plt
 class Population:
     """A Population object is a container for Neurons.
 
@@ -99,9 +100,9 @@ class Population:
                                                                                                 ) if tree is not np.nan else np.nan
                                                                 )
         else:
+            # Assuming self.cells is a Pandas DataFrame
             self.cells['barcodes'] = self.cells['cells'].apply(lambda cell: get_ph_neuron(neuron = cell, feature=filtration_function
-                                                                                                ) if cell is not np.nan else np.nan
-                                                                )
+                                                                                                ) if cell is not np.nan else np.nan)
     
     def simplify(self):
         self.cells['simplified_cells'] = self.cells['cells'].apply(lambda cell: cell.simplify()

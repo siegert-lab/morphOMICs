@@ -1,9 +1,27 @@
 import os
-from setuptools import setup, find_packages
-from distutils.core import Extension
+import sys
+import subprocess
+from setuptools import setup
 from pathlib import Path
 
 MINIMAL_DESCRIPTION = '''morphOMICs: a python package for the topological and statistical analysis of microglia morphology (appliable to any tree structure)'''
+
+TORCH_VERSION = "torch==2.6.0"  # Explicitly specify the PyTorch version
+
+def install_package(package):
+    """Install a package using pip."""
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+def ensure_torch_installed():
+    """Ensure that the specified torch version is installed before running setup."""
+    try:
+        import torch
+        if torch.__version__ != "2.6.0":
+            print(f"Upgrading torch to {TORCH_VERSION}...")
+            install_package(TORCH_VERSION)
+    except ImportError:
+        print(f"Torch not found. Installing {TORCH_VERSION}...")
+        install_package(TORCH_VERSION)
 
 def get_requires():
     """Read requirements.txt."""

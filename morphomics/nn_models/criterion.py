@@ -55,7 +55,7 @@ class VAELoss(nn.Module):
             beta_value = self.mse_avg / (self.kl_avg + 1e-8)  # Avoid division by zero
 
         loss = mse_loss + beta_value * kl_loss
-        return loss, mse_loss
+        return loss, mse_loss, kl_loss, beta_value
 
 
 class NLLLoss(nn.Module):

@@ -99,6 +99,8 @@ class Tree:
     
     def is_equal(self, tree):
         """Tests if all tree lists are the same."""
+        if self.size() != tree.size(): 
+            return False
         eq = np.all(
             [
                 np.allclose(self.x, tree.x, atol=1e-4),
@@ -230,15 +232,15 @@ class Tree:
     def subsample_tree(self, _type, number):
         tip_starts = self.get_terminations()
         subsampled_nodes = set()
-
         for leaf in tip_starts:
             if _type == 'cut':
                 way = self.cut_branch(leaf, degree = number)
             elif _type == 'prune':
                 way = self.prune_branch(leaf, nb_nodes = number)
             subsampled_nodes.update(way)
-            
         subsampled_nodes = list(subsampled_nodes)
+        subsampled_nodes = sorted(subsampled_nodes)
+
         if len(subsampled_nodes) == 0:
             subsampled_nodes = [0]
         new_x = self.x[subsampled_nodes]
@@ -253,7 +255,6 @@ class Tree:
         index_map[-1] = -1
         # Step 2: Replace each number in list p with its index from subsampled_nodes
         new_p = [index_map[number] for number in new_p]
-
         if len(subsampled_nodes) > 1:
             new_tree = Tree(new_x, new_y, new_z, new_d, new_t, new_p)
             return new_tree

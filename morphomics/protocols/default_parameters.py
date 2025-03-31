@@ -48,7 +48,8 @@ class DefaultParams:
                                              },
                                     'tsne': {'n_components': 2,
                                              'perplexity': 50,
-                                             'lr': "auto"
+                                             'lr': "auto",
+                                             'random_state': 51,
                                              },
                                     'vae': {'n_components': 2,      
                                             'nn_layers': [64, 32, 16, 8], 
@@ -67,7 +68,7 @@ class DefaultParams:
                                 "morphoframe_name": 'microglia',
                                 "save_data": False,
                                 "save_folderpath": 'results',
-                                "save_filename": 0
+                                "save_filename": None
         }
         self.pipeline_params = {'Input': {"data_location_filepath": 'data',
                                             "extension": '.swc',
@@ -79,8 +80,7 @@ class DefaultParams:
                                 'Clean_frame': {"combine_conditions": [],
                                                 "restrict_conditions": []
                                                 },
-                                'Filter_frame': {"barcode_size_cutoff": 5,
-                                                 "features_to_filter":  { "nb_trunks" : { 'min': 0, 'max': 10, 'type': 'abs' },
+                                'Filter_frame': {"features_to_filter":  { "nb_trunks" : { 'min': 0, 'max': 10, 'type': 'abs' },
                                                                         "max_length_bar" : { 'min': 0, 'max': 150, 'type': 'abs' },
                                                                         "nb_bars" : { 'min': 5, 'max': 250, 'type': 'abs' } }
                                                  },
@@ -94,7 +94,7 @@ class DefaultParams:
                                                 
                                                 "main_branches": 'keep',
                                                 "k_elements": 0.9,
-                                                "type": "keep",
+                                                "type": "cut",
                                                 "nb_sections": 1,
                                                 },
                                 'Bootstrap': {"feature_to_bootstrap": ['pi', 'array'],
@@ -122,7 +122,7 @@ class DefaultParams:
                                                 },
                                 'Save_reduced': {"conditions_to_save": ['Region', 'Model', 'Sex'],
                                                 "dimred_method": 'pca_umap',
-                                                "coordinate_axisnames": ['umap_1', 'umap_2', 'umap_3'],
+                                                "coordinate_axisnames": 'umap',
                                                 },
                                 'Log_results': {"checks":[]},
                                 'Mapping': {"fitted_dimreducer_filepath": 0,

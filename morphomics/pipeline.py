@@ -63,7 +63,6 @@ class Pipeline(object):
 
         self.default_params = DefaultParams()
         
-        #print("Unless you have specified the file prefix in the succeeding executables, 
         print("This will be the file prefix: %s"%(self.file_prefix))
         print("")
 
@@ -119,11 +118,11 @@ class Pipeline(object):
             char0 = "%s/%s"
 
         if save_data:
-            if save_filename == 0:
+            if save_filename is None or save_filename == 'None':
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             else:
                 self.parameters[protocol_name]["save_filename"] = save_filename
-            if save_folderpath == 0:
+            if save_folderpath is None or save_filename == 'None':
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
             save_filepath = char0 % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
@@ -235,10 +234,10 @@ class Pipeline(object):
                 # Save the file 
                 if save_data:
                     suffix = "%s-%s" % (separated_by, _v)
-                    if save_filename != 0:
+                    if save_filename is not None:
                         _save_filename = "%s.%s" % (save_filename, suffix)
                     else:
-                        _save_filename = 0
+                        _save_filename = None
                     _default_save_filename = "%s.%s" % (default_save_filename, suffix)
                     _save_filepath = self._set_filename(protocol_name = "Input", 
                                                             save_folderpath = save_folderpath, 
@@ -325,7 +324,7 @@ class Pipeline(object):
         # initialize morphoframe to bootstrap
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)
-        
+        _morphoframe_copy = _morphoframe.copy()
         if all(isinstance(item, list) for item in _morphoframe["cells"]):
             is_list = True
         elif all(isinstance(item, morphomics.cells.neuron.Neuron) for item in _morphoframe["cells"]):
@@ -346,8 +345,12 @@ class Pipeline(object):
         # Merge back
         if is_list:
             _morphoframe = _morphoframe.groupby(_morphoframe.index).agg(list)
+        
+        # Update the morphoframe with the new column
+        _morphoframe_copy['barcodes'] = _morphoframe['barcodes']
 
-        _morphoframe = _morphoframe[~pd.isna(_morphoframe['barcodes'])]
+        # Remove failed barcodes
+        _morphoframe_copy = _morphoframe_copy[~pd.isna(_morphoframe_copy['barcodes'])]
 
         # define output filename
         default_save_filename = "TMD"
@@ -357,7 +360,7 @@ class Pipeline(object):
                                               default_save_filename = default_save_filename, 
                                               save_data = save_data)
         
-        self.morphoframe[morphoframe_name] = _morphoframe
+        self.morphoframe[morphoframe_name] = _morphoframe_copy
 
         # save the file 
         if save_data:
@@ -409,7 +412,6 @@ class Pipeline(object):
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
         save_filename = params["save_filename"]
-
         # define morphoframe to clean
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)
@@ -421,7 +423,6 @@ class Pipeline(object):
         # restrict conditions
         for _cond, _restricts, _action in restrict_conditions:
             _morphoframe = cleaner.restrict_conditions(_morphoframe, _cond, _restricts, _action)
-
         # initialize output filename
         default_save_filename = "Cleaned"
         save_filepath = self._set_filename(protocol_name = "Clean_frame", 
@@ -431,7 +432,6 @@ class Pipeline(object):
                                               save_data = save_data)
         
         self.morphoframe[morphoframe_name] = _morphoframe
-
         # save the file 
         if save_data:
             print("Saving cleaned morphoframe in %s"%(save_filename))
@@ -615,9 +615,10 @@ class Pipeline(object):
         Essential parameters:
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be subsampled out.
-            feature_to_subsample (str): A column in morphoframe .i.e the type (either barcodes, or tree) to subsample.
-            main_branches (str or None): If you want to force main branches to be kept = 'keep'. 
-                                        If you want to remove them, and keep only subbranches = 'remove'.
+            feature_to_subsample (str): A column in morphoframe .i.e the type (either barcodes, or trees) to subsample.
+            main_branches (str or None): If you want to force main branches to be kept, set main_branches = 'keep'. 
+                                        If you want to remove them, and keep only subbranches, set main_branches = 'remove'.
+                                        If you don't want to do anything particular with them, set main_branches = None.
             k_elements (int or ratio): The number of elements that will be subsampled to generate a subbarcode or subtree.
             n_samples (int): Number of subbarcodes per barcode.
             rand_seed (int): Seed of the random number generator.
@@ -649,7 +650,9 @@ class Pipeline(object):
         _morphoframe = self._get_variable(variable_filepath = morphoframe_filepath,
                                             variable_name = morphoframe_name)   
         _morphoframe_copy = _morphoframe.copy()
+        # Extract the column witht the feature to subsample
         features = _morphoframe_copy[feature_to_subsample]
+        # Create a original copy of the column that will be subsampled
         _morphoframe_copy[feature_to_subsample + "_not_subsampled"] = _morphoframe_copy[feature_to_subsample]
         
         if feature_to_subsample == "barcodes":
@@ -658,7 +661,7 @@ class Pipeline(object):
             _morphoframe_copy[feature_to_subsample + "_proba"] = subsampler.set_proba(feature_list = features, 
                                                                                         main_branches = main_branches)
             probas = _morphoframe_copy[feature_to_subsample + "_proba"]
-            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_w_replacement(feature_list = features,
+            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_phs_w_replacement(ph_list = features,
                                                                                         probas = probas, 
                                                                                         k_elements = k_elements, 
                                                                                         n_samples = n_samples, 
@@ -667,7 +670,15 @@ class Pipeline(object):
         else:
             _type = params['type']
             number = params['nb_sections']
-            _morphoframe_copy[feature_to_subsample] = subsampler.subsample_trees(feature_list = features,
+            if feature_to_subsample == "trees":
+                _morphoframe_copy[feature_to_subsample] = subsampler.subsample_trees(tree_list = features,
+                                                                                    _type = _type,
+                                                                                    number = number,
+                                                                                    n_samples = n_samples, 
+                                                                                    rand_seed = rand_seed,)
+                
+            if feature_to_subsample == "cells":
+                _morphoframe_copy[feature_to_subsample] = subsampler.subsample_cells(cell_list = features,
                                                                                     _type = _type,
                                                                                     number = number,
                                                                                     n_samples = n_samples, 
@@ -822,6 +833,7 @@ class Pipeline(object):
         assert (
             barcode_column in _morphoframe.keys()
         ), "Missing `barcodes` column in info_frame..."
+        _morphoframe_copy = _morphoframe.copy()
 
         if all(isinstance(item, list) for item in _morphoframe[barcode_column]):
             is_list = True  
@@ -832,8 +844,6 @@ class Pipeline(object):
 
         if is_list:
             _morphoframe = _morphoframe.explode(barcode_column)
-
-        _morphoframe_copy = _morphoframe.copy()
 
         # define the name of the vect method
         vect_methods = vect_method_parameters.keys()
@@ -853,7 +863,7 @@ class Pipeline(object):
             self.parameters["Vectorizations"]["vect_method_parameters"][vect_method] = vect_method_parameters[vect_method]
 
         # initalize an instance of Vectorizer
-        vectorizer = Vectorizer(tmd = _morphoframe_copy[barcode_column], 
+        vectorizer = Vectorizer(tmd = _morphoframe[barcode_column], 
                                 vect_parameters = vect_method_parameters)
         
         
@@ -862,15 +872,15 @@ class Pipeline(object):
             perform_vect_method = getattr(vectorizer, vect_method)
             output_vector = perform_vect_method()
 
-            _morphoframe_copy[vect_methods_codenames_list[i]] = list(output_vector)
-
+            _morphoframe[vect_methods_codenames_list[i]] = list(output_vector)
 
         # Merge back
         if is_list:
-            _morphoframe_copy = _morphoframe_copy.groupby(_morphoframe.index).agg({
+            _morphoframe = _morphoframe.groupby(_morphoframe.index).agg({
                     k: "mean" if k in vect_methods_codenames_list else "first" 
-                    for k in _morphoframe_copy.columns
+                    for k in _morphoframe.columns
         })
+        _morphoframe_copy[vect_methods_codenames_list] = _morphoframe[vect_methods_codenames_list]
             
         self.morphoframe[morphoframe_name] = _morphoframe_copy
 
@@ -939,6 +949,7 @@ class Pipeline(object):
       
         _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy.apply(lambda row: np.concatenate([row[col] for col in vectorization_list]), axis=1)
         
+        # way to normalize if image
         if normalize and len(_morphoframe_copy[vectors_to_reduce].iloc[0].shape) == 2:
             def normalize_array(arr):
                 arr_min = arr.min()
@@ -1119,7 +1130,7 @@ class Pipeline(object):
                                               save_folderpath = save_folderpath, 
                                               save_filename = save_filename,
                                               default_save_filename = default_save_filename)
-        print(save_filepath)
+        print("The dataset will be saved as a .csv in ", save_filepath)
         save_filepath = "%s.csv" % (save_filepath)
 
         # ensure the directory exists

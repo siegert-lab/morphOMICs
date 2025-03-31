@@ -16,10 +16,19 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
         kl_factor_list = [None]*epochs
         #x_values = np.linspace(2, 7, epochs)  # Generate 100 points between 0 and 5
         #kl_factor_list = (1 - np.exp(-x_values))
+    elif isinstance(kl_factor_function, list):
+        if len(kl_factor_function) != epochs:
+            print("Warning: kl_factor_list does not have the same length as epochs. Adjusting the list accordingly.")
+            # Pad with the last value or truncate
+            if len(kl_factor_function) < epochs:
+                kl_factor_list = kl_factor_function + [kl_factor_function[-1]] * (epochs - len(kl_factor_function))
+            else:
+                kl_factor_list = kl_factor_function[:epochs]
+        else:
+            kl_factor_list = kl_factor_function
     else:
         kl_factor_list = []
         kl_factor_list = [kl_factor_function(i) for i in epochs]
-        
     # Loop through the epochs
     for epoch in range(epochs):
         # Initialize the loss
@@ -33,7 +42,7 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
             # Pass the input through the model
             out, z_mean, z_log_var = model(x, sample_size=sample_size)
             # Calculate the loss
-            loss, mse = loss_fn.forward(x, out, z_mean, z_log_var, kl_factor_list[epoch])
+            loss, mse, kl_loss, beta_value = loss_fn.forward(x, out, z_mean, z_log_var, kl_factor_list[epoch])
             
             # Backpropagate
             loss.backward()
@@ -47,7 +56,7 @@ def vae_train(data, model, sample_size, optimizer, loss_fn, epochs, batch_size, 
 
         # Print the loss every 10 epochs
         if epoch % 10 == 0:
-            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}, i: {i}')
+            print(f'Epoch {epoch}, Loss: {tot_loss/(i+1)}, mse: {tot_mse/(i+1)}', f'KL loss {kl_loss/(i+1)}', f'KL weight {beta_value}')
             if scheduler:
                 current_lr = optimizer.param_groups[0]['lr']
                 print(f'Epoch {epoch}, Current Learning Rate: {current_lr}')
