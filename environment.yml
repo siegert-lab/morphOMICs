@@ -27,7 +27,7 @@ dependencies:
       - morphon>=0.0.8
       - pylmeasure>=0.2.0
       - torch-geometric
-      - torch-scatter==2.1.1 
+      - torch-scatter==2.1.2 
       - fa2-modified
       - umap-learn>=0.3.10
       - wandb

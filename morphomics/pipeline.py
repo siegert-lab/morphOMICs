@@ -118,11 +118,11 @@ class Pipeline(object):
             char0 = "%s/%s"
 
         if save_data:
-            if save_filename is None:
+            if save_filename is None or save_filename == 'None':
                 self.parameters[protocol_name]["save_filename"] = default_save_filename
             else:
                 self.parameters[protocol_name]["save_filename"] = save_filename
-            if save_folderpath is None:
+            if save_folderpath is None or save_filename == 'None':
                 self.parameters[protocol_name]["save_folderpath"] = os.getcwd()
             save_filepath = char0 % (self.parameters[protocol_name]["save_folderpath"], self.file_prefix + '.' + self.parameters[protocol_name]["save_filename"])
         else:
@@ -949,6 +949,7 @@ class Pipeline(object):
       
         _morphoframe_copy[vectors_to_reduce] = _morphoframe_copy.apply(lambda row: np.concatenate([row[col] for col in vectorization_list]), axis=1)
         
+        # way to normalize if image
         if normalize and len(_morphoframe_copy[vectors_to_reduce].iloc[0].shape) == 2:
             def normalize_array(arr):
                 arr_min = arr.min()

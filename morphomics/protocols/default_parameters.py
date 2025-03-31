@@ -48,7 +48,8 @@ class DefaultParams:
                                              },
                                     'tsne': {'n_components': 2,
                                              'perplexity': 50,
-                                             'lr': "auto"
+                                             'lr': "auto",
+                                             'random_state': 51,
                                              },
                                     'vae': {'n_components': 2,      
                                             'nn_layers': [64, 32, 16, 8], 

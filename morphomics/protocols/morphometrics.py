@@ -181,7 +181,7 @@ def compute_lmeasures(filenames,
     '''This Python function processes SWC files for morphometric analysis using pyLmeasure and returns the
     calculated morphometric quantities.
     '''
-    # Lmeasure does not like filenames with spaces
+
     if "nt" in os.name:
         char0 = '%s\\tmp%d.swc'
         char1 = "\\"
@@ -189,6 +189,8 @@ def compute_lmeasures(filenames,
         char0 = '%s/tmp%d.swc'
         char1 = "/"
 
+    # Lmeasure does not like filenames with spaces
+    # So they are renamed temporarly 
     filenames_to_process = []
     tmp_ind = 0
     for filename in filenames:
@@ -201,9 +203,11 @@ def compute_lmeasures(filenames,
     if tmp_ind > 0:
         print("There were %d files in the tmp_directory" % (tmp_ind-1))
 
+    print('Define Lm functions')
     filename = [filenames_to_process[0]]
     Lm_functions, Lm_quantities = create_Lm_functions(Lmeasure_functions, filename)
-    
+    print('Define Lm functions done')
+
     # Get morphometrics    
     if not histogram:
         morphometric_quantities = compute_morphometrics(filenames_to_process, Lm_functions, Lm_quantities)
