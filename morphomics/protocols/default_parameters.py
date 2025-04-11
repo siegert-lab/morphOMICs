@@ -85,7 +85,8 @@ class DefaultParams:
                                                                         "nb_bars" : { 'min': 5, 'max': 250, 'type': 'abs' } }
                                                  },
                                 'Filter_morpho': {"barlength_cutoff": [],
-                                                "exclude_sg_branches": True,
+                                                "exclude_sg_branches": False,
+                                                "remove_duplicates": True,
                                                   },
                                 'Subsample': {"extendedframe_name": 'subsampled_microglia',
                                                 "feature_to_subsample": 'barcodes',
