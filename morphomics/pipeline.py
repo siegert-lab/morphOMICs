@@ -548,7 +548,9 @@ class Pipeline(object):
             morphoframe_filepath (str or 0): If not 0, must contain the filepath to the morphoframe which will then be saved into morphoframe_name.
             morphoframe_name (str): Key of the morphoframe which will be filtered out.
             barlength_cutoff (list, (str, float)): Retain bars whose length satisfy a certain cutoff
-                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff].           
+                                    must be an array with two elements, [">" "<", ">=", "<=", "==", bar length cutoff]. 
+            remove_duplicate_bar (bool): If True, remove duplicate entries within each barcode.
+                                 Only one instance of each [n, 2] pair will be kept.
             save_data (bool): trigger to save output of protocol
             save_folderpath (str): Location where to save the variable.
 
@@ -565,6 +567,8 @@ class Pipeline(object):
         
         exclude_sg_branches = params["exclude_sg_branches"]
         barlength_cutoff = params["barlength_cutoff"]
+        
+        remove_duplicates = params["remove_duplicate_bar"]
 
         save_data = params["save_data"]
         save_folderpath = params["save_folderpath"]
@@ -587,6 +591,11 @@ class Pipeline(object):
             print("Removing bars from all barcodes with the following criteria: bar length %s %.2f"%(_operation, barl_cutoff))
             _morphoframe.barcodes = _morphoframe.barcodes.apply(lambda x: ph_transformations.filter_ph(np.array(x), barl_cutoff, method=_operation))
         
+        if remove_duplicates:
+            _morphoframe.barcodes = _morphoframe.barcodes.apply(
+                lambda x: np.unique(np.array(x), axis=0)
+)
+
         # initialize output filename
         default_save_filename = "Filter_morpho"
         save_filepath = self._set_filename(protocol_name = "Filter_morpho", 

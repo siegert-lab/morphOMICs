@@ -6,6 +6,9 @@
 - [Overview](#overview)
 - [Required Dependencies](#required-dependencies)
 - [Installation Guide](#installation-guide)
+    - [Clone the Repository:\*\*](#clone-the-repository)
+    - [Using Conda](#using-conda)
+    - [Using pip](#using-pip)
 - [Usage](#usage)
 
 # Overview
@@ -19,10 +22,10 @@ This project relies on a range of scientific computing and machine learning libr
 # Installation Guide
 
 ### Clone the Repository:**  
-   `git clone git@github.com:ThomasNgl/morphOMICs.git`  
+   `git clone git@github.com:siegert-lab/morphOMICs.git`  
    `cd morphOMICs`
 
-You need Python 3.9 or 3.10 to run this package.
+You need Python 3.9 to run this package.
 You can install morphOMICs using either Conda or pip. Follow the steps below based on your preferred package manager.
 
 ### Using Conda
