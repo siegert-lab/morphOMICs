@@ -138,7 +138,7 @@ class DefaultParams:
                                                   "concatenate": False,
                                                   "histogram": False,
                                                   "bins": 100,
-                                                  "tmp_folder": "results"},
+                                                  "tmp_folder": "tmp"},
                                 'Plotting': {"conditions": ['Region', 'Model', 'Sex'],
                                             "reduced_vectors_name": 'pca_umap',
                                             "axis_labels": ['umap_1', 'umap_2', 'umap_3'],
