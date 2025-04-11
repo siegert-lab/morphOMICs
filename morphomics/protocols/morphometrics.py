@@ -193,8 +193,11 @@ def compute_lmeasures(filenames,
     # So they are renamed temporarly 
     filenames_to_process = []
     tmp_ind = 0
+    os.makedirs(tmp_folder, exist_ok=True)
+
     for filename in filenames:
         space_in_filename = " " in filename
+        # Create the directory if it doesn't exist
         if space_in_filename:
             os.system("cp '%s' '%s'" % (filename, char0 % (tmp_folder, tmp_ind)))
             filename = char0 % (tmp_folder, tmp_ind)

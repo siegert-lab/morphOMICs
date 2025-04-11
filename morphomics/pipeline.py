@@ -1499,6 +1499,15 @@ class Pipeline(object):
                     _morphoframe_copy[col] = morphometric_quantities[:, i]
             else:
                 _morphoframe_copy['morphometrics'] = list(morphometric_quantities)
+                # Count rows where 'morphometrics' contains None
+                num_rows_with_none = _morphoframe_copy['morphometrics'].apply(lambda x: any(item is None for item in x)).sum()
+
+                # Print the count
+                print(f"Number of rows with None in 'morphometrics': {num_rows_with_none}")
+
+                # Create a filtered DataFrame that excludes rows with None in 'morphometrics'
+                _morphoframe_copy = _morphoframe_copy[~_morphoframe_copy['morphometrics'].apply(lambda x: any(item is None for item in x))]
+                
 
         # define output filename
         default_save_filename = "Morphometrics"
