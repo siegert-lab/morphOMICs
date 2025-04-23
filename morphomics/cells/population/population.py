@@ -25,6 +25,7 @@ class Population:
                              'Sex' : None,
                              'Animal' : None},
                 extension = ".swc",
+                compute_tree = True
                 ):
         """
         Initialize the swc array and the Neuron instance for each sample in the DataFrame.
@@ -62,7 +63,8 @@ class Population:
             for i, sub_info_frame in enumerate(info_frame_parts):
                 # Read the swc files and add them in the column swc_array.
                 sub_info_frame['swc_array'] = sub_info_frame['file_path'].apply(lambda file_path: read_swc(file_path))                        
-                sub_info_frame['cells'] = sub_info_frame['swc_array'].apply(lambda swc_arr: swc_to_neuron(swc_arr) if swc_arr is not np.nan else np.nan)
+                if compute_tree:
+                    sub_info_frame['cells'] = sub_info_frame['swc_array'].apply(lambda swc_arr: swc_to_neuron(swc_arr) if swc_arr is not np.nan else np.nan)
                 print("You have loaded %d%% chunk of the data..."%(((i+1)/4)*100))
                 morphoframe[str(i)] = sub_info_frame
    
