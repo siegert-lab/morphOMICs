@@ -62,8 +62,8 @@ class Population:
             # info_frame_parts = [info_frame.iloc[i:i + len(info_frame) // 4] for i in range(0, len(info_frame), len(info_frame) // 4)]
             for i, sub_info_frame in enumerate(info_frame_parts):
                 # Read the swc files and add them in the column swc_array.
-                sub_info_frame['swc_array'] = sub_info_frame['file_path'].apply(lambda file_path: read_swc(file_path))                        
-                if compute_tree:
+                sub_info_frame['swc_array'] = sub_info_frame['file_path'].apply(lambda file_path: read_swc(file_path)) 
+                if compute_tree:                       
                     sub_info_frame['cells'] = sub_info_frame['swc_array'].apply(lambda swc_arr: swc_to_neuron(swc_arr) if swc_arr is not np.nan else np.nan)
                 print("You have loaded %d%% chunk of the data..."%(((i+1)/4)*100))
                 morphoframe[str(i)] = sub_info_frame
@@ -75,8 +75,12 @@ class Population:
         if cells_frame is not None:
             self.cells = pd.concat((self.cells, cells_frame))
 
-        self.set_empty_cells_to_nan()
     
+    def set_cells(self):
+        self.cells['cells'] = self.cells['swc_array'].apply(lambda swc_arr: swc_to_neuron(swc_arr) if swc_arr is not np.nan else np.nan)
+        self.set_empty_cells_to_nan()
+
+
     def exclude_sg_branches(self):
         """
         Remove from each cell the branches that do not have ramification.
