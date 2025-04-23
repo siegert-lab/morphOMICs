@@ -1,4 +1,4 @@
-name: morphomics
+name: morphomics_env
 channels:
   - conda-forge
   - defaults

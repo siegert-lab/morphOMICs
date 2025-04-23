@@ -31,18 +31,18 @@ You can install morphOMICs using either Conda or pip. Follow the steps below bas
 ### Using Conda
 2. **Create and Activate the Conda Environment:**  
    `conda env create -f environment.yml`  
-   `conda activate morphomics`
+   `conda activate morphomics_env`
 
 3. **Install the Package:**  
    `pip install -e .`
 
 ### Using pip
 2. **Create and Activate the Virtual Environment:**  
-   `python -m venv morphomics`  
+   `python -m venv morphomics_env`  
    On macOS/Linux:  
-   `source morphomics/bin/activate`  
+   `source morphomics_env/bin/activate`  
    On Windows:  
-   `morphomics\Scripts\activate`
+   `morphomics_env\Scripts\activate`
 
 3. **Install the Required Packages:**  
    `pip install -r requirements.txt`  
