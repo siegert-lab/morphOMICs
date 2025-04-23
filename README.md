@@ -6,7 +6,7 @@
 - [Overview](#overview)
 - [Required Dependencies](#required-dependencies)
 - [Installation Guide](#installation-guide)
-    - [Clone the Repository:\*\*](#clone-the-repository)
+    - [Clone the Repository:](#clone-the-repository)
     - [Using Conda](#using-conda)
     - [Using pip](#using-pip)
 - [Usage](#usage)
@@ -21,7 +21,7 @@ This project relies on a range of scientific computing and machine learning libr
 
 # Installation Guide
 
-### Clone the Repository:**  
+### Clone the Repository:
    `git clone git@github.com:siegert-lab/morphOMICs.git`  
    `cd morphOMICs`
 
