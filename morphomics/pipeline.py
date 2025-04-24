@@ -289,8 +289,6 @@ class Pipeline(object):
         print("Input done!")
         print("")
 
-
-
     def TMD(self):
         '''
         Protocol: Compute and Add the Topological Morphology Descriptor to morphoframe for each cell in morphoframe.
@@ -372,8 +370,6 @@ class Pipeline(object):
         print("TMD done!")
         print("")
 
-
-
     def Clean_frame(self):
         """
         Protocol: Clean out the morphoframe, to filter out unwanted conditions or generally rename them.
@@ -441,8 +437,6 @@ class Pipeline(object):
         print("Clean done!")        
         print("")     
      
-
-
     def Filter_frame(self):
         """
         Protocol: Filter out morphologies that don't respect some conditions based on their Tree or Barcode.
@@ -538,8 +532,6 @@ class Pipeline(object):
         print("Filtering done!")        
         print("")  
 
-
-
     def Filter_morpho(self):
         """
         Protocol: Preprocess features like trees or barcodes modifying them based on some conditions.
@@ -614,8 +606,6 @@ class Pipeline(object):
 
         print("Filtering done!")        
         print("")     
-
-
 
     def Subsample(self):
         """
@@ -711,8 +701,6 @@ class Pipeline(object):
         print("Subsampling done!")
         print("")
 
-
-
     def Bootstrap(self):
         """
         Protocol: Takes the morphoframe and bootstraps the variable specified in  `feature_to_bootstrap` and returns a new morphoframe with the bootstrapped samples
@@ -802,8 +790,6 @@ class Pipeline(object):
 
         print("Bootstrap done!")
         print("")
-
-
 
     def Vectorizations(self):
         """
@@ -908,8 +894,6 @@ class Pipeline(object):
         if save_filepath is not None:
             print("The vectors are saved in %s" %(save_filepath))
             io.save_obj(obj = self.morphoframe[morphoframe_name], filepath = save_filepath)
-
-
 
     def Dim_reductions(self):
         """
@@ -1036,8 +1020,6 @@ class Pipeline(object):
         print("Reducing done!")
         print("")
 
-
-
     def Palantir(self):
         #     """
         #     Protocol: Takes the UMAP manifold, calculates diffusion maps using Palantir and outputs a force-directed layout of the maps
@@ -1084,9 +1066,7 @@ class Pipeline(object):
         #         morphomics.utils.save_obj(self.metadata["palantir_distances"], "%s-PalantirDistances" % (save_filename) )
         #         morphomics.utils.save_obj(self.metadata["X_fdl"], "%s-PalantirFDCoords" % (save_filename) )
         return
-
-
-            
+  
     def Save_reduced(self):
         """
         Protocol: Takes the reduced manifold coordinates and conditions to create a .csv file which can be uploaded to the morphOMICs dashboard
@@ -1150,8 +1130,6 @@ class Pipeline(object):
 
         print("Reduced coordinates splitted and saved!")
         print("")
-
-
 
     def Log_results(self):
         """
@@ -1285,8 +1263,6 @@ class Pipeline(object):
         print("Logging of results done!")
         print("")
 
-
-
     def Mapping(self):
         """
         Protocol: Takes a pre-calculated UMAP function, maps persistence images into the UMAP manifold and outputs the manifold coordinates
@@ -1383,8 +1359,6 @@ class Pipeline(object):
         print("Mapping done!")
         print("")
 
-       
-        
     def Sholl_curves(self):
         """
         Protocol: Takes .swc files, reads them and calculates Sholl curves at given radial intervals
@@ -1439,9 +1413,7 @@ class Pipeline(object):
         if params["save_data"]:
             #print("The Sholl curves are saved in %s" (save_filepath))
             io.save_obj(self.metadata, "%s" % (save_filename) )
-
-            
-            
+   
     def Morphometrics(self):
         """
         Protocol: Takes .swc files, reads them and calculates classical morphometric quantities
@@ -1538,8 +1510,6 @@ class Pipeline(object):
         print("Morphometrics done!")
         print("")
              
-
-
     def Plotting(self):
         """
         Protocol: Generates a 3D interactive plot from a morphoframe, or from the ReductionInfo files, or from coordinate and morphoinfo files
@@ -1642,8 +1612,6 @@ class Pipeline(object):
         print("Plotting done!")
         print("")
 
-
-
     def Save_parameters(self):
         """
         Protocol: Save the wanted parameters in a .pkl for reproducibility.
@@ -1688,8 +1656,6 @@ class Pipeline(object):
                                     filepath = save_filepath) 
         print("The experiment parameters are saved in %s" %(save_filepath))
         print("")
-
-
 
     def Clear_morphoframe(self):
         """

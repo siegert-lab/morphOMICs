@@ -53,6 +53,8 @@ setup(
     python_requires='<=3.10',
     license='GNU',
     url='https://github.com/siegert-lab/morphOMICs',
-    keywords=['Morphomics', 'MicroGlia', 'UMAP', 'TDA', 'Topological Data Analysis', 'Microscopy', 'Image Analysis', 'Cell Morphology'],
+    keywords=['Morphomics', 'MicroGlia', 'UMAP', 'TDA', 
+              'Topological Data Analysis', 'Microscopy', 
+              'Image Analysis', 'Cell Morphology'],
     packages=['morphomics'],
     include_package_data=True,)
