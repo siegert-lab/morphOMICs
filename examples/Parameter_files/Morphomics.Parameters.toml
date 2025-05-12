@@ -10,7 +10,6 @@ Protocols = [
         "Input",
         "TMD",
         "Clean_frame",
-        "Bootstrap",
         "Vectorizations",
         "Dim_reductions",
         "Save_reduced",

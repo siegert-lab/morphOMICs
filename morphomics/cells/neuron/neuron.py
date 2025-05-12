@@ -55,7 +55,7 @@ class Neuron:
     @property
     def neurites(self):
         """Get neurites."""
-        return self.apical_dendrite + self.axon + self.basal_dendrite + self.glia_process
+        return self.apical_dendrite + self.axon + self.basal_dendrite + self.glia_process + self.undefined
 
     @property
     def dendrites(self):
