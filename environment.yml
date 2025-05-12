@@ -11,23 +11,23 @@ dependencies:
   - ipykernel
   - nbformat>=4.2.0
   - matplotlib>=3.2.0
-  - networkx
+  - networkx  
   - numpy<1.25
   - pandas
   - scikit-bio
   - scikit-learn>=0.19.1
   - scipy>=0.13.3
   - tomli
-  - torch=2.6.0 
   - plotly
   - seaborn
-  - kaleido
   - pip
   - pip:
+      - torch
+      - kaleido
       - morphon>=0.0.8
       - pylmeasure>=0.2.0
-      - torch-geometric
-      - torch-scatter==2.1.2 
+      # - torch-geometric
+      # - torch-scatter==2.1.2
       - fa2-modified
       - umap-learn>=0.3.10
       - wandb

@@ -31,7 +31,7 @@ path_to_new_instance = "examples/saved_instances"
 
 [Input]
 # Path pointing to the parent folder containing the .swc files arranged hierarchically according to 'conditions'.
-"data_location_filepath" = "examples/data"
+"data_location_filepath" = "data"
 
 # .swc file extension, "_corrected.swc" refers to .swc files that were corrected with NeurolandMLConverter.
 "extension" = "_corrected.swc"
